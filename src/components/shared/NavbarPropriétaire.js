@@ -24,7 +24,7 @@ const OwnerBottomNavbar = () => {
           <path strokeLinecap="round" strokeLinejoin="round" d="M4 18V6a2 2 0 0 1 2-2h4m4 0h4a2 2 0 0 1 2 2v12m-6-4h.01M4 12h16" />
         </svg>
       ),
-      path: '/',
+      path: '/owner/income',
     },
     {
       label: 'Mes propriétés',

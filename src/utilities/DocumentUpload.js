@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
+import { DocumentUploadDebugger } from '../utils/documentUploadDebug';
 import SectionTitle from '../components/shared/SectionTitle';
 
 const REQUIRED_DOCUMENTS = [
@@ -106,6 +107,11 @@ export default function DocumentUpload() {
     setSubmitError(null);
 
     try {
+      // Run debug check first
+      const debuggerInstance = new DocumentUploadDebugger();
+      const debugInfo = await debuggerInstance.getDebugInfo();
+      console.log("🔍 Debug info before upload:", debugInfo);
+
       const formData = new FormData();
       const documentTypes = [];
 
@@ -119,19 +125,38 @@ export default function DocumentUpload() {
         }
       });
 
-      // Backend expects documentTypes as an array, not JSON string
+      // Backend expects documentTypes as an array - append each type individually
       documentTypes.forEach(type => {
         formData.append("documentTypes", type);
       });
 
-      console.log("Submitting with documentTypes:", documentTypes);
-      console.log("FormData entries:");
+      console.log("📤 Submitting with documentTypes:", documentTypes);
+      console.log("📊 Files count:", documentTypes.length);
+      console.log("📊 DocumentTypes count:", documentTypes.length);
+      console.log("📋 FormData entries:");
       for (let pair of formData.entries()) {
-        console.log(pair[0] + ': ' + (pair[1].name || pair[1]));
+        console.log(`  ${pair[0]}: ${pair[1].name || pair[1]}`);
+      }
+      
+      // Validate that we have exactly 4 files and 4 document types
+      if (documentTypes.length !== 4) {
+        console.error("❌ Expected exactly 4 files and 4 document types, got:", documentTypes.length);
+        throw new Error(`Expected exactly 4 documents, but got ${documentTypes.length}`);
+      }
+      
+      // Validate that all required document types are present
+      const requiredTypes = ['kbis', 'identity', 'address', 'insurance'];
+      const missingTypes = requiredTypes.filter(type => !documentTypes.includes(type));
+      if (missingTypes.length > 0) {
+        console.error("❌ Missing required document types:", missingTypes);
+        throw new Error(`Missing required document types: ${missingTypes.join(', ')}`);
       }
 
+      // Use environment variable for API URL
+      const API_BASE_URL = process.env.REACT_APP_API_URL ? `${process.env.REACT_APP_API_URL}/api` : 'http://localhost:4000/api';
+      
       const response = await axios.post(
-        "http://localhost:4000/api/documents/upload",
+        `${API_BASE_URL}/documents/upload`,
         formData,
         {
           headers: {
@@ -143,16 +168,37 @@ export default function DocumentUpload() {
             Object.keys(documents).forEach(docId =>
               setUploadProgress(prev => ({ ...prev, [docId]: percent }))
             );
-          }
+          },
+          timeout: 30000 // 30 second timeout
         }
       );
 
-      console.log("Upload successful:", response.data);
+      console.log("✅ Upload successful:", response.data);
       setSubmitted(true);
     } catch (err) {
-      console.error("Submit error:", err);
-      console.error("Response data:", err.response?.data);
-      const errorMessage = err.response?.data?.message || "Erreur lors de l'envoi des documents.";
+      console.error("❌ Submit error:", err);
+      console.error("📥 Error response:", err.response?.data);
+      console.error("📥 Error status:", err.response?.status);
+      console.error("📥 Error headers:", err.response?.headers);
+      
+      let errorMessage = "Erreur lors de l'envoi des documents.";
+      
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.code === 'ECONNABORTED') {
+        errorMessage = "Timeout: Le serveur met trop de temps à répondre. Veuillez réessayer.";
+      } else if (err.code === 'NETWORK_ERROR' || !err.response) {
+        errorMessage = "Erreur de connexion: Impossible de joindre le serveur. Vérifiez votre connexion internet.";
+      } else if (err.response?.status === 401) {
+        errorMessage = "Session expirée. Veuillez vous reconnecter.";
+      } else if (err.response?.status === 403) {
+        errorMessage = "Accès refusé. Votre compte n'a pas les permissions nécessaires.";
+      } else if (err.response?.status === 413) {
+        errorMessage = "Fichiers trop volumineux. La taille totale ne doit pas dépasser 10MB.";
+      } else if (err.response?.status >= 500) {
+        errorMessage = "Erreur serveur. Veuillez réessayer plus tard.";
+      }
+      
       setSubmitError(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -322,17 +368,31 @@ export default function DocumentUpload() {
         </div>
 
         <div className="mt-8 text-center">
-          <button 
-            onClick={handleSubmit} 
-            disabled={!canSubmit || isSubmitting} 
-            className={`px-8 py-4 rounded-xl font-semibold text-lg transition-all ${
-              canSubmit && !isSubmitting 
-                ? 'bg-green-600 text-white hover:bg-green-700 shadow-lg' 
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            }`}
-          >
-            {isSubmitting ? 'Envoi en cours...' : 'Envoyer les documents'}
-          </button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <button 
+              onClick={handleSubmit} 
+              disabled={!canSubmit || isSubmitting} 
+              className={`px-8 py-4 rounded-xl font-semibold text-lg transition-all ${
+                canSubmit && !isSubmitting 
+                  ? 'bg-green-600 text-white hover:bg-green-700 shadow-lg' 
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              {isSubmitting ? 'Envoi en cours...' : 'Envoyer les documents'}
+            </button>
+            
+            <button 
+              onClick={async () => {
+                const debuggerInstance = new DocumentUploadDebugger();
+                const info = await debuggerInstance.getDebugInfo();
+                console.log('🔍 Document Upload Debug Report:', info);
+                alert(`Debug info logged to console. Check browser console for details.\n\nStatus: ${info.tests.upload.success ? 'SUCCESS' : 'FAILED'}\nError: ${info.tests.upload.error || 'None'}`);
+              }}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition-colors"
+            >
+              🔍 Debug Upload
+            </button>
+          </div>
           
           {!canSubmit && (
             <p className="text-sm text-gray-500 mt-2">

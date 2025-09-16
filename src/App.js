@@ -22,6 +22,7 @@ import PasswordRecoveryConfirmation from './pages/LogIn/PasswordRecoveryConfirma
 import Explore from './pages/Explore/Explore';
 import Restauration from './pages/Explore/Restauration';
 import Packages from './pages/Explore/Packages';
+import Activites from './pages/Explore/Activites';
 import Profile from './pages/Profile/Profile';
 import Favorites from './pages/Favorite/Favorite';
 import Navbar from './components/shared/Navbar';
@@ -31,6 +32,7 @@ import NavbarPartner from './components/shared/NavbarPartner';
 import { PropertyCreationProvider } from './context/PropertyCreationContext';
 import WelcomeScreen from './pages/WelcomeScreen';
 import ResetPasswordScreen from './pages/LogIn/ResetPasswordScreen';
+import TestDocumentUpload from './pages/TestDocumentUpload';
 
 import SearchResults from './pages/UserSearch/SearchResults';
 import PropertySearchFlow from './pages/UserSearch/SearchFlow';
@@ -177,6 +179,7 @@ function App() {
         <Route path="/" element={<ExploreLayout />}>
           <Route index element={<Explore />} />
           <Route path="restauration" element={<Restauration />} />
+          <Route path="activites" element={<Activites />} />
           <Route path="packages" element={<Packages />} />
         </Route>
 
@@ -201,6 +204,7 @@ function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/edit-profile" element={<EditProfileScreen />} />
         <Route path="/favorites" element={<Favorites />} />
+        <Route path="/test-upload" element={<TestDocumentUpload />} />
         <Route path="/partner-welcome" element={<HomeIntermédiaire />} />
         <Route path="/VillaMakarska" element={<VillaMakarska />} />
         <Route path="/property/:id" element={<PropertyPreview />} />

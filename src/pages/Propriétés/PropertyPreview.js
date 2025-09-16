@@ -22,13 +22,22 @@ export default function PropertyPreview() {
   useEffect(() => {
     const fetchPropertyAndPacks = async () => {
       try {
+        console.log('🔍 Fetching property data for ID:', id);
+        
         // Fetch property
         const resProperty = await axios.get(`${API_BASE}/api/property/public/${id}`);
+        console.log('🏠 Property data received:', resProperty.data.property);
+        console.log('👤 Owner data:', resProperty.data.property?.owner);
         setProperty(resProperty.data.property);
 
         // Fetch associated packs
+        console.log('📦 Fetching associated packs...');
         const resPacks = await axios.get(`${API_BASE}/api/property/${id}/packs`);
-        if (resPacks.data.success) setPacks(resPacks.data.packs);
+        console.log('📦 Packs response:', resPacks.data);
+        if (resPacks.data.success) {
+          console.log('📦 Associated packs:', resPacks.data.packs);
+          setPacks(resPacks.data.packs);
+        }
       } catch (err) {
         console.error("Error fetching property or packs:", err);
       }
@@ -48,30 +57,41 @@ export default function PropertyPreview() {
     property.equipments?.includes("ac") && { icon: <AcIcon className="w-7 h-7 text-gray-600" />, label: "Climatisation" },
   ].filter(Boolean);
 
-  const mapImage = "/map-placeholder.jpg";
+  // Dynamic map will be generated based on property location
 
   const hostData = property.owner ? {
     id: property.owner._id,
-    name: property.owner.displayName || property.owner.fullName || property.owner.name || 'Nom non disponible',
+    name: property.owner.displayName || property.owner.fullName || property.owner.name || 'Hôte',
     photo: property.owner.profileImage || property.owner.profilePic,
-    email: property.owner.email
+    email: property.owner.email,
+    // Add more owner fields that might be available
+    fullName: property.owner.fullName,
+    displayName: property.owner.displayName,
+    profileImage: property.owner.profileImage,
+    profilePic: property.owner.profilePic
   } : null;
 
+  console.log('👤 Host data mapped:', hostData);
+  console.log('📦 Packs data:', packs);
+
   return (
+    <div>
+      {/* Debug Info removed in production */}
     <PropertyLayout
       title={property.title}
       location={`${property.localisation?.city || ""}${property.localisation?.address ? ", " + property.localisation.address : ""}`}
-      rating={5}
-      reviewCount={property.reviews?.length || 0}
+      rating={property.rating?.average || 0}
+      reviewCount={property.rating?.count || 0}
       mainImage={property.photos?.[0] || "/placeholder1.jpg"}
       photos={property.photos || []}
       host={hostData}
-      checkInTime="15:00"
+      checkInTime={property.checkInTime || "15:00"}
       features={features}
       associatedPacks={packs}
-      mapImage={mapImage}
+      mapImage={property.localisation}
       reviews={property.reviews || []}
       user={user}
     />
+    </div>
   );
 }

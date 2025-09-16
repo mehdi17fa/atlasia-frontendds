@@ -2,15 +2,25 @@ import React, { useState, useEffect } from "react";
 import { FaHeart } from "react-icons/fa";
 import S3Image from "../S3Image";
 import ImageCarousel from "../ImageCarousel";
+import { useFavorites } from "../../hooks/useFavorites";
 
 export default function ListingCardGrid({ listings, onCardClick }) {
-  const [favorites, setFavorites] = useState([]);
+  const { favorites, isFavorited, toggleFavorite, isAuthenticated } = useFavorites();
   const [visibleCards, setVisibleCards] = useState([]);
 
-  const toggleFavorite = (id) => {
-    setFavorites((prev) =>
-      prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
-    );
+  const handleToggleFavorite = async (e, id) => {
+    e.stopPropagation();
+    console.log('🔄 ListingCardGrid: handleToggleFavorite called for:', id);
+    console.log('🔄 isAuthenticated:', isAuthenticated);
+    
+    if (!isAuthenticated) {
+      alert('Please log in to save favorites');
+      return;
+    }
+    
+    console.log('🔄 Calling toggleFavorite...');
+    const result = await toggleFavorite(id, 'property');
+    console.log('🔄 toggleFavorite result:', result);
   };
 
   // Animate cards one by one on mount
@@ -27,8 +37,13 @@ export default function ListingCardGrid({ listings, onCardClick }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {listings.map((listing) => {
-        const isFavorite = favorites.includes(listing._id);
+        const isFavorite = isFavorited(listing._id);
         const isVisible = visibleCards.includes(listing._id);
+        
+        // Debug logging for first few items
+        if (listings.indexOf(listing) < 3) {
+          console.log(`🔄 Listing ${listing._id}: isFavorite = ${isFavorite}, favorites array:`, favorites);
+        }
 
         return (
           <div
@@ -40,10 +55,7 @@ export default function ListingCardGrid({ listings, onCardClick }) {
           >
             {/* Heart button (top right) */}
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleFavorite(listing._id);
-              }}
+              onClick={(e) => handleToggleFavorite(e, listing._id)}
               className="absolute top-3 right-3 bg-white rounded-full p-2 shadow-md transform transition hover:scale-110 active:scale-95"
             >
               <FaHeart

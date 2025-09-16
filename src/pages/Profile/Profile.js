@@ -10,6 +10,7 @@ import SignUpScreen from '../SignUp/SignUpScreen';
 import SignupScreenConf from '../SignUp/SignUpConfScreen';
 import IdentificationModal from '../SignUp/IdentificationScreen';
 import LoginScreen from '../LogIn/LogInScreen';
+import { useProfileData } from '../../hooks/useProfileData';
 
 export default function Profile() {
   const [showLogin, setShowLogin] = useState(false);
@@ -18,7 +19,18 @@ export default function Profile() {
   const [showIdentification, setShowIdentification] = useState(false);
   const navigate = useNavigate();
   
-  const { user, logout } = useContext(AuthContext); // ← get user and logout
+  const { user, logout, setUser } = useContext(AuthContext); // ← get user and logout
+  
+  // Dynamic profile data fetching
+  const { 
+    profileData, 
+    loading: profileLoading, 
+    error: profileError, 
+    refreshProfileData 
+  } = useProfileData(user?._id, !!user);
+  
+  // Use dynamic data if available, fallback to context user
+  const displayUser = profileData || user;
   const handleLogin = () => setShowLogin(true);
   const handleSignup = () => setShowSignup(true);
   const handleCloseLogin = () => setShowLogin(false);
@@ -43,6 +55,25 @@ export default function Profile() {
   const handleSearchBarClick = () => {
     navigate('/search');
   };
+  
+  // Handle profile data refresh
+  const handleRefreshProfile = () => {
+    refreshProfileData();
+  };
+  
+  // Update context user when dynamic data is fetched
+  React.useEffect(() => {
+    if (profileData && profileData !== user) {
+      setUser(profileData);
+    }
+  }, [profileData, user, setUser]);
+  
+  // Refresh profile data when component mounts (e.g., returning from edit profile)
+  React.useEffect(() => {
+    if (user?._id) {
+      refreshProfileData();
+    }
+  }, []); // Only run on mount
   // Routes for each menu item
   const menuItems = [
     { label: 'Info Personnel', path: '/edit-profile' },
@@ -117,28 +148,71 @@ export default function Profile() {
       </div>
 
       <div className="text-center mt-6">
+        {/* Loading indicator for profile data */}
+        {profileLoading && (
+          <div className="mb-4 text-sm text-gray-500">
+            <div className="inline-flex items-center">
+              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Chargement des données...
+            </div>
+          </div>
+        )}
+        
+        {/* Error message for profile data */}
+        {profileError && (
+          <div className="mb-4 text-sm text-red-500">
+            <div className="inline-flex items-center">
+              <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              {profileError}
+              <button 
+                onClick={handleRefreshProfile}
+                className="ml-2 text-green-600 hover:text-green-800 underline"
+              >
+                Réessayer
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="w-32 h-32 mx-auto rounded-full overflow-hidden border-4 border-green-600">
           <S3Image
-            src={user.profilePic}
+            src={displayUser?.profilePic}
             alt="Profile"
             className="w-full h-full object-cover"
             fallbackSrc={DefaultAvatar}
           />
           {/* Debug info */}
           <div className="text-xs text-gray-500 mt-1">
-            Debug: {user.profilePic ? 'Has profilePic' : 'No profilePic'}
+            Debug: {displayUser?.profilePic ? 'Has profilePic' : 'No profilePic'}
+            {profileData && ' (Dynamic)'}
           </div>
         </div>
 
-        <h1 className="font-semibold text-3xl mt-2">{user.fullName || user.email}</h1>
+        <h1 className="font-semibold text-3xl mt-2">{displayUser?.fullName || displayUser?.email}</h1>
         <div className="mt-4 text-green-700 font-medium">
-          {user.role === 'partner'
+          {displayUser?.role === 'partner'
             ? 'Devenir partenaire avec Atlasia'
             : 'Bienvenue sur Atlasia'}
           <br />
           <span className="text-sm underline cursor-pointer" onClick={() => navigate('/edit-profile')}>
             voir plus
           </span>
+        </div>
+        
+        {/* Refresh button */}
+        <div className="mt-2">
+          <button
+            onClick={handleRefreshProfile}
+            disabled={profileLoading}
+            className="text-xs text-gray-500 hover:text-green-600 transition-colors disabled:opacity-50"
+          >
+            {profileLoading ? 'Actualisation...' : 'Actualiser les données'}
+          </button>
         </div>
       </div>
 
