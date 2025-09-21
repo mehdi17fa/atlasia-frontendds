@@ -10,7 +10,6 @@ import SignUpScreen from '../SignUp/SignUpScreen';
 import SignupScreenConf from '../SignUp/SignUpConfScreen';
 import IdentificationModal from '../SignUp/IdentificationScreen';
 import LoginScreen from '../LogIn/LogInScreen';
-import ConfirmationModal from '../../components/shared/ConfirmationModal';
 import { useProfileData } from '../../hooks/useProfileData';
 
 // Get user initials for avatar fallback
@@ -69,18 +68,18 @@ export default function Profile() {
   const [showSignup, setShowSignup] = useState(false);
   const [showSignupConfirmation, setShowSignupConfirmation] = useState(false);
   const [showIdentification, setShowIdentification] = useState(false);
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const navigate = useNavigate();
   
   const { user, logout, setUser } = useContext(AuthContext); // ← get user and logout
   
-  // Dynamic profile data fetching
+  // Dynamic profile data fetching - only if user exists and has valid token
+  const shouldFetchProfile = user && user._id && localStorage.getItem('accessToken');
   const { 
     profileData, 
     loading: profileLoading, 
     error: profileError, 
     refreshProfileData 
-  } = useProfileData(user?._id, !!user);
+  } = useProfileData(user?._id, shouldFetchProfile);
   
   // Use dynamic data if available, fallback to context user
   const displayUser = profileData || user;
@@ -115,10 +114,6 @@ export default function Profile() {
   };
   
   const handleLogoutClick = () => {
-    setShowLogoutConfirm(true);
-  };
-  
-  const handleLogoutConfirm = () => {
     // Clear user data and tokens
     logout();
     
@@ -126,9 +121,6 @@ export default function Profile() {
     window.location.href = '/';
   };
   
-  const handleLogoutCancel = () => {
-    setShowLogoutConfirm(false);
-  };
   
   // Update context user when dynamic data is fetched
   React.useEffect(() => {
@@ -137,10 +129,14 @@ export default function Profile() {
     }
   }, [profileData, user, setUser]);
 
-  // Debug showLogoutConfirm state changes
+
+  // Redirect to login if user is not authenticated
   React.useEffect(() => {
-    console.log('🔍 showLogoutConfirm state changed to:', showLogoutConfirm);
-  }, [showLogoutConfirm]);
+    const token = localStorage.getItem('accessToken');
+    if (!user || !token) {
+      navigate('/login');
+    }
+  }, [user, navigate]);
   
   // Refresh profile data when component mounts (e.g., returning from edit profile)
   React.useEffect(() => {
@@ -185,20 +181,6 @@ export default function Profile() {
         {showSignupConfirmation && <SignupScreenConf onClose={handleCloseSignupConfirmation} />}
         {showIdentification && <IdentificationModal onClose={() => setShowIdentification(false)} onBack={handleBackToSignup} />}
         
-        <ConfirmationModal
-          isOpen={showLogoutConfirm}
-          onClose={handleLogoutCancel}
-          onConfirm={handleLogoutConfirm}
-          title="Déconnexion"
-          message="Êtes-vous sûr de vouloir vous déconnecter ?"
-          confirmText="Déconnexion"
-          cancelText="Annuler"
-          confirmButtonColor="bg-red-600 hover:bg-red-700"
-          cancelButtonColor="bg-gray-500 hover:bg-gray-600"
-        />
-        
-        {/* Debug info */}
-        {console.log('🔍 showLogoutConfirm state:', showLogoutConfirm)}
 
         {/* ADD THE MODAL OVERLAY */}
         {(showLogin || showSignup || showSignupConfirmation || showIdentification) && (
