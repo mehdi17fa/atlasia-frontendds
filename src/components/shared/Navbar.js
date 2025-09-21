@@ -70,7 +70,7 @@ export default function Navbar() {
                 flex flex-col items-center justify-center text-xs
                 transition-colors duration-200
                 focus:outline-none
-                ${isActive ? 'text-green-700' : 'text-gray-500 hover:text-green-600'}
+                ${isActive ? 'text-primary-700' : 'text-secondary-500 hover:text-primary-600'}
               `}
               aria-current={isActive ? 'page' : undefined}
               aria-label={item.name}
@@ -78,8 +78,8 @@ export default function Navbar() {
             >
               {React.cloneElement(item.icon, {
                 className: isActive
-                  ? 'w-5 h-5 mb-1 stroke-green-700'
-                  : 'w-5 h-5 mb-1 stroke-gray-500',
+                  ? 'w-5 h-5 mb-1 stroke-primary-700'
+                  : 'w-5 h-5 mb-1 stroke-secondary-500',
               })}
               {item.name}
             </button>

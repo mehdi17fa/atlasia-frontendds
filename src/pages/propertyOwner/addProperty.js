@@ -39,7 +39,6 @@ export default function AddProperty() {
   const { user } = useContext(AuthContext) || {};
   const authToken =
     localStorage.getItem("accessToken") ||
-    localStorage.getItem("token") ||
     user?.accessToken ||
     user?.token;
 

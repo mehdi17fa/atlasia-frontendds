@@ -76,7 +76,6 @@ export default function PropertyEquipmentsStep() {
   const handleNext = async () => {
     const authToken =
       localStorage.getItem("accessToken") ||
-      localStorage.getItem("token") ||
       user?.accessToken ||
       user?.token;
 

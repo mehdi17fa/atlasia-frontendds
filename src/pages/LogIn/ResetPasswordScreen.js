@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import PasswordInput from "../../components/shared/PasswordInput";
 
 export default function ResetPasswordScreen() {
   const { token } = useParams();
@@ -52,35 +53,34 @@ export default function ResetPasswordScreen() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md mx-4">
+    <div className="flex items-center justify-center min-h-screen bg-secondary-50">
+      <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md mx-4">
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Reset Your Password</h2>
-          <p className="text-gray-600">Enter your new password below</p>
+          <h2 className="text-2xl font-bold text-secondary-900 mb-2">Reset Your Password</h2>
+          <p className="text-secondary-600">Enter your new password below</p>
         </div>
 
         <div className="space-y-4">
           <div>
-            <input
-              type="password"
+            <PasswordInput
               placeholder="New Password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+              className="px-4 py-3 border border-secondary-300 rounded-lg text-secondary-900 placeholder-secondary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               disabled={isLoading}
+              showStrengthIndicator={true}
             />
             {newPassword && validatePassword(newPassword) && (
-              <p className="text-red-500 text-sm mt-1">{validatePassword(newPassword)}</p>
+              <p className="text-error-500 text-sm mt-1">{validatePassword(newPassword)}</p>
             )}
           </div>
 
           <div>
-            <input
-              type="password"
+            <PasswordInput
               placeholder="Confirm Password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+              className="px-4 py-3 border border-secondary-300 rounded-lg text-secondary-900 placeholder-secondary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               disabled={isLoading}
             />
           </div>
@@ -91,8 +91,8 @@ export default function ResetPasswordScreen() {
           disabled={isLoading || !newPassword || !confirmPassword || newPassword !== confirmPassword}
           className={`w-full py-3 rounded-lg font-semibold text-lg transition-colors mt-6 ${
             isLoading || !newPassword || !confirmPassword || newPassword !== confirmPassword
-              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              : 'bg-green-800 text-white hover:bg-green-700'
+              ? 'bg-secondary-300 text-secondary-500 cursor-not-allowed'
+              : 'bg-primary-500 text-white hover:bg-primary-600 shadow-atlasia'
           }`}
         >
           {isLoading ? 'Resetting...' : 'Reset Password'}
@@ -101,8 +101,8 @@ export default function ResetPasswordScreen() {
         {message && (
           <div className={`mt-4 p-3 rounded-lg text-center text-sm ${
             message.includes('successful') || message.includes('success')
-              ? 'bg-green-50 text-green-700 border border-green-200'
-              : 'bg-red-50 text-red-700 border border-red-200'
+              ? 'bg-success-50 text-success-700 border border-success-200'
+              : 'bg-error-50 text-error-700 border border-error-200'
           }`}>
             {message}
           </div>
@@ -111,7 +111,7 @@ export default function ResetPasswordScreen() {
         <div className="text-center mt-6">
           <button
             onClick={() => navigate('/login')}
-            className="text-green-700 hover:text-green-800 text-sm underline"
+            className="text-primary-600 hover:text-primary-700 text-sm underline transition-colors"
           >
             Back to Login
           </button>

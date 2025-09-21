@@ -325,7 +325,7 @@ export default function PropertyLayout({
         {associatedPacks && associatedPacks.length > 0 ? (
         <div className="space-y-3">
           {associatedPacks.map((pack, index) => (
-              <div key={pack._id || index} className="flex items-center space-x-4 p-4 rounded-xl shadow hover:shadow-lg transition-all cursor-pointer border border-gray-200 hover:border-green-300"
+              <div key={pack._id || index} className="flex items-center space-x-4 p-4 rounded-xl shadow hover:shadow-lg transition-all cursor-pointer border border-secondary-200 hover:border-primary-300"
                    onClick={() => navigate(`/packages/${pack._id}`)}>
                 <S3Image
                 src={pack.image || '/placeholder-image.jpg'}
@@ -334,13 +334,13 @@ export default function PropertyLayout({
                   fallbackSrc="/placeholder1.jpg"
                 />
                 <div className="flex-1">
-                  <p className="font-medium text-gray-900">{pack.name || 'Unnamed Pack'}</p>
-                  <p className="text-sm text-gray-500">{pack.description || 'Aucune description disponible'}</p>
+                  <p className="font-medium text-secondary-900">{pack.name || 'Unnamed Pack'}</p>
+                  <p className="text-sm text-secondary-500">{pack.description || 'Aucune description disponible'}</p>
                   {pack.partnerName && (
-                    <p className="text-xs text-green-600 mt-1">Par {pack.partnerName}</p>
+                    <p className="text-xs text-primary-600 mt-1">Par {pack.partnerName}</p>
                   )}
                 </div>
-                <div className="text-green-600">
+                <div className="text-primary-600">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>

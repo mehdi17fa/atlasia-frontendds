@@ -26,7 +26,7 @@ export default function WelcomeScreen() {
       {/* Buttons Container */}
       <div className="absolute bottom-20 sm:bottom-28 w-full max-w-2xl mx-auto px-4 sm:px-0 flex flex-col items-center gap-4 bg-white/30 rounded-3xl py-8 min-h-[300px] z-10">
         <button
-          className="w-3/5 mx-auto bg-atlasia-dark hover:bg-green-800 text-white py-4 rounded-full text-lg font-semibold"
+          className="w-3/5 mx-auto bg-primary-500 hover:bg-primary-600 text-white py-4 rounded-full text-lg font-semibold shadow-atlasia transition-colors"
           onClick={() => navigate('/login')} // ✅ Navigate to /login
         >
           Log in
@@ -35,7 +35,7 @@ export default function WelcomeScreen() {
 
         <button
           onClick={() => navigate('/explore')}
-          className="w-3/5 mx-auto bg-atlasia-sage hover:bg-teal-600 text-white py-4 rounded-full text-lg font-semibold transition"
+          className="w-3/5 mx-auto bg-primary-300 hover:bg-primary-400 text-white py-4 rounded-full text-lg font-semibold transition-colors shadow-atlasia"
         >
           Continue as a guest
         </button>
@@ -43,7 +43,7 @@ export default function WelcomeScreen() {
 
         <button
           onClick={() => navigate('/signup')}
-          className="w-3/5 mx-auto bg-gray-400 hover:bg-gray-500 text-white border border-gray-400 py-4 rounded-full text-lg font-semibold shadow-lg transition-colors duration-200"
+          className="w-3/5 mx-auto bg-secondary-400 hover:bg-secondary-500 text-white border border-secondary-400 py-4 rounded-full text-lg font-semibold shadow-lg transition-colors duration-200"
         >
           Sign up
         </button>

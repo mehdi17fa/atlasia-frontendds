@@ -8,7 +8,7 @@ export const api = axios.create({
 
 // Add token automatically if available
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token"); // or sessionStorage depending on your login logic
+  const token = localStorage.getItem("accessToken"); // Changed to match AuthContext
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
