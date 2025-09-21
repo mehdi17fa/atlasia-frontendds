@@ -11,7 +11,7 @@ export default function SearchResults({ isOpen, onClose, searchParams, onPropert
     maxPrice: "",
     bedrooms: "",
     bathrooms: "",
-    equipments: [],
+    equipments: [], 
   });
   const [pagination, setPagination] = useState({ page: 1, pages: 1 });
   const [availableFilters, setAvailableFilters] = useState({ equipments: [] });

@@ -12,7 +12,7 @@ export default function SearchResultsPage() {
     minPrice: "",
     maxPrice: "",
     bedrooms: "",
-    bathrooms: "",
+    bathrooms: "", 
     equipments: [],
   });
   const [pagination, setPagination] = useState({ page: 1, pages: 1 });

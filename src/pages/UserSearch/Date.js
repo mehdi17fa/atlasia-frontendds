@@ -10,7 +10,7 @@ const DateSelectionScreens = ({ selectedDestination, onBack }) => {
 
   const months = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
   const daysOfWeek = ['Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa', 'Di'];
-
+ 
   const getDaysInMonth = (date) => {
     const year = date.getFullYear();
     const month = date.getMonth();

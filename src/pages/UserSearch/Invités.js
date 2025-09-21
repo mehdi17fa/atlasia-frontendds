@@ -11,7 +11,7 @@ const GuestsSelectionScreen = ({ onBack, selectedDestination, dateSelection, onS
     if (dateSelection.isRange && dateSelection.dates && dateSelection.dates.length > 0) {
       const startDate = new Date(dateSelection.dates[0]);
       const endDate = new Date(dateSelection.dates[dateSelection.dates.length - 1]);
-      const formatDate = (date) => {
+      const formatDate = (date) => { 
         return `${date.getDate()} ${['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'][date.getMonth()]}`;
       };
       return `${formatDate(startDate)} - ${formatDate(endDate)}`;

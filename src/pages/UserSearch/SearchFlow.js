@@ -9,7 +9,7 @@ const SearchModal = ({ isOpen, onClose, onSearch }) => {
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+   
   const destinationRef = useRef(null);
   const modalRef = useRef(null);
 

@@ -5,7 +5,7 @@ const DestinationSearchScreens = ({ onBack, onDestinationSelected }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
-
+ 
   const destinations = [
     { id: 1, name: 'Ifrane, Downtown', type: 'city' },
     { id: 2, name: 'Ifrane, Zéphire', type: 'area' },
