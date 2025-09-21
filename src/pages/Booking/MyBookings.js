@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import ImageCarousel from "../../components/ImageCarousel";
+import S3Image from "../../components/S3Image";
 
 const TouristBookings = () => {
   const { user, token, logout } = useContext(AuthContext);
@@ -489,10 +490,11 @@ const TouristBookings = () => {
                     showArrows={booking.property.photos.length > 1}
                   />
                 ) : (
-                  <img
-                    src="https://via.placeholder.com/400x250?text=No+Image"
+                  <S3Image
+                    src={booking.property?.photos?.[0] || "/placeholder.jpg"}
                     alt={booking.property?.title || "Property"}
                     className="w-full h-48 object-cover"
+                    fallbackSrc="/placeholder.jpg"
                   />
                 )}
               </div>

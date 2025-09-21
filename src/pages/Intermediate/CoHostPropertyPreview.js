@@ -11,8 +11,14 @@ import { ReactComponent as GuestsIcon } from '../../assets/icons/invité.svg';
 import { ReactComponent as AreaIcon } from '../../assets/icons/superficie.svg';
 import { ReactComponent as BathIcon } from '../../assets/icons/bathroom.svg';
 import { ReactComponent as WifiIcon } from '../../assets/icons/wifi.svg';
-import { ReactComponent as KitchenIcon } from '../../assets/icons/cuisine.svg';
+import { ReactComponent as TvIcon } from '../../assets/icons/PropertyEquipment/tvBlack.svg';
+import { ReactComponent as WasherIcon } from '../../assets/icons/PropertyEquipment/washerBlack.svg';
 import { ReactComponent as AcIcon } from '../../assets/icons/ac.svg';
+import { ReactComponent as HeaterIcon } from '../../assets/icons/PropertyEquipment/heaterBlack.svg';
+import { ReactComponent as KitchenIcon } from '../../assets/icons/cuisine.svg';
+import { ReactComponent as ParkingIcon } from '../../assets/icons/PropertyEquipment/parkingBlack.svg';
+import { ReactComponent as PoolIcon } from '../../assets/icons/PropertyEquipment/poolBlack.svg';
+import { ReactComponent as PlaygroundIcon } from '../../assets/icons/PropertyEquipment/playgroundBlack.svg';
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:4000";
 
@@ -58,9 +64,16 @@ export default function CoHostPropertyPreview() {
     { icon: <GuestsIcon className="w-7 h-7 text-gray-600" />, label: `${property.info?.guests || 0} invités` },
     { icon: <AreaIcon className="w-7 h-7 text-gray-600" />, label: `${property.info?.beds || 0} m²` },
     { icon: <BathIcon className="w-7 h-7 text-gray-600" />, label: `${property.info?.bathrooms || 0} salles de bain` },
+    // Equipment features
     property.equipments?.includes("wifi") && { icon: <WifiIcon className="w-7 h-7 text-gray-600" />, label: "Wifi" },
-    property.equipments?.includes("kitchen") && { icon: <KitchenIcon className="w-7 h-7 text-gray-600" />, label: "Cuisine" },
+    property.equipments?.includes("tv") && { icon: <TvIcon className="w-7 h-7 text-gray-600" />, label: "Télévision" },
+    property.equipments?.includes("washer") && { icon: <WasherIcon className="w-7 h-7 text-gray-600" />, label: "Lave-linge" },
     property.equipments?.includes("ac") && { icon: <AcIcon className="w-7 h-7 text-gray-600" />, label: "Climatisation" },
+    property.equipments?.includes("heater") && { icon: <HeaterIcon className="w-7 h-7 text-gray-600" />, label: "Chauffage" },
+    property.equipments?.includes("kitchen") && { icon: <KitchenIcon className="w-7 h-7 text-gray-600" />, label: "Cuisine" },
+    property.equipments?.includes("parking") && { icon: <ParkingIcon className="w-7 h-7 text-gray-600" />, label: "Parking" },
+    property.equipments?.includes("pool") && { icon: <PoolIcon className="w-7 h-7 text-gray-600" />, label: "Piscine" },
+    property.equipments?.includes("playground") && { icon: <PlaygroundIcon className="w-7 h-7 text-gray-600" />, label: "Aire de jeux" },
   ].filter(Boolean);
 
   const associatedPacks = property.associatedPacks?.length

@@ -25,8 +25,14 @@ const S3Image = ({
       // First, try to clean any malformed S3 URLs
       const cleanedUrl = cleanS3Url(src);
       
-      // Check if it's already a full URL or local path
-      if (cleanedUrl.startsWith('http') || cleanedUrl.startsWith('/')) {
+      // Check if it's a local path
+      if (cleanedUrl.startsWith('/') && !cleanedUrl.startsWith('http')) {
+        finalUrl = cleanedUrl;
+      } else if (cleanedUrl.startsWith('http') && cleanedUrl.includes('amazonaws.com')) {
+        // If it's a direct S3 URL, convert to backend proxy URL
+        finalUrl = getS3Url(cleanedUrl);
+      } else if (cleanedUrl.startsWith('http')) {
+        // If it's any other HTTP URL, use as-is
         finalUrl = cleanedUrl;
       } else {
         // If it's an S3 key, convert to full URL

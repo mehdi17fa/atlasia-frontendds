@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import SearchResults from './SearchResults';
 
 const SearchModal = ({ isOpen, onClose, onSearch }) => {
@@ -328,6 +329,7 @@ const SearchModal = ({ isOpen, onClose, onSearch }) => {
 
 // Example usage component showing how to integrate with SearchResults
 const SearchApp = () => {
+  const navigate = useNavigate();
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [searchParams, setSearchParams] = useState(null);
@@ -346,6 +348,11 @@ const SearchApp = () => {
   const handlePropertySelect = (property) => {
     console.log('Selected property:', property);
     // Navigate to property detail page
+    if (property && property._id) {
+      navigate(`/property/${property._id}`);
+    } else {
+      console.error('Property ID not found:', property);
+    }
   };
 
   if (showResults) {
