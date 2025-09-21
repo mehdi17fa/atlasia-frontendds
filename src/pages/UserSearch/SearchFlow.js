@@ -327,19 +327,19 @@ const SearchModal = ({ isOpen, onClose, onSearch }) => {
   );
 };
 
-// Example usage component showing how to integrate with SearchResults
+// Main search page component
 const SearchApp = () => {
   const navigate = useNavigate();
   const [showSearchModal, setShowSearchModal] = useState(false);
-  const [showResults, setShowResults] = useState(false);
-  const [searchParams, setSearchParams] = useState(null);
 
   const handleSearch = (params) => {
-    setSearchParams(params);
-    setShowSearchModal(false);
-    setShowResults(true);
+    // Navigate to search results page with search parameters
+    navigate('/search/results', { 
+      state: { searchParams: params } 
+    });
   };
 
+<<<<<<< HEAD
   const handleBackToSearch = () => {
     setShowResults(false);
     setShowSearchModal(true);
@@ -388,6 +388,8 @@ const SearchApp = () => {
     );
   }
 
+=======
+>>>>>>> 47d197d80eb3b5bd9dcfa4c7656326d83af4dd8b
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
       <div className="text-center">
