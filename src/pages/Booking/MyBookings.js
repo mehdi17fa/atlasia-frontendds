@@ -273,7 +273,7 @@ const TouristBookings = () => {
   // Authentication checks
   if (!user) {
     return (
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-6 pb-28">
         <div className="text-center py-12">
           <div className="mb-4">
             <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -295,7 +295,7 @@ const TouristBookings = () => {
 
   if (user.role !== "tourist") {
     return (
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-6 pb-28">
         <div className="text-center py-12">
           <div className="mb-4">
             <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -310,7 +310,7 @@ const TouristBookings = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <div className="max-w-7xl mx-auto p-6 pb-28">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Mes Réservations</h1>

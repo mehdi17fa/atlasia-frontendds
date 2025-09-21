@@ -161,7 +161,7 @@ const BookingDetails = () => {
 
   if (!user) {
     return (
-      <div className="max-w-4xl mx-auto p-6">
+      <div className="max-w-4xl mx-auto p-6 pb-28">
         <div className="text-center py-12">
           <h3 className="text-lg font-medium text-gray-900 mb-2">Authentication Required</h3>
           <p className="text-gray-500 mb-4">Please log in to view booking details.</p>
@@ -178,7 +178,7 @@ const BookingDetails = () => {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto p-6">
+      <div className="max-w-4xl mx-auto p-6 pb-28">
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
           <p className="text-gray-600 mt-4">Loading booking details...</p>
@@ -189,7 +189,7 @@ const BookingDetails = () => {
 
   if (error) {
     return (
-      <div className="max-w-4xl mx-auto p-6">
+      <div className="max-w-4xl mx-auto p-6 pb-28">
         <div className="bg-red-50 border border-red-200 rounded-md p-4">
           <div className="flex">
             <div className="flex-shrink-0">
@@ -223,7 +223,7 @@ const BookingDetails = () => {
 
   if (!booking) {
     return (
-      <div className="max-w-4xl mx-auto p-6">
+      <div className="max-w-4xl mx-auto p-6 pb-28">
         <div className="text-center py-12">
           <h3 className="text-lg font-medium text-gray-900 mb-2">Booking not found</h3>
           <p className="text-gray-500 mb-4">The booking you're looking for doesn't exist or you don't have access to it.</p>
@@ -239,7 +239,7 @@ const BookingDetails = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-4xl mx-auto p-6 pb-28">
       {/* Header */}
       <div className="mb-6">
         <button

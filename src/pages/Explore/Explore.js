@@ -88,7 +88,7 @@ export default function Explore() {
   };
 
   return (
-    <div className="px-4 py-8">
+    <div className="px-4 py-8 pb-28">
       <SectionTitle title="Explorer" />
       
 

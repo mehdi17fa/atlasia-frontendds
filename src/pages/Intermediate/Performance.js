@@ -3,7 +3,7 @@ import { FaArrowLeft, FaStar } from 'react-icons/fa';
 
 const Performance = () => {
   return (
-    <div className="max-w-md mx-auto min-h-screen bg-white p-4">
+    <div className="max-w-md mx-auto min-h-screen bg-white p-4 pb-28">
       {/* Header */}
       <div className="text-center font-bold text-green-700 text-3xl m-6">
         Atlasia

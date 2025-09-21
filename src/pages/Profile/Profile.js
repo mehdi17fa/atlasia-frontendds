@@ -121,7 +121,7 @@ export default function Profile() {
   }
 
   return (
-    <div className="pb-20 px-4 mt-12 relative">
+    <div className="pb-32 px-4 mt-12 relative">
 
       <div className="flex items-center justify-center mb-4 relative">
       {/* Back arrow button */}

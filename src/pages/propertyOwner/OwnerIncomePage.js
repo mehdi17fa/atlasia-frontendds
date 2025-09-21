@@ -101,7 +101,7 @@ const OwnerIncomePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center py-8 px-4 sm:px-6 lg:px-8 pb-28">
       <Toaster position="top-right" reverseOrder={false} />
       <h1 className="text-3xl font-bold text-green-600 mb-6">Your Income Overview</h1>
 

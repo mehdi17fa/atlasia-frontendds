@@ -68,10 +68,10 @@ const ImageCarousel = ({
           {/* Previous Button */}
           <button
             onClick={prevImage}
-            className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-70 hover:bg-opacity-90 rounded-full p-2 shadow-lg transition-all duration-200 z-10 opacity-80 hover:opacity-100"
+            className="absolute left-1 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-70 hover:bg-opacity-90 rounded-full p-1.5 shadow-lg transition-all duration-200 z-10 opacity-80 hover:opacity-100"
             aria-label="Previous image"
           >
-            <svg className="h-5 w-5 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-4 w-4 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
             </svg>
           </button>
@@ -79,10 +79,10 @@ const ImageCarousel = ({
           {/* Next Button */}
           <button
             onClick={nextImage}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-70 hover:bg-opacity-90 rounded-full p-2 shadow-lg transition-all duration-200 z-10 opacity-80 hover:opacity-100"
+            className="absolute right-1 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-70 hover:bg-opacity-90 rounded-full p-1.5 shadow-lg transition-all duration-200 z-10 opacity-80 hover:opacity-100"
             aria-label="Next image"
           >
-            <svg className="h-5 w-5 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-4 w-4 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
             </svg>
           </button>
@@ -91,12 +91,12 @@ const ImageCarousel = ({
 
       {/* Dots Indicator */}
       {showDots && images.length > 1 && (
-        <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
+        <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1.5 z-10">
           {images.map((_, index) => (
             <button
               key={index}
               onClick={(e) => goToImage(index, e)}
-              className={`w-2 h-2 rounded-full transition-all duration-200 ${
+              className={`w-1.5 h-1.5 rounded-full transition-all duration-200 ${
                 index === currentIndex 
                   ? 'bg-white shadow-md' 
                   : 'bg-white bg-opacity-60 hover:bg-opacity-80'
@@ -106,12 +106,6 @@ const ImageCarousel = ({
         </div>
       )}
 
-      {/* Image Counter */}
-      {images.length > 1 && (
-        <div className="absolute top-3 right-3 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded-full">
-          {currentIndex + 1}/{images.length}
-        </div>
-      )}
     </div>
   );
 };

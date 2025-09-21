@@ -493,7 +493,7 @@ export default function WelcomeOwner() {
   const propertiesToShow = showAllProperties ? ownerProperties : ownerProperties.slice(0, 6);
 
   return (
-    <div className="min-h-screen bg-white flex flex-col pb-24">
+    <div className="min-h-screen bg-white flex flex-col pb-28">
       <Toaster position="top-right" reverseOrder={false} />
       
       <div className="w-full max-w-7xl mx-auto px-4 pt-4 md:px-8 lg:px-16">

@@ -32,7 +32,7 @@ export default function ListPropertyOwner() {
   const navigate = useNavigate();
 
   return (
-    <div className="max-w-md mx-auto min-h-screen bg-white p-4">
+    <div className="max-w-md mx-auto min-h-screen bg-white p-4 pb-28">
       {/* Header */}
       <div className="flex items-center justify-center py-4 bg-white shadow-sm">
             <span className="text-2xl font-bold text-green-700">ATLASIA</span>
