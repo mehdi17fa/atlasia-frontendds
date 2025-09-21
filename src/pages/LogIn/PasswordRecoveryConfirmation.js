@@ -43,7 +43,7 @@ export default function PasswordRecoveryConfirmation() {
     return () => clearInterval(timer);
   }, [cooldown]);
 
-  const handleClose = () => navigate('/');
+  const handleClose = () => navigate(-1);
 
   return (
     <>

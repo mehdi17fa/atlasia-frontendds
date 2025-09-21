@@ -3,11 +3,14 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ReactComponent as ArrowLeftIcon } from '../../assets/icons/arrow-left.svg';
 import { FaHeart } from "react-icons/fa";
 import S3Image from "../../components/S3Image";
+import ImageCarousel from "../../components/ImageCarousel";
 import SinglePropertyMap from "../../components/SinglePropertyMap";
 import InitialsAvatar from "../../components/shared/InitialsAvatar";
 import RatingDisplay from "../../components/shared/RatingDisplay";
 import ReviewList from "../../components/shared/ReviewList";
 import ReviewForm from "../../components/shared/ReviewForm";
+import LoginScreen from "../LogIn/LogInScreen";
+import SignUpScreen from "../SignUp/SignUpScreen";
 import { useFavorites } from "../../hooks/useFavorites";
 import useReviews from "../../hooks/useReviews";
 
@@ -42,6 +45,8 @@ export default function PropertyLayout({
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [reviewsData, setReviewsData] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+  const [showSignup, setShowSignup] = useState(false);
   
   const { isFavorited, toggleFavorite, isAuthenticated } = useFavorites();
   const { getPropertyReviews, submitReview, reviewableBookings } = useReviews();
@@ -108,8 +113,7 @@ export default function PropertyLayout({
 
   const handleToggleFavorite = async () => {
     if (!isAuthenticated) {
-      setError('Please log in to save favorites');
-      navigate('/login');
+      setShowLogin(true);
       return;
     }
     
@@ -122,18 +126,24 @@ export default function PropertyLayout({
     }
   };
 
+  const handleCloseLogin = () => setShowLogin(false);
+  const handleCloseSignup = () => setShowSignup(false);
+  const handleSwitchToSignup = () => {
+    setShowLogin(false);
+    setShowSignup(true);
+  };
+  const handleSwitchToLogin = () => {
+    setShowSignup(false);
+    setShowLogin(true);
+  };
+
   const handleBooking = () => {
     console.log('🚀 Starting booking process. User:', user, 'Token:', authToken, 'isLoggedIn:', isLoggedIn);
     console.log('📅 Form data:', { checkIn, checkOut, guests });
 
     if (!isLoggedIn) {
-      console.log('🔒 Redirecting to login because user or token is missing');
-      navigate('/login', { 
-        state: { 
-          from: `/property/${propertyId}`,
-          message: 'Please log in to book this property.'
-        } 
-      });
+      console.log('🔒 Showing login modal because user or token is missing');
+      setShowLogin(true);
       return;
     }
 
@@ -185,83 +195,136 @@ export default function PropertyLayout({
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-100 py-6 pb-28 space-y-8">
-      {/* Property Title and Favorite Button */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">{title}</h1>
-        <button 
-          onClick={handleToggleFavorite}
-          className="p-3 text-green-600 hover:text-green-700 transition-colors"
-          title={isFavorited(propertyId) ? "Remove from favorites" : "Add to favorites"}
-        >
-          <FaHeart
-            className={`w-6 h-6 transition-colors duration-300 ${
-              isFavorited(propertyId) ? "text-red-500" : "text-green-600 hover:text-red-500"
-            }`}
-          />
-        </button>
+    <div className="relative min-h-screen">
+      {/* Desktop Header */}
+      <div className="hidden md:flex items-center justify-between px-6 py-4 bg-white shadow-sm sticky top-0 z-10">
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={() => navigate('/')}
+            className="text-2xl font-bold text-green-800 hover:text-green-600 transition-colors"
+          >
+            ATLASIA
+          </button>
+        </div>
+        <div className="flex-1 max-w-3xl mx-10">
+          <div 
+            onClick={() => navigate('/search')}
+            className="bg-white border border-gray-300 rounded-full px-6 py-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+          >
+            <div className="flex items-center space-x-3">
+              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <span className="text-gray-500">Rechercher des destinations</span>
+            </div>
+          </div>
+        </div>
+        <div className="w-32"></div> {/* Spacer for balance */}
       </div>
 
-      {/* Image Gallery - One large image and two smaller images */}
+      <div className="max-w-4xl mx-auto px-100 py-6 pb-28 space-y-8">
+        {/* Property Title and Favorite Button */}
+        <div className="flex items-center justify-between mb-6 mx-4 md:mx-0">
+          <h1 className="text-3xl font-bold">{title}</h1>
+          <button 
+            onClick={handleToggleFavorite}
+            className="p-3 text-green-600 hover:text-green-700 transition-colors"
+            title={isFavorited(propertyId) ? "Remove from favorites" : "Add to favorites"}
+          >
+            <FaHeart
+              className={`w-6 h-6 transition-colors duration-300 ${
+                isFavorited(propertyId) ? "text-red-500" : "text-green-600 hover:text-red-500"
+              }`}
+            />
+          </button>
+        </div>
+
+      {/* Image Gallery */}
       {photos && photos.length > 0 ? (
-        <div className="grid grid-cols-3 rounded-2xl overflow-hidden shadow-lg" style={{ gap: '20px' }}>
-          {/* Large main image - takes 2 columns */}
-          <div className="col-span-2 relative">
+        <div className="relative">
+          {/* Mobile: Image Carousel */}
+          <div className="md:hidden mx-4">
+            <ImageCarousel
+              images={photos}
+              className="h-80 rounded-2xl shadow-lg"
+              showDots={photos.length > 1}
+              showArrows={photos.length > 1}
+            />
+          </div>
+          
+          {/* Desktop: Grid Layout */}
+          <div className="hidden md:grid grid-cols-3 rounded-2xl overflow-hidden shadow-lg" style={{ gap: '20px' }}>
+            {/* Large main image - takes 2 columns */}
+            <div className="col-span-2 relative">
+              <S3Image 
+                src={photos[0]} 
+                alt={title} 
+                className="w-full h-96 object-cover rounded-lg" 
+                fallbackSrc="/villa1.jpg"
+              />
+            </div>
+            
+            {/* One or two smaller images stacked on the right */}
+            <div className="col-span-1 flex flex-col h-96" style={{ gap: '20px' }}>
+              {/* First small image */}
+              {photos[1] && (
+                <div className="relative flex-1">
+                  <S3Image 
+                    src={photos[1]} 
+                    alt={`${title} - Image 2`} 
+                    className="w-full h-full object-cover rounded-lg" 
+                    fallbackSrc="/villa1.jpg"
+                  />
+                </div>
+              )}
+              
+              {/* Second small image with show more button if there are more than 3 photos */}
+              {photos.length > 2 && (
+                <div className="relative flex-1">
+                  <S3Image 
+                    src={photos[2]} 
+                    alt={`${title} - Image 3`} 
+                    className="w-full h-full object-cover rounded-lg" 
+                    fallbackSrc="/villa1.jpg"
+                  />
+                  {photos.length > 3 && (
+                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                      <button className="text-white text-sm font-medium bg-black bg-opacity-60 px-3 py-1 rounded-full hover:bg-opacity-80 transition-all">
+                        Show all photos
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="relative">
+          {/* Mobile: Single image */}
+          <div className="md:hidden mx-4">
             <S3Image 
-              src={photos[0]} 
+              src={mainImage} 
               alt={title} 
-              className="w-full h-96 object-cover rounded-lg" 
+              className="w-full h-80 object-cover rounded-2xl shadow-lg" 
               fallbackSrc="/villa1.jpg"
             />
           </div>
           
-          {/* One or two smaller images stacked on the right */}
-          <div className="col-span-1 flex flex-col h-96" style={{ gap: '20px' }}>
-            {/* First small image */}
-            {photos[1] && (
-              <div className="relative flex-1">
-                <S3Image 
-                  src={photos[1]} 
-                  alt={`${title} - Image 2`} 
-                  className="w-full h-full object-cover rounded-lg" 
-                  fallbackSrc="/villa1.jpg"
-                />
-              </div>
-            )}
-            
-            {/* Second small image with show more button if there are more than 3 photos */}
-            {photos.length > 2 && (
-              <div className="relative flex-1">
-                <S3Image 
-                  src={photos[2]} 
-                  alt={`${title} - Image 3`} 
-                  className="w-full h-full object-cover rounded-lg" 
-                  fallbackSrc="/villa1.jpg"
-                />
-                {photos.length > 3 && (
-                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                    <button className="text-white text-sm font-medium bg-black bg-opacity-60 px-3 py-1 rounded-full hover:bg-opacity-80 transition-all">
-                      Show all photos
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
+          {/* Desktop: Single image */}
+          <div className="hidden md:block relative rounded-2xl overflow-hidden shadow-lg">
+            <S3Image 
+              src={mainImage} 
+              alt={title} 
+              className="w-full h-96 object-cover" 
+              fallbackSrc="/villa1.jpg"
+            />
           </div>
-        </div>
-      ) : (
-        <div className="relative rounded-2xl overflow-hidden shadow-lg">
-          <S3Image 
-            src={mainImage} 
-            alt={title} 
-            className="w-full h-96 object-cover" 
-            fallbackSrc="/villa1.jpg"
-          />
         </div>
       )}
       
       {/* Property Details */}
-      <div>
+      <div className="mx-4 md:mx-0">
         <p className="text-gray-600 mt-1">{location}</p>
         <div className="mt-1">
           <RatingDisplay 
@@ -273,7 +336,7 @@ export default function PropertyLayout({
         </div>
       </div>
       
-      <div className="border rounded-2xl p-4 shadow-sm">
+      <div className="border rounded-2xl p-4 shadow-sm mx-4 md:mx-0">
         <h2 className="font-semibold text-lg mb-3">Book This Property</h2>
         {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -309,7 +372,7 @@ export default function PropertyLayout({
           </div>
         </div>
       </div>
-      <div>
+      <div className="mx-4 md:mx-0">
         <h2 className="font-semibold text-lg mb-3">Ce que propose ce logement</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm text-gray-700 font-medium">
           {features.map((feature, index) => (
@@ -320,7 +383,7 @@ export default function PropertyLayout({
           ))}
         </div>
       </div>
-      <div>
+      <div className="mx-4 md:mx-0">
         <h2 className="font-semibold text-lg mb-3">Les packs associés</h2>
         {associatedPacks && associatedPacks.length > 0 ? (
         <div className="space-y-3">
@@ -360,12 +423,12 @@ export default function PropertyLayout({
         </div>
         )}
       </div>
-      <div>
+      <div className="mx-4 md:mx-0">
         <h2 className="font-semibold text-lg mb-3">Localisation</h2>
         <SinglePropertyMap location={location} />
       </div>
       {/* Reviews Section */}
-      <div>
+      <div className="mx-4 md:mx-0">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-semibold text-lg">Avis des clients</h2>
           {isLoggedIn && reviewableBookings.some(b => b.property && b.property._id === propertyId) && (
@@ -394,7 +457,7 @@ export default function PropertyLayout({
       
       {/* Owner Profile Section */}
         {host && (
-        <div className="border rounded-2xl p-6 shadow-sm bg-gradient-to-r from-blue-50 to-green-50">
+        <div className="border rounded-2xl p-6 shadow-sm bg-gradient-to-r from-blue-50 to-green-50 mx-4 md:mx-0">
           <h2 className="font-semibold text-xl mb-4 text-gray-800">👤 Propriétaire</h2>
           <div className="flex items-start space-x-4">
             <InitialsAvatar
@@ -441,7 +504,7 @@ export default function PropertyLayout({
       )}
       
       {/* Host/Owner Information Section */}
-      <div className="border rounded-2xl p-6 shadow-sm bg-white">
+      <div className="border rounded-2xl p-6 shadow-sm bg-white mx-4 md:mx-0">
         <h2 className="font-semibold text-lg mb-4">À propos de votre hôte</h2>
         {host ? (
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -509,6 +572,21 @@ export default function PropertyLayout({
           isLoading={reviewsLoading}
         />
       )}
+
+      {/* Login Modal */}
+      {showLogin && (
+        <LoginScreen 
+          onClose={handleCloseLogin}
+        />
+      )}
+
+      {/* Signup Modal */}
+      {showSignup && (
+        <SignUpScreen 
+          onClose={handleCloseSignup}
+        />
+      )}
+      </div>
     </div>
   );
 }

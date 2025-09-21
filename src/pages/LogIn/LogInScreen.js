@@ -69,7 +69,7 @@ export default function LoginScreen({onClose}) {
     };
 
   const handleClose = () => {
-    navigate('/');
+    navigate(-1);
   };
 
   return (

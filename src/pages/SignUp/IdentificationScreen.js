@@ -28,7 +28,7 @@ export default function IdentificationModal({ onClose }) {
   };
 
   const handleClose = () => {
-    if (onClose) onClose();
+    navigate(-1);
   };
 
   return (

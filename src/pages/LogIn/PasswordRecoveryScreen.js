@@ -30,7 +30,7 @@ export default function PasswordRecoveryScreen() {
   };
 
   const handleBackToLogin = () => navigate('/login');
-  const handleClose = () => navigate('/');
+  const handleClose = () => navigate(-1);
 
   return (
     <>

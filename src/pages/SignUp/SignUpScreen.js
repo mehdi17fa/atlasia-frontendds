@@ -58,7 +58,7 @@ export default function SignUpScreen({onClose}) {
   };
 
   const handleClose = () => {
-    navigate('/');
+    navigate(-1);
   };
 
   return (

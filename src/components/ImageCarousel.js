@@ -48,7 +48,7 @@ const ImageCarousel = ({
     <div className={`relative group ${className}`}>
       {/* Main Image */}
       <div 
-        className={`relative overflow-hidden ${autoHeight ? '' : 'h-full'}`}
+        className={`relative overflow-hidden rounded-xl ${autoHeight ? '' : 'h-full'}`}
         onClick={handleImageClick}
       >
         <S3Image

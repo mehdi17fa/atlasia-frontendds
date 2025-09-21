@@ -72,7 +72,7 @@ export default function ListingCardGrid({ listings, onCardClick }) {
                   <S3Image
                     src={listing.image || "/placeholder.jpg"}
                     alt={listing.title}
-                    className="w-full h-40 object-cover"
+                    className="w-full h-40 object-cover rounded-xl"
                     fallbackSrc="/placeholder.jpg"
                   />
                 )}
