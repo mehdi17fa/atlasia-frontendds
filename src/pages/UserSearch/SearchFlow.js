@@ -304,7 +304,7 @@ const SearchModal = ({ isOpen, onClose, onSearch }) => {
           <button
             onClick={handleSearch}
             disabled={!destination.trim() || loading}
-            className="px-8 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors flex items-center space-x-2"
+            className="px-8 py-3 bg-primary-500 hover:bg-primary-600 disabled:bg-secondary-300 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors flex items-center space-x-2 shadow-atlasia"
           >
             {loading ? (
               <>
@@ -389,7 +389,7 @@ const SearchApp = () => {
         {/* Search Button */}
         <button
           onClick={() => setShowSearchModal(true)}
-          className="px-8 py-4 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg shadow-lg transition-colors flex items-center space-x-3 mx-auto"
+          className="px-8 py-4 bg-primary-500 hover:bg-primary-600 text-white font-medium rounded-lg shadow-atlasia transition-colors flex items-center space-x-3 mx-auto"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />

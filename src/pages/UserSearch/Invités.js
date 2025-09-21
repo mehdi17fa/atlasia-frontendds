@@ -214,7 +214,7 @@ const GuestsSelectionScreen = ({ onBack, selectedDestination, dateSelection, onS
         <div className="px-4 pb-8">
           <button
             onClick={handleSearch}
-            className="w-full py-3 bg-green-800 text-white rounded-full font-medium hover:bg-green-700 transition"
+            className="w-full py-3 bg-primary-500 text-white rounded-full font-medium hover:bg-primary-600 transition-colors shadow-atlasia"
           >
             Chercher
           </button>

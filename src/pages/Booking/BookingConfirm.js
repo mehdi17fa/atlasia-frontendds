@@ -17,8 +17,7 @@ export default function BookingConfirm() {
   const handleConfirm = async () => {
     // Try to get token from state first, then from localStorage as fallback
     const token = authToken || 
-                 localStorage.getItem("accessToken") || 
-                 localStorage.getItem("token");
+                 localStorage.getItem("accessToken");
     
     console.log("Auth Debug (Confirm):", {
       authTokenFromState: authToken,

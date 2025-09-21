@@ -38,7 +38,7 @@ export default function CoHostPropertyLayout({
     setError(null);
     
     try {
-      const token = localStorage.getItem("accessToken") || localStorage.getItem("token");
+      const token = localStorage.getItem("accessToken");
       if (!token) {
         throw new Error("Token d'authentification manquant");
       }
@@ -77,7 +77,7 @@ export default function CoHostPropertyLayout({
   // Handle reservation status change
   const handleReservationAction = async (reservationId, action) => {
     try {
-      const token = localStorage.getItem("accessToken") || localStorage.getItem("token");
+      const token = localStorage.getItem("accessToken");
       if (!token) {
         throw new Error("Token d'authentification manquant");
       }

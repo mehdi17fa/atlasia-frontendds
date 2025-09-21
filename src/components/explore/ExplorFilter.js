@@ -31,10 +31,10 @@ export default function ExploreFilter() {
             key={i}
             onClick={() => navigate(cat.path)}
             className={`flex flex-col items-center text-xs transition ${
-              isActive ? 'text-green-800 font-semibold' : 'text-gray-500'
+              isActive ? 'text-primary-700 font-semibold' : 'text-secondary-500'
             }`}
           >
-            <Icon className={`w-6 h-6 mb-1 ${isActive ? 'text-green-800' : 'text-gray-500'}`} />
+            <Icon className={`w-6 h-6 mb-1 ${isActive ? 'text-primary-700' : 'text-secondary-500'}`} />
             {cat.label}
           </button>
         );

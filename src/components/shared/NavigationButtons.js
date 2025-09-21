@@ -13,13 +13,13 @@ export default function NavigationButton({ left, right, to, active }) {
 
   return (
     <div
-      className={`rounded-xl border border-gray-300 bg-white px-4 py-2.5 mb-2 flex items-center justify-between cursor-pointer transition hover:bg-gray-50
-        ${active ? "ring-2 ring-green-800" : ""}
+      className={`rounded-xl border border-secondary-300 bg-white px-4 py-2.5 mb-2 flex items-center justify-between cursor-pointer transition hover:bg-secondary-50
+        ${active ? "ring-2 ring-primary-500" : ""}
       `}
       onClick={to ? () => navigate(to) : undefined}
     >
-      <span className="text-black font-semibold">{left}</span>
-      <span className="text-gray-500 font-medium">{right}</span>
+      <span className="text-secondary-900 font-semibold">{left}</span>
+      <span className="text-secondary-500 font-medium">{right}</span>
     </div>
   );
 }

@@ -17,7 +17,7 @@ export default function SearchBar({ onClick }) {
           className="flex-1 text-sm text-gray-700 focus:outline-none pointer-events-none"
           readOnly
         />
-        <FilterIcon className="w-5 h-5 text-green-800" />
+        <FilterIcon className="w-5 h-5 text-primary-700" />
       </div>
     </div>
   );

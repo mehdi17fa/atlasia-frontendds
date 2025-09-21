@@ -43,9 +43,9 @@ const PackageCard = ({ package: pkg, onBook }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-shadow duration-300">
+    <div className="bg-white rounded-xl shadow-lg border border-secondary-200 overflow-hidden hover:shadow-xl transition-shadow duration-300">
       {/* Header Image */}
-      <div className="h-48 bg-gradient-to-r from-green-400 to-blue-500 flex items-center justify-center relative">
+      <div className="h-48 bg-gradient-to-r from-primary-400 to-primary-600 flex items-center justify-center relative">
         {/* Heart button */}
         <button
           onClick={handleToggleFavorite}
@@ -148,16 +148,16 @@ const PackageCard = ({ package: pkg, onBook }) => {
         )}
 
         {/* Price and Action */}
-        <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+        <div className="flex items-center justify-between pt-4 border-t border-secondary-200">
           <div className="flex items-center">
-            <CurrencyDollarIcon className="h-5 w-5 text-green-600 mr-1" />
-            <span className="text-lg font-bold text-gray-900">
+            <CurrencyDollarIcon className="h-5 w-5 text-primary-600 mr-1" />
+            <span className="text-lg font-bold text-secondary-900">
               {pkg.totalPrice ? `${pkg.totalPrice} MAD` : 'Prix sur demande'}
             </span>
           </div>
           <button
             onClick={() => onBook(pkg)}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium"
+            className="bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition-colors font-medium shadow-atlasia"
           >
             Réserver
           </button>
@@ -278,13 +278,13 @@ export default function Packages() {
 
         {/* Filter */}
         <div className="mb-8 flex justify-center">
-          <div className="flex space-x-2 bg-gray-100 p-1 rounded-lg">
+          <div className="flex space-x-2 bg-secondary-100 p-1 rounded-lg">
             <button
               onClick={() => setFilter('all')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 filter === 'all'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-primary-500 text-white shadow-sm'
+                  : 'text-secondary-600 hover:text-primary-600'
               }`}
             >
               Tous ({packages.length})
@@ -293,8 +293,8 @@ export default function Packages() {
               onClick={() => setFilter('individual')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 filter === 'individual'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-primary-500 text-white shadow-sm'
+                  : 'text-secondary-600 hover:text-primary-600'
               }`}
             >
               Individuels
@@ -303,8 +303,8 @@ export default function Packages() {
               onClick={() => setFilter('property')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 filter === 'property'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-primary-500 text-white shadow-sm'
+                  : 'text-secondary-600 hover:text-primary-600'
               }`}
             >
               Avec Propriété

@@ -20,13 +20,25 @@ export const useProfileData = (userId, shouldFetch = true) => {
         throw new Error('No authentication token found');
       }
 
+      console.log('🔍 Fetching profile for userId:', userId);
+      console.log('🔍 API URL:', `${API_BASE_URL}/auth/user/${userId}`);
+      console.log('🔍 Token exists:', !!token);
+
       const response = await axios.get(`${API_BASE_URL}/auth/user/${userId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      if (response.data.success) {
+      console.log('🔍 Response received:', response.data);
+
+      if (response.data.success && response.data.user) {
         setProfileData(response.data.user);
       } else {
+        console.log('❌ Response validation failed:', {
+          hasSuccess: !!response.data.success,
+          hasUser: !!response.data.user,
+          success: response.data.success,
+          user: response.data.user
+        });
         throw new Error(response.data.message || 'Failed to fetch profile data');
       }
     } catch (err) {

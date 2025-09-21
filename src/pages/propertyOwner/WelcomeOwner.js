@@ -237,7 +237,7 @@ export default function WelcomeOwner() {
       setLoadingProperties(true);
       setPropertiesError(null);
       
-      const token = localStorage.getItem("accessToken") || localStorage.getItem("token");
+      const token = localStorage.getItem("accessToken");
       
       console.log("🔍 Fetching owner properties...");
       console.log("🔑 Token found:", token ? "YES" : "NO");
@@ -290,7 +290,7 @@ export default function WelcomeOwner() {
       setLoadingReservations(true);
       setReservationsError(null);
       
-      const token = localStorage.getItem("accessToken") || localStorage.getItem("token");
+      const token = localStorage.getItem("accessToken");
       
       if (!token) {
         toast.error("Veuillez vous reconnecter");
@@ -325,7 +325,7 @@ export default function WelcomeOwner() {
 
   const handleBookingResponse = async (bookingId, action) => {
     try {
-      const token = localStorage.getItem("accessToken") || localStorage.getItem("token");
+      const token = localStorage.getItem("accessToken");
       
       if (!token) {
         toast.error("Veuillez vous reconnecter");
@@ -361,7 +361,7 @@ export default function WelcomeOwner() {
   const fetchCoHostRequests = async () => {
     try {
       // Check both possible token locations
-      const token = localStorage.getItem("accessToken") || localStorage.getItem("token");
+      const token = localStorage.getItem("accessToken");
       
       console.log("🔍 Fetching co-host requests...");
       console.log("🔑 Token found:", token ? "YES" : "NO");
@@ -410,7 +410,7 @@ export default function WelcomeOwner() {
   const handleAcceptRequest = async (requestId) => {
     setActionLoading(true);
     try {
-      const token = localStorage.getItem("accessToken") || localStorage.getItem("token");
+      const token = localStorage.getItem("accessToken");
       const response = await axios.patch(
         `${API_BASE}/api/partner/accept/${requestId}`,
         {},
@@ -443,7 +443,7 @@ export default function WelcomeOwner() {
   const handleRejectRequest = async (requestId) => {
     setActionLoading(true);
     try {
-      const token = localStorage.getItem("accessToken") || localStorage.getItem("token");
+      const token = localStorage.getItem("accessToken");
       const response = await axios.patch(
         `${API_BASE}/api/partner/reject/${requestId}`,
         {},
