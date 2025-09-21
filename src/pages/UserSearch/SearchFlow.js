@@ -339,7 +339,6 @@ const SearchApp = () => {
     });
   };
 
-<<<<<<< HEAD
   const handleBackToSearch = () => {
     setShowResults(false);
     setShowSearchModal(true);
@@ -387,9 +386,6 @@ const SearchApp = () => {
       </div>
     );
   }
-
-=======
->>>>>>> 47d197d80eb3b5bd9dcfa4c7656326d83af4dd8b
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
       <div className="text-center">
