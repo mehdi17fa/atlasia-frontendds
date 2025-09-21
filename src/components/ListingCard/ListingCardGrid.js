@@ -60,7 +60,7 @@ export default function ListingCardGrid({ listings, onCardClick }) {
               </button>
 
               {/* Image content */}
-              <div onClick={() => onCardClick && onCardClick(listing._id)}>
+              <div onClick={() => onCardClick && onCardClick(listing)}>
                 {listing.photos && listing.photos.length > 0 ? (
                   <ImageCarousel
                     images={listing.photos}

@@ -136,6 +136,16 @@ export default function SearchResultsPage() {
       console.log('Filtered properties count:', properties.length);
       console.log('First few filtered properties:', properties.slice(0, 3));
       
+      // Debug: Check property IDs
+      if (properties.length > 0) {
+        console.log('First property structure:', properties[0]);
+        console.log('First property ID fields:', {
+          _id: properties[0]._id,
+          id: properties[0].id,
+          propertyId: properties[0].propertyId
+        });
+      }
+      
       setProperties(properties);
       setPagination(data.pagination || { page: 1, pages: 1 });
       
@@ -182,7 +192,21 @@ export default function SearchResultsPage() {
   };
 
   const handlePropertySelect = (property) => {
-    navigate(`/property/${property._id}`);
+    console.log('Property selected:', property);
+    console.log('Property ID:', property._id);
+    console.log('Property ID type:', typeof property._id);
+    console.log('All property keys:', Object.keys(property));
+    
+    const propertyId = property._id || property.id || property.propertyId;
+    console.log('Using property ID:', propertyId);
+    
+    if (!propertyId) {
+      console.error('No valid property ID found:', property);
+      alert('Error: Property ID not found');
+      return;
+    }
+    
+    navigate(`/property/${propertyId}`);
   };
 
 
