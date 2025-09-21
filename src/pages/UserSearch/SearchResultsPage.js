@@ -62,10 +62,41 @@ export default function SearchResultsPage() {
 
       let properties = data.properties || [];
       
-      // Client-side equipment filtering as fallback
-      if (filters.equipments.length > 0) {
-        properties = properties.filter(property => {
-          // Check if property has equipment data
+      // Apply client-side filtering for all filter types
+      properties = properties.filter(property => {
+        // Price filtering
+        if (filters.minPrice || filters.maxPrice) {
+          const propertyPrice = property.price || property.pricePerNight || 0;
+          const minPrice = parseFloat(filters.minPrice) || 0;
+          const maxPrice = parseFloat(filters.maxPrice) || Infinity;
+          
+          if (propertyPrice < minPrice || propertyPrice > maxPrice) {
+            return false;
+          }
+        }
+        
+        // Bedrooms filtering
+        if (filters.bedrooms) {
+          const propertyBedrooms = property.bedrooms || property.info?.bedrooms || 0;
+          const requiredBedrooms = parseInt(filters.bedrooms);
+          
+          if (propertyBedrooms < requiredBedrooms) {
+            return false;
+          }
+        }
+        
+        // Bathrooms filtering
+        if (filters.bathrooms) {
+          const propertyBathrooms = property.bathrooms || property.info?.bathrooms || 0;
+          const requiredBathrooms = parseInt(filters.bathrooms);
+          
+          if (propertyBathrooms < requiredBathrooms) {
+            return false;
+          }
+        }
+        
+        // Equipment filtering
+        if (filters.equipments.length > 0) {
           const propertyEquipments = property.equipments || property.info?.equipments || [];
           
           // Create a mapping for better matching
@@ -82,19 +113,28 @@ export default function SearchResultsPage() {
           };
           
           // Check if property has ALL selected equipment filters
-          return filters.equipments.every(selectedEq => {
+          const hasAllEquipments = filters.equipments.every(selectedEq => {
             const searchTerms = equipmentMapping[selectedEq.toLowerCase()] || [selectedEq.toLowerCase()];
-            const hasEquipment = propertyEquipments.some(propEq => {
+            return propertyEquipments.some(propEq => {
               const propEqLower = propEq.toLowerCase();
               return searchTerms.some(term => 
                 propEqLower.includes(term) || term.includes(propEqLower)
               );
             });
-            
-            return hasEquipment;
           });
-        });
-      }
+          
+          if (!hasAllEquipments) {
+            return false;
+          }
+        }
+        
+        return true;
+      });
+      
+      // Debug: Log filtered results
+      console.log('Applied filters:', filters);
+      console.log('Filtered properties count:', properties.length);
+      console.log('First few filtered properties:', properties.slice(0, 3));
       
       setProperties(properties);
       setPagination(data.pagination || { page: 1, pages: 1 });
@@ -144,6 +184,7 @@ export default function SearchResultsPage() {
   const handlePropertySelect = (property) => {
     navigate(`/property/${property._id}`);
   };
+
 
   return (
     <div className="relative min-h-screen">
