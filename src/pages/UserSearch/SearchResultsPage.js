@@ -1,7 +1,5 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import S3Image from "../../components/S3Image";
-import ImageCarousel from "../../components/ImageCarousel";
 import ListingCardGrid from "../../components/ListingCard/ListingCardGrid";
 
 export default function SearchResultsPage() {
@@ -22,7 +20,7 @@ export default function SearchResultsPage() {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   // Get search parameters from location state or URL params
-  const searchParams = location.state?.searchParams || {};
+  const searchParams = useMemo(() => location.state?.searchParams || {}, [location.state?.searchParams]);
 
   const fetchProperties = useCallback(async () => {
     try {
@@ -50,7 +48,6 @@ export default function SearchResultsPage() {
       if (filters.bedrooms) params.append("bedrooms", filters.bedrooms);
       if (filters.bathrooms) params.append("bathrooms", filters.bathrooms);
       if (filters.equipments.length > 0) {
-        console.log('Sending equipment filters to API:', filters.equipments);
         filters.equipments.forEach(eq => params.append("equipments[]", eq));
       }
 
@@ -63,33 +60,13 @@ export default function SearchResultsPage() {
 
       const data = await response.json();
 
-      console.log('API Response:', data);
-      console.log('Available filters:', data.filters);
-      console.log('Equipments from API:', data.filters?.equipments);
-      
-      // Debug: Log first few properties to see their structure
-      if (data.properties && data.properties.length > 0) {
-        console.log('First property structure:', data.properties[0]);
-        console.log('First property equipments:', data.properties[0].equipments || data.properties[0].info?.equipments);
-        
-        // Log all unique equipment values across all properties
-        const allEquipments = new Set();
-        data.properties.forEach(property => {
-          const equipments = property.equipments || property.info?.equipments || [];
-          equipments.forEach(eq => allEquipments.add(eq));
-        });
-        console.log('All unique equipment values in properties:', Array.from(allEquipments));
-      }
-
       let properties = data.properties || [];
       
       // Client-side equipment filtering as fallback
       if (filters.equipments.length > 0) {
-        console.log('Applying client-side equipment filter:', filters.equipments);
         properties = properties.filter(property => {
           // Check if property has equipment data
           const propertyEquipments = property.equipments || property.info?.equipments || [];
-          console.log(`Property ${property.title} equipments:`, propertyEquipments);
           
           // Create a mapping for better matching
           const equipmentMapping = {
@@ -114,11 +91,9 @@ export default function SearchResultsPage() {
               );
             });
             
-            console.log(`Property ${property.title} has ${selectedEq}:`, hasEquipment);
             return hasEquipment;
           });
         });
-        console.log('Filtered properties count:', properties.length);
       }
       
       setProperties(properties);
@@ -317,27 +292,18 @@ export default function SearchResultsPage() {
                 {/* Equipments */}
                 <div className="mb-6">
                   <h4 className="font-medium mb-3">Équipements</h4>
-                  <div className="text-xs text-gray-500 mb-2">
-                    Debug: {availableFilters.equipments.length} equipments available
-                  </div>
                   <div className="grid grid-cols-2 gap-2">
-                    {availableFilters.equipments.length > 0 ? (
-                      availableFilters.equipments.map(eq => (
-                        <label key={eq} className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            checked={filters.equipments.includes(eq)}
-                            onChange={() => handleEquipmentToggle(eq)}
-                            className="rounded text-green-600 focus:ring-green-500"
-                          />
-                          <span className="text-sm">{eq}</span>
-                        </label>
-                      ))
-                    ) : (
-                      <div className="text-sm text-gray-500 col-span-2">
-                        Aucun équipement disponible
-                      </div>
-                    )}
+                    {availableFilters.equipments.map(eq => (
+                      <label key={eq} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          checked={filters.equipments.includes(eq)}
+                          onChange={() => handleEquipmentToggle(eq)}
+                          className="rounded text-green-600 focus:ring-green-500"
+                        />
+                        <span className="text-sm">{eq}</span>
+                      </label>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -562,27 +528,18 @@ export default function SearchResultsPage() {
             {/* Equipments */}
             <div className="mb-6">
               <h4 className="font-medium mb-3">Équipements</h4>
-              <div className="text-xs text-gray-500 mb-2">
-                Debug: {availableFilters.equipments.length} equipments available
-              </div>
               <div className="grid grid-cols-2 gap-2">
-                {availableFilters.equipments.length > 0 ? (
-                  availableFilters.equipments.map(eq => (
-                    <label key={eq} className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        checked={filters.equipments.includes(eq)}
-                        onChange={() => handleEquipmentToggle(eq)}
-                        className="rounded text-green-600 focus:ring-green-500"
-                      />
-                      <span className="text-sm">{eq}</span>
-                    </label>
-                  ))
-                ) : (
-                  <div className="text-sm text-gray-500 col-span-2">
-                    Aucun équipement disponible
-                  </div>
-                )}
+                {availableFilters.equipments.map(eq => (
+                  <label key={eq} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={filters.equipments.includes(eq)}
+                      onChange={() => handleEquipmentToggle(eq)}
+                      className="rounded text-green-600 focus:ring-green-500"
+                    />
+                    <span className="text-sm">{eq}</span>
+                  </label>
+                ))}
               </div>
             </div>
 
