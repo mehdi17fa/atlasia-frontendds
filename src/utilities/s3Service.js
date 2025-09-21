@@ -280,7 +280,17 @@ export const getS3Url = (key) => {
   if (key.includes('amazonaws.com/')) {
     cleanKey = key.split('amazonaws.com/')[1];
   }
-  return `${API_URL}/api/images/${encodeURIComponent(cleanKey)}`;
+  
+  // Parse the S3 key to get folder and filename
+  const parts = cleanKey.split('/');
+  if (parts.length >= 2) {
+    const folder = parts[0];
+    const filename = parts.slice(1).join('/');
+    return `${API_URL}/s3-proxy/${folder}/${encodeURIComponent(filename)}`;
+  } else {
+    // If no folder specified, assume it's a property photo
+    return `${API_URL}/s3-proxy/property-photos/${encodeURIComponent(cleanKey)}`;
+  }
 };
 
 /**

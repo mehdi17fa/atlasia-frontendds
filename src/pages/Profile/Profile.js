@@ -10,6 +10,7 @@ import SignUpScreen from '../SignUp/SignUpScreen';
 import SignupScreenConf from '../SignUp/SignUpConfScreen';
 import IdentificationModal from '../SignUp/IdentificationScreen';
 import LoginScreen from '../LogIn/LogInScreen';
+import ConfirmationModal from '../../components/shared/ConfirmationModal';
 import { useProfileData } from '../../hooks/useProfileData';
 
 export default function Profile() {
@@ -17,6 +18,7 @@ export default function Profile() {
   const [showSignup, setShowSignup] = useState(false);
   const [showSignupConfirmation, setShowSignupConfirmation] = useState(false);
   const [showIdentification, setShowIdentification] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const navigate = useNavigate();
   
   const { user, logout, setUser } = useContext(AuthContext); // ← get user and logout
@@ -59,6 +61,22 @@ export default function Profile() {
   // Handle profile data refresh
   const handleRefreshProfile = () => {
     refreshProfileData();
+  };
+  
+  const handleLogoutClick = () => {
+    setShowLogoutConfirm(true);
+  };
+  
+  const handleLogoutConfirm = () => {
+    // Clear user data and tokens
+    logout();
+    
+    // Navigate to home page and force reload to ensure clean state
+    window.location.href = '/';
+  };
+  
+  const handleLogoutCancel = () => {
+    setShowLogoutConfirm(false);
   };
   
   // Update context user when dynamic data is fetched
@@ -110,6 +128,18 @@ export default function Profile() {
       {showSignup && <SignUpScreen onClose={handleCloseSignup} />}
         {showSignupConfirmation && <SignupScreenConf onClose={handleCloseSignupConfirmation} />}
         {showIdentification && <IdentificationModal onClose={() => setShowIdentification(false)} onBack={handleBackToSignup} />}
+        
+        <ConfirmationModal
+          isOpen={showLogoutConfirm}
+          onClose={handleLogoutCancel}
+          onConfirm={handleLogoutConfirm}
+          title="Déconnexion"
+          message="Êtes-vous sûr de vouloir vous déconnecter ?"
+          confirmText="Déconnexion"
+          cancelText="Annuler"
+          confirmButtonColor="bg-red-600 hover:bg-red-700"
+          cancelButtonColor="bg-gray-500 hover:bg-gray-600"
+        />
 
         {/* ADD THE MODAL OVERLAY */}
         {(showLogin || showSignup || showSignupConfirmation || showIdentification) && (
@@ -239,11 +269,8 @@ export default function Profile() {
         </button>
 
         <button
-          onClick={() => {
-            logout();
-            navigate('/');
-          }}
-          className="bg-red-600 hover:bg-red-700 text-white py-2 px-6 rounded-full font-medium"
+          onClick={handleLogoutClick}
+          className="bg-red-600 hover:bg-red-700 text-white py-2 px-6 rounded-full font-medium transition-colors duration-200"
         >
           Déconnexion
         </button>

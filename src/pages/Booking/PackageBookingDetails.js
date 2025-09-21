@@ -67,7 +67,18 @@ const PackageBookingDetails = () => {
     setError("");
     
     try {
+      console.log('🔍 Fetching package booking details for ID:', bookingId);
+      
+      // First try the debug endpoint to see if the booking exists
+      try {
+        const debugData = await apiCall(`/api/packagebooking/debug/${bookingId}`);
+        console.log('🔍 Debug response:', debugData);
+      } catch (debugErr) {
+        console.log('🔍 Debug endpoint failed:', debugErr.message);
+      }
+      
       const data = await apiCall(`/api/packagebooking/${bookingId}`);
+      console.log('✅ Package booking response:', data);
 
       if (data.success) {
         setBooking(data.booking);
@@ -76,6 +87,11 @@ const PackageBookingDetails = () => {
       }
     } catch (err) {
       console.error("Error fetching package booking details:", err);
+      console.error("Error details:", {
+        message: err.message,
+        status: err.status,
+        bookingId: bookingId
+      });
       
       // Handle specific error cases
       if (err.message.includes("Session expired") || err.message.includes("Unauthorized")) {
@@ -84,10 +100,12 @@ const PackageBookingDetails = () => {
         navigate("/login");
       } else if (err.message.includes("Not authorized")) {
         setError("You don't have permission to view this booking.");
-      } else if (err.message.includes("Package booking not found")) {
+      } else if (err.message.includes("Package booking not found") || err.message.includes("404")) {
         setError("This booking doesn't exist or has been removed.");
+      } else if (err.message.includes("Invalid booking ID format")) {
+        setError("Invalid booking ID format.");
       } else {
-        setError(err.message);
+        setError(`Error: ${err.message}`);
       }
     } finally {
       setLoading(false);

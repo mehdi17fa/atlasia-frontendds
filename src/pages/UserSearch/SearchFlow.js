@@ -331,14 +331,63 @@ const SearchModal = ({ isOpen, onClose, onSearch }) => {
 const SearchApp = () => {
   const navigate = useNavigate();
   const [showSearchModal, setShowSearchModal] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const [searchParams, setSearchParams] = useState(null);
 
   const handleSearch = (params) => {
-    // Navigate to search results page with search parameters
-    navigate('/search/results', { 
-      state: { searchParams: params } 
-    });
+    // Set search parameters and show results
+    setSearchParams(params);
+    setShowResults(true);
+    setShowSearchModal(false);
   };
 
+  const handleBackToSearch = () => {
+    setShowResults(false);
+    setShowSearchModal(true);
+  };
+
+  const handlePropertySelect = (property) => {
+    console.log('Selected property:', property);
+    // Navigate to property detail page
+    if (property && property._id) {
+      navigate(`/property/${property._id}`);
+    } else {
+      console.error('Property ID not found:', property);
+    }
+  };
+
+  if (showResults) {
+    // You would import your actual SearchResults component here
+    return (
+      <div className="min-h-screen bg-gray-100 p-8">
+        <div className="max-w-4xl mx-auto bg-white rounded-lg p-8 pb-28">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold">Résultats de recherche</h2>
+            <button 
+              onClick={handleBackToSearch}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+            >
+              Nouvelle recherche
+            </button>
+          </div>
+          <div className="space-y-4">
+            <p><strong>Destination:</strong> {searchParams?.destination}</p>
+            {searchParams?.dateSelection?.dates && (
+              <p><strong>Dates:</strong> {searchParams.dateSelection.dates.join(' → ')}</p>
+            )}
+            <p className="text-sm text-gray-600">
+            <SearchResults
+                isOpen={showResults}
+                onClose={() => setShowResults(false)}
+                searchParams={searchParams}
+                onPropertySelect={handlePropertySelect}
+                />
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
       <div className="text-center">

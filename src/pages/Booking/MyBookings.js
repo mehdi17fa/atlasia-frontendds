@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import ImageCarousel from "../../components/ImageCarousel";
+import S3Image from "../../components/S3Image";
 
 const TouristBookings = () => {
   const { user, token, logout } = useContext(AuthContext);
@@ -489,10 +490,11 @@ const TouristBookings = () => {
                     showArrows={booking.property.photos.length > 1}
                   />
                 ) : (
-                  <img
-                    src="https://via.placeholder.com/400x250?text=No+Image"
+                  <S3Image
+                    src={booking.property?.photos?.[0] || "/placeholder.jpg"}
                     alt={booking.property?.title || "Property"}
                     className="w-full h-48 object-cover"
+                    fallbackSrc="/placeholder.jpg"
                   />
                 )}
               </div>
@@ -554,7 +556,7 @@ const TouristBookings = () => {
                   )}
                   <button
                     onClick={() => navigate(`/package-booking/${booking._id}`)}
-                    className="flex-1 bg-gray-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+                    className="flex-1 bg-green-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors"
                   >
                     View Details
                   </button>

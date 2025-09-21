@@ -54,8 +54,8 @@ export default function Explore() {
   const handleMapPropertyClick = (propertyId) => {
     const property = properties.find(p => p._id === propertyId);
     setSelectedProperty(property);
-    // Optional: navigate to property details
-    // navigate(`/property/${propertyId}`);
+    // Navigate to property details
+    navigate(`/property/${propertyId}`);
   };
 
   if (loading) return <p className="text-center mt-20">Chargement...</p>;

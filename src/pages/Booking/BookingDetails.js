@@ -275,10 +275,10 @@ const BookingDetails = () => {
                 />
               ) : (
                 <S3Image
-                  src={booking.property?.photos?.[0]}
+                  src={booking.property?.photos?.[0] || "/placeholder.jpg"}
                   alt={booking.property?.title || "Property"}
                   className="w-full h-64 object-cover"
-                  fallbackSrc="https://via.placeholder.com/600x300?text=No+Image"
+                  fallbackSrc="/placeholder.jpg"
                 />
               )}
             </div>
