@@ -138,7 +138,7 @@ export default function EditProfileScreen() {
       </div>
 
       {/* Form fields */}
-      <div className="mt-12 px-4 md:px-40 space-y-6">
+      <div className="mt-12 px-4 md:px-40 space-y-6 pb-28">
         {[
           { label: 'Nom complet', value: profile.fullName, key: 'fullName' },
           { label: 'Adresse email', value: profile.email, key: 'email', disabled: true },

@@ -47,7 +47,7 @@ export default function MyProperties() {
   if (loading) return <div className="p-6 text-center">Chargement...</div>;
 
   return (
-    <div className="px-4 py-8 max-w-5xl mx-auto">
+    <div className="px-4 py-8 max-w-5xl mx-auto pb-28">
       <div className="flex items-center justify-center mb-4 relative">
       {/* Back arrow button */}
       <button

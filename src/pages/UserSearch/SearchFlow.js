@@ -352,7 +352,7 @@ const SearchApp = () => {
     // You would import your actual SearchResults component here
     return (
       <div className="min-h-screen bg-gray-100 p-8">
-        <div className="max-w-4xl mx-auto bg-white rounded-lg p-8">
+        <div className="max-w-4xl mx-auto bg-white rounded-lg p-8 pb-28">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold">Résultats de recherche</h2>
             <button 

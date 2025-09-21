@@ -17,6 +17,7 @@ export default function PropertyLayout({
   rating,
   reviewCount,
   mainImage,
+  photos,
   host,
   checkInTime,
   features,
@@ -184,65 +185,83 @@ export default function PropertyLayout({
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-6 space-y-8">
-      {/* Navigation Header */}
+    <div className="max-w-4xl mx-auto px-100 py-6 pb-28 space-y-8">
+      {/* Property Title and Favorite Button */}
       <div className="flex items-center justify-between mb-6">
-        <button
-          className="flex items-center space-x-2 text-green-600 hover:text-green-700 transition-colors"
-          onClick={() => navigate(-1)}
-        >
-          <ArrowLeftIcon className="w-5 h-5" />
-          <span className="font-medium">Retour</span>
-        </button>
-        <div className="flex items-center space-x-2">
-          <button
-            className="p-2 text-green-600 hover:text-green-700 transition-colors"
-            onClick={() => navigate(-1)}
-            title="Page précédente"
-          >
-            <ArrowLeftIcon className="w-5 h-5" />
-          </button>
-          <button
-            className="p-2 text-green-600 hover:text-green-700 transition-colors"
-            onClick={() => window.history.forward()}
-            title="Page suivante"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <div className="relative rounded-2xl overflow-hidden shadow-lg">
-        <S3Image 
-          src={mainImage} 
-          alt={title} 
-          className="w-full h-96 object-cover" 
-          fallbackSrc="/villa1.jpg"
-        />
-        <button
-          className="absolute top-4 left-4 p-3 bg-black bg-opacity-30 rounded-full text-white flex items-center justify-center shadow-md hover:bg-opacity-50 transition-all"
-          onClick={() => navigate(-1)}
-        >
-          <ArrowLeftIcon className="w-5 h-5" fill="white" stroke="white" />
-        </button>
-        
-        {/* Heart button for favorites */}
-        <button
-          className="absolute top-4 right-4 p-3 bg-black bg-opacity-30 rounded-full text-white flex items-center justify-center shadow-md hover:bg-opacity-50 transition-all"
+        <h1 className="text-3xl font-bold">{title}</h1>
+        <button 
           onClick={handleToggleFavorite}
+          className="p-3 text-green-600 hover:text-green-700 transition-colors"
           title={isFavorited(propertyId) ? "Remove from favorites" : "Add to favorites"}
         >
           <FaHeart
-            className={`w-5 h-5 transition-colors duration-300 ${
-              isFavorited(propertyId) ? "text-red-500" : "text-white hover:text-red-300"
+            className={`w-6 h-6 transition-colors duration-300 ${
+              isFavorited(propertyId) ? "text-red-500" : "text-green-600 hover:text-red-500"
             }`}
           />
         </button>
       </div>
+
+      {/* Image Gallery - One large image and two smaller images */}
+      {photos && photos.length > 0 ? (
+        <div className="grid grid-cols-3 gap-2 rounded-2xl overflow-hidden shadow-lg">
+          {/* Large main image - takes 2 columns */}
+          <div className="col-span-2 relative">
+            <S3Image 
+              src={photos[0]} 
+              alt={title} 
+              className="w-full h-96 object-cover" 
+              fallbackSrc="/villa1.jpg"
+            />
+          </div>
+          
+          {/* One or two smaller images stacked on the right */}
+          <div className="col-span-1 flex flex-col gap-2 h-96">
+            {/* First small image */}
+            {photos[1] && (
+              <div className="relative flex-1">
+                <S3Image 
+                  src={photos[1]} 
+                  alt={`${title} - Image 2`} 
+                  className="w-full h-full object-cover" 
+                  fallbackSrc="/villa1.jpg"
+                />
+              </div>
+            )}
+            
+            {/* Second small image with show more button if there are more than 3 photos */}
+            {photos.length > 2 && (
+              <div className="relative flex-1">
+                <S3Image 
+                  src={photos[2]} 
+                  alt={`${title} - Image 3`} 
+                  className="w-full h-full object-cover" 
+                  fallbackSrc="/villa1.jpg"
+                />
+                {photos.length > 3 && (
+                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                    <button className="text-white text-sm font-medium bg-black bg-opacity-60 px-3 py-1 rounded-full hover:bg-opacity-80 transition-all">
+                      Show all photos
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="relative rounded-2xl overflow-hidden shadow-lg">
+          <S3Image 
+            src={mainImage} 
+            alt={title} 
+            className="w-full h-96 object-cover" 
+            fallbackSrc="/villa1.jpg"
+          />
+        </div>
+      )}
+      
+      {/* Property Details */}
       <div>
-        <h1 className="text-3xl font-bold">{title}</h1>
         <p className="text-gray-600 mt-1">{location}</p>
         <div className="mt-1">
           <RatingDisplay 
@@ -253,6 +272,7 @@ export default function PropertyLayout({
           />
         </div>
       </div>
+      
       <div className="border rounded-2xl p-4 shadow-sm">
         <h2 className="font-semibold text-lg mb-3">Book This Property</h2>
         {error && <p className="text-red-500 text-sm mb-3">{error}</p>}

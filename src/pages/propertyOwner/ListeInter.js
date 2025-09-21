@@ -40,7 +40,7 @@ export default function ListeInter() {
 
     return (
 
-        <div className="max-w-md mx-auto min-h-screen bg-white p-4 pb-24">
+        <div className="max-w-md mx-auto min-h-screen bg-white p-4 pb-32">
             {/* Header with back arrow */}
             <div className="flex items-center justify-center mb-4 relative">
 

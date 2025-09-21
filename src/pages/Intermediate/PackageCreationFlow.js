@@ -290,7 +290,7 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+    <div className="max-w-4xl mx-auto p-6 pb-28 bg-white rounded-lg shadow-lg">
       {/* Progress Bar */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">

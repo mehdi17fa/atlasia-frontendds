@@ -135,7 +135,7 @@ export default function Favorites() {
 
   if (!user || user.role !== 'tourist') {
     return (
-      <div className="pb-20 px-4 mt-24 text-center">
+      <div className="pb-28 px-4 mt-24 text-center">
         <SectionTitle title="Ma Liste" />
         <p className="text-gray-600 mt-8">Please log in as a tourist to view your favorites.</p>
       </div>
@@ -144,7 +144,7 @@ export default function Favorites() {
 
   if (loading) {
     return (
-      <div className="pb-20 px-4 mt-24">
+      <div className="pb-28 px-4 mt-24">
         <SectionTitle title="Ma Liste" />
         <div className="text-center mt-8">
           <p className="text-gray-600">Loading your favorites...</p>
@@ -155,7 +155,7 @@ export default function Favorites() {
 
   if (error) {
     return (
-      <div className="pb-20 px-4 mt-24">
+      <div className="pb-28 px-4 mt-24">
         <SectionTitle title="Ma Liste" />
         <div className="text-center mt-8">
           <p className="text-red-600">{error}</p>
@@ -171,7 +171,7 @@ export default function Favorites() {
   }
 
   return (
-    <div className="pb-20 px-4 mt-24">
+    <div className="pb-28 px-4 mt-24">
       <SectionTitle title="Ma Liste" />
       
       {/* Tabs */}
