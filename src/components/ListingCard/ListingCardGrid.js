@@ -10,17 +10,13 @@ export default function ListingCardGrid({ listings, onCardClick }) {
 
   const handleToggleFavorite = async (e, id) => {
     e.stopPropagation();
-    console.log('🔄 ListingCardGrid: handleToggleFavorite called for:', id);
-    console.log('🔄 isAuthenticated:', isAuthenticated);
     
     if (!isAuthenticated) {
       alert('Please log in to save favorites');
       return;
     }
     
-    console.log('🔄 Calling toggleFavorite...');
-    const result = await toggleFavorite(id, 'property');
-    console.log('🔄 toggleFavorite result:', result);
+    await toggleFavorite(id, 'property');
   };
 
   // Animate cards one by one on mount
@@ -40,10 +36,6 @@ export default function ListingCardGrid({ listings, onCardClick }) {
         const isFavorite = isFavorited(listing._id);
         const isVisible = visibleCards.includes(listing._id);
         
-        // Debug logging for first few items
-        if (listings.indexOf(listing) < 3) {
-          console.log(`🔄 Listing ${listing._id}: isFavorite = ${isFavorite}, favorites array:`, favorites);
-        }
 
         return (
           <div
