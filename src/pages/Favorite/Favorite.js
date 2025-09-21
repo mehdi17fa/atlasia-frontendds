@@ -56,19 +56,26 @@ export default function Favorites() {
         if (favorite.itemType === 'property') {
           // Fetch property price using public endpoint
           const response = await axios.get(`${API_BASE_URL}/property/public/${favorite.item._id}`);
+          console.log('🔍 Property response:', response.data);
+          const price = typeof response.data.price === 'number' ? response.data.price : 
+                       typeof response.data.price === 'object' ? response.data.price?.value || response.data.price?.amount || 0 : 0;
           return {
             id: favorite.item._id,
             type: 'property',
-            price: response.data.price,
+            price: price,
             pricePerNight: true
           };
         } else if (favorite.itemType === 'package') {
           // Fetch package price using public endpoint
           const response = await axios.get(`${API_BASE_URL}/packages/${favorite.item._id}`);
+          console.log('🔍 Package response:', response.data);
+          const totalPrice = response.data.package?.totalPrice || response.data.totalPrice;
+          const price = typeof totalPrice === 'number' ? totalPrice : 
+                       typeof totalPrice === 'object' ? totalPrice?.value || totalPrice?.amount || 0 : 0;
           return {
             id: favorite.item._id,
             type: 'package',
-            price: response.data.package?.totalPrice,
+            price: price,
             pricePerNight: false
           };
         }
@@ -125,7 +132,9 @@ export default function Favorites() {
 
   const PropertyCard = ({ item, favoriteId }) => {
     const realTimePrice = priceData[item._id];
-    const displayPrice = realTimePrice?.price || item.price;
+    const rawPrice = realTimePrice?.price || item.price;
+    const displayPrice = typeof rawPrice === 'number' ? rawPrice : 
+                       typeof rawPrice === 'object' ? rawPrice?.value || rawPrice?.amount || 0 : 0;
     const isRealTime = !!realTimePrice?.price;
     
     return (
@@ -151,9 +160,9 @@ export default function Favorites() {
           </p>
           <div className="flex items-center justify-between">
             <p className="font-bold text-green-600">
-              {displayPrice ? `${displayPrice} MAD / nuit` : 'Price not available'}
+              {displayPrice && displayPrice > 0 ? `${displayPrice} MAD / nuit` : 'Price not available'}
             </p>
-            {isRealTime && (
+            {isRealTime && displayPrice && displayPrice > 0 && (
               <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
                 Live Price
               </span>
@@ -166,7 +175,9 @@ export default function Favorites() {
 
   const PackageCard = ({ item, favoriteId }) => {
     const realTimePrice = priceData[item._id];
-    const displayPrice = realTimePrice?.price || item.totalPrice;
+    const rawPrice = realTimePrice?.price || item.totalPrice;
+    const displayPrice = typeof rawPrice === 'number' ? rawPrice : 
+                       typeof rawPrice === 'object' ? rawPrice?.value || rawPrice?.amount || 0 : 0;
     const isRealTime = !!realTimePrice?.price;
     
     return (
@@ -194,10 +205,10 @@ export default function Favorites() {
           
           <div className="flex justify-between items-center">
             <span className="font-bold text-green-600">
-              {displayPrice ? `${displayPrice} MAD` : 'Price not available'}
+              {displayPrice && displayPrice > 0 ? `${displayPrice} MAD` : 'Price not available'}
             </span>
             <div className="flex items-center space-x-2">
-              {isRealTime && (
+              {isRealTime && displayPrice && displayPrice > 0 && (
                 <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
                   Live Price
                 </span>
