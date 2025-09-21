@@ -93,29 +93,23 @@ export default function ExploreLayout() {
           {/* Replace this part in your desktop header */}
 <div className="flex gap-4 text-sm">
   {user ? (
-    // User is logged in - show avatar
+    // User is logged in - show avatar with green border like Profile page
     <button
       onClick={() => navigate('/profile')}
-      className="flex items-center justify-center w-10 h-10 bg-green-800 text-white rounded-full hover:bg-green-700 transition-colors duration-200"
+      className="flex items-center justify-center w-12 h-12 rounded-full overflow-hidden border-4 border-green-600 hover:border-green-700 transition-colors duration-200"
       aria-label="Go to profile"
     >
       {user.profilePic || user.avatar ? (
         <img
           src={user.profilePic || user.avatar}
           alt={user.fullName || user.name || 'User'}
-          className="w-full h-full rounded-full object-cover"
+          className="w-full h-full object-cover"
         />
       ) : (
-        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center overflow-hidden">
-          {DefaultAvatar ? (
-            <img src={DefaultAvatar} alt="Default Profile" className="w-full h-full object-cover" />
-          ) : ( 
-            <div className="w-8 h-8 bg-green-800 rounded-full flex items-center justify-center">
-              <span className="text-white text-sm font-bold">
-                {user.firstName ? user.firstName.charAt(0).toUpperCase() : (user.fullName ? user.fullName.charAt(0).toUpperCase() : (user.name ? user.name.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U')))}
-              </span>
-            </div>
-          )}
+        <div className="w-full h-full bg-green-600 flex items-center justify-center">
+          <span className="text-white text-lg font-bold">
+            {user.firstName ? user.firstName.charAt(0).toUpperCase() : (user.fullName ? user.fullName.charAt(0).toUpperCase() : (user.name ? user.name.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U')))}
+          </span>
         </div>
       )}
     </button>
@@ -151,26 +145,20 @@ export default function ExploreLayout() {
             {user ? (
               <button
                 onClick={() => navigate('/profile')}
-                className="flex items-center justify-center w-12 h-12 bg-green-800 text-white rounded-full hover:bg-green-700 transition-colors duration-200"
+                className="flex items-center justify-center w-12 h-12 rounded-full overflow-hidden border-4 border-green-600 hover:border-green-700 transition-colors duration-200"
                 aria-label="Go to profile"
               >
                 {user.profilePic || user.avatar ? (
                   <img
                     src={user.profilePic || user.avatar}
                     alt={user.fullName || user.name || 'User'}
-                    className="w-full h-full rounded-full object-cover"
+                    className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center overflow-hidden">
-                    {DefaultAvatar ? (
-                      <img src={DefaultAvatar} alt="Default Profile" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-8 h-8 bg-green-800 rounded-full flex items-center justify-center">
-                        <span className="text-white text-sm font-bold">
-                          {user.firstName ? user.firstName.charAt(0).toUpperCase() : (user.fullName ? user.fullName.charAt(0).toUpperCase() : (user.name ? user.name.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U')))}
-                        </span>
-                      </div>
-                    )}
+                  <div className="w-full h-full bg-green-600 flex items-center justify-center">
+                    <span className="text-white text-lg font-bold">
+                      {user.firstName ? user.firstName.charAt(0).toUpperCase() : (user.fullName ? user.fullName.charAt(0).toUpperCase() : (user.name ? user.name.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U')))}
+                    </span>
                   </div>
                 )}
               </button>

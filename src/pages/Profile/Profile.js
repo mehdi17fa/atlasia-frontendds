@@ -13,6 +13,57 @@ import LoginScreen from '../LogIn/LogInScreen';
 import ConfirmationModal from '../../components/shared/ConfirmationModal';
 import { useProfileData } from '../../hooks/useProfileData';
 
+// Get user initials for avatar fallback
+const getInitials = (user) => {
+  if (!user) return 'U';
+  
+  // Try different name fields
+  const fullName = user.fullName || user.name || (user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : '');
+  const email = user.email;
+  
+  if (fullName && fullName.trim()) {
+    const names = fullName.trim().split(' ').filter(name => name.length > 0);
+    if (names.length >= 2) {
+      return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
+    } else {
+      return names[0].charAt(0).toUpperCase();
+    }
+  } else if (email) {
+    return email.charAt(0).toUpperCase();
+  }
+  
+  return 'U';
+};
+
+// Profile Avatar Component
+const ProfileAvatar = ({ user }) => {
+  const [imageError, setImageError] = useState(false);
+  
+  if (!user?.profilePic || imageError) {
+    return (
+      <div className="w-full h-full bg-green-600 flex items-center justify-center rounded-full border-4 border-green-600">
+        <span className="text-white text-4xl font-bold">
+          {getInitials(user)}
+        </span>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="w-full h-full rounded-full overflow-hidden border-4 border-green-600">
+      <S3Image
+        src={user.profilePic}
+        alt="Profile"
+        className="w-full h-full object-cover"
+        fallbackSrc={null}
+        onError={() => {
+          setImageError(true);
+        }}
+      />
+    </div>
+  );
+};
+
 export default function Profile() {
   const [showLogin, setShowLogin] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
@@ -64,34 +115,18 @@ export default function Profile() {
   };
   
   const handleLogoutClick = () => {
-    console.log('🔍 Logout button clicked');
-    console.log('🔍 Current showLogoutConfirm state:', showLogoutConfirm);
-    
-    // Try direct logout first to test if it works
-    if (window.confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-      console.log('🔍 User confirmed logout via window.confirm');
-      handleLogoutConfirm();
-    } else {
-      console.log('🔍 User cancelled logout via window.confirm');
-    }
-    
-    // Also try the modal approach
     setShowLogoutConfirm(true);
-    console.log('🔍 Setting showLogoutConfirm to true');
   };
   
   const handleLogoutConfirm = () => {
-    console.log('🔍 Logout confirmed, clearing user data');
     // Clear user data and tokens
     logout();
     
-    console.log('🔍 Redirecting to home page');
     // Navigate to home page and force reload to ensure clean state
     window.location.href = '/';
   };
   
   const handleLogoutCancel = () => {
-    console.log('🔍 Logout cancelled');
     setShowLogoutConfirm(false);
   };
   
@@ -233,18 +268,8 @@ export default function Profile() {
           </div>
         )}
 
-        <div className="w-32 h-32 mx-auto rounded-full overflow-hidden border-4 border-green-600">
-          <S3Image
-            src={displayUser?.profilePic}
-            alt="Profile"
-            className="w-full h-full object-cover"
-            fallbackSrc={DefaultAvatar}
-          />
-          {/* Debug info */}
-          <div className="text-xs text-gray-500 mt-1">
-            Debug: {displayUser?.profilePic ? 'Has profilePic' : 'No profilePic'}
-            {profileData && ' (Dynamic)'}
-          </div>
+        <div className="w-32 h-32 mx-auto">
+          <ProfileAvatar user={displayUser} />
         </div>
 
         <h1 className="font-semibold text-3xl mt-2">{displayUser?.fullName || displayUser?.email}</h1>
@@ -293,11 +318,7 @@ export default function Profile() {
         </button>
 
         <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleLogoutClick();
-          }}
+          onClick={handleLogoutClick}
           className="bg-red-600 hover:bg-red-700 text-white py-2 px-6 rounded-full font-medium transition-colors duration-200"
         >
           Déconnexion
