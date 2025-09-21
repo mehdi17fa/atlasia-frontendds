@@ -16,6 +16,7 @@ export default function Favorites() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('all'); // 'all', 'properties', 'packages'
+  const [priceData, setPriceData] = useState({}); // Store real-time prices
 
   useEffect(() => {
     if (user && token && user.role === 'tourist') {
@@ -35,13 +36,65 @@ export default function Favorites() {
       });
       console.log('✅ Favorites response:', response.data);
       console.log('📊 Favorites count:', response.data.favorites?.length || 0);
-      setFavorites(response.data.favorites || []);
+      const favoritesData = response.data.favorites || [];
+      setFavorites(favoritesData);
+      
+      // Fetch real-time prices for each favorite
+      await fetchRealTimePrices(favoritesData);
     } catch (err) {
       console.error('❌ Error fetching favorites:', err);
       console.error('❌ Error response:', err.response?.data);
       setError(`Failed to fetch favorites: ${err.response?.data?.message || err.message}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRealTimePrices = async (favoritesData) => {
+    const pricePromises = favoritesData.map(async (favorite) => {
+      try {
+        if (favorite.itemType === 'property') {
+          // Fetch property price using public endpoint
+          const response = await axios.get(`${API_BASE_URL}/property/public/${favorite.item._id}`);
+          return {
+            id: favorite.item._id,
+            type: 'property',
+            price: response.data.price,
+            pricePerNight: true
+          };
+        } else if (favorite.itemType === 'package') {
+          // Fetch package price using public endpoint
+          const response = await axios.get(`${API_BASE_URL}/packages/${favorite.item._id}`);
+          return {
+            id: favorite.item._id,
+            type: 'package',
+            price: response.data.package?.totalPrice,
+            pricePerNight: false
+          };
+        }
+      } catch (err) {
+        console.error(`❌ Error fetching price for ${favorite.itemType} ${favorite.item._id}:`, err);
+        return {
+          id: favorite.item._id,
+          type: favorite.itemType,
+          price: null,
+          pricePerNight: favorite.itemType === 'property'
+        };
+      }
+    });
+
+    try {
+      const prices = await Promise.all(pricePromises);
+      const priceMap = {};
+      prices.forEach(price => {
+        if (price) {
+          priceMap[price.id] = price;
+        }
+      });
+      setPriceData(priceMap);
+      console.log('✅ Real-time prices fetched:', priceMap);
+    } catch (err) {
+      console.error('❌ Error fetching real-time prices:', err);
     }
   };
 
@@ -70,68 +123,94 @@ export default function Favorites() {
     return fav.itemType === activeTab;
   });
 
-  const PropertyCard = ({ item, favoriteId }) => (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-      <div className="relative">
-        <S3Image
-          src={item.photos?.[0] || item.image}
-          alt={item.title || 'Property'}
-          className="w-full h-48 object-cover"
-          fallbackSrc="/placeholder.jpg"
-        />
-        <button
-          onClick={() => removeFavorite(favoriteId, item._id, 'property')}
-          className="absolute top-3 right-3 p-2 bg-white rounded-full shadow-md hover:scale-110 transition-transform"
-        >
-          <FaHeart className="w-4 h-4 text-red-500" />
-        </button>
-      </div>
-      <div className="p-4" onClick={() => handleItemClick(item, 'property')}>
-        <h3 className="font-semibold text-lg text-gray-900 mb-1">{item.title || 'Untitled Property'}</h3>
-        <p className="text-gray-600 text-sm mb-2">
-          {item.localisation?.city || item.localisation || 'Location not specified'}
-        </p>
-        <p className="font-bold text-green-600">
-          {item.price ? `${item.price} MAD / nuit` : 'Price not available'}
-        </p>
-      </div>
-    </div>
-  );
-
-  const PackageCard = ({ item, favoriteId }) => (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-      <div className="p-4" onClick={() => handleItemClick(item, 'package')}>
-        <div className="flex justify-between items-start mb-3">
-          <div className="flex-1">
-            <h3 className="font-semibold text-lg text-gray-900 mb-1">{item.name || 'Untitled Package'}</h3>
-            <p className="text-gray-600 text-sm mb-2">{item.description || 'No description available'}</p>
-          </div>
+  const PropertyCard = ({ item, favoriteId }) => {
+    const realTimePrice = priceData[item._id];
+    const displayPrice = realTimePrice?.price || item.price;
+    const isRealTime = !!realTimePrice?.price;
+    
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+        <div className="relative">
+          <S3Image
+            src={item.photos?.[0] || item.image}
+            alt={item.title || 'Property'}
+            className="w-full h-48 object-cover"
+            fallbackSrc="/placeholder.jpg"
+          />
           <button
-            onClick={() => removeFavorite(favoriteId, item._id, 'package')}
-            className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors ml-2"
+            onClick={() => removeFavorite(favoriteId, item._id, 'property')}
+            className="absolute top-3 right-3 p-2 bg-white rounded-full shadow-md hover:scale-110 transition-transform"
           >
             <FaHeart className="w-4 h-4 text-red-500" />
           </button>
         </div>
-        
-        {item.property && (
-          <div className="flex items-center text-sm text-gray-600 mb-2">
-            <FaMapMarkerAlt className="w-4 h-4 mr-1" />
-            <span>{item.property.title || 'Associated Property'}</span>
+        <div className="p-4" onClick={() => handleItemClick(item, 'property')}>
+          <h3 className="font-semibold text-lg text-gray-900 mb-1">{item.title || 'Untitled Property'}</h3>
+          <p className="text-gray-600 text-sm mb-2">
+            {item.localisation?.city || item.localisation || 'Location not specified'}
+          </p>
+          <div className="flex items-center justify-between">
+            <p className="font-bold text-green-600">
+              {displayPrice ? `${displayPrice} MAD / nuit` : 'Price not available'}
+            </p>
+            {isRealTime && (
+              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                Live Price
+              </span>
+            )}
           </div>
-        )}
-        
-        <div className="flex justify-between items-center">
-          <span className="font-bold text-green-600">
-            {item.totalPrice ? `${item.totalPrice} MAD` : 'Price not available'}
-          </span>
-          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-            Package
-          </span>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
+
+  const PackageCard = ({ item, favoriteId }) => {
+    const realTimePrice = priceData[item._id];
+    const displayPrice = realTimePrice?.price || item.totalPrice;
+    const isRealTime = !!realTimePrice?.price;
+    
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+        <div className="p-4" onClick={() => handleItemClick(item, 'package')}>
+          <div className="flex justify-between items-start mb-3">
+            <div className="flex-1">
+              <h3 className="font-semibold text-lg text-gray-900 mb-1">{item.name || 'Untitled Package'}</h3>
+              <p className="text-gray-600 text-sm mb-2">{item.description || 'No description available'}</p>
+            </div>
+            <button
+              onClick={() => removeFavorite(favoriteId, item._id, 'package')}
+              className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors ml-2"
+            >
+              <FaHeart className="w-4 h-4 text-red-500" />
+            </button>
+          </div>
+          
+          {item.property && (
+            <div className="flex items-center text-sm text-gray-600 mb-2">
+              <FaMapMarkerAlt className="w-4 h-4 mr-1" />
+              <span>{item.property.title || 'Associated Property'}</span>
+            </div>
+          )}
+          
+          <div className="flex justify-between items-center">
+            <span className="font-bold text-green-600">
+              {displayPrice ? `${displayPrice} MAD` : 'Price not available'}
+            </span>
+            <div className="flex items-center space-x-2">
+              {isRealTime && (
+                <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                  Live Price
+                </span>
+              )}
+              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                Package
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   if (!user || user.role !== 'tourist') {
     return (
@@ -174,8 +253,10 @@ export default function Favorites() {
     <div className="pb-28 px-4 mt-24">
       <SectionTitle title="Ma Liste" />
       
-      {/* Tabs */}
-      <div className="flex space-x-4 mt-6 mb-6">
+      {/* Header with refresh button */}
+      <div className="flex justify-between items-center mt-6 mb-6">
+        {/* Tabs */}
+        <div className="flex space-x-4">
         <button
           onClick={() => setActiveTab('all')}
           className={`px-4 py-2 rounded-lg font-medium transition-colors ${
@@ -205,6 +286,19 @@ export default function Favorites() {
           }`}
         >
           Packages ({favorites.filter(f => f.itemType === 'package').length})
+        </button>
+        </div>
+        
+        {/* Refresh Prices Button */}
+        <button
+          onClick={() => fetchRealTimePrices(favorites)}
+          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+          disabled={loading}
+        >
+          <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span>{loading ? 'Refreshing...' : 'Refresh Prices'}</span>
         </button>
       </div>
 

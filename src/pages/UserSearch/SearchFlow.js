@@ -331,12 +331,14 @@ const SearchModal = ({ isOpen, onClose, onSearch }) => {
 const SearchApp = () => {
   const navigate = useNavigate();
   const [showSearchModal, setShowSearchModal] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const [searchParams, setSearchParams] = useState(null);
 
   const handleSearch = (params) => {
-    // Navigate to search results page with search parameters
-    navigate('/search/results', { 
-      state: { searchParams: params } 
-    });
+    // Set search parameters and show results
+    setSearchParams(params);
+    setShowResults(true);
+    setShowSearchModal(false);
   };
 
   const handleBackToSearch = () => {

@@ -40,11 +40,22 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    console.log("🔄 AuthContext logout called");
+    
+    // Clear state immediately
     setUser(null);
     setToken(null);
+    
+    // Clear all localStorage items
     localStorage.removeItem('user');
-    localStorage.removeItem('accessToken'); // ✅ Changed to accessToken
-    localStorage.removeItem('refreshToken'); // ✅ Also remove refresh token
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    
+    // Clear any other potential auth-related items
+    localStorage.removeItem('token');
+    localStorage.removeItem('authToken');
+    
+    console.log("✅ User logged out, state cleared");
   };
 
   return (
