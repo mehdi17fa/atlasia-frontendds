@@ -35,6 +35,7 @@ import ResetPasswordScreen from './pages/LogIn/ResetPasswordScreen';
 import TestDocumentUpload from './pages/TestDocumentUpload';
 
 import SearchResults from './pages/UserSearch/SearchResults';
+import SearchResultsPage from './pages/UserSearch/SearchResultsPage';
 import PropertySearchFlow from './pages/UserSearch/SearchFlow';
 
 // Property Owner
@@ -184,7 +185,7 @@ function App() {
         </Route>
 
         <Route path="/search" element={<PropertySearchFlow />} />
-        <Route path="/search/results" element={<SearchResults />} />
+        <Route path="/search/results" element={<SearchResultsPage />} />
         
         {/* General / Auth */}
         <Route path="/login" element={<LoginScreen />} />

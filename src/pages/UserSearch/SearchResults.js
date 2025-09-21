@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import S3Image from "../../components/S3Image";
 import ImageCarousel from "../../components/ImageCarousel";
 
 export default function SearchResults({ isOpen, onClose, searchParams, onPropertySelect }) {
+  const navigate = useNavigate();
   const [properties, setProperties] = useState([]);
   const [filters, setFilters] = useState({
     minPrice: "",
@@ -90,7 +92,18 @@ export default function SearchResults({ isOpen, onClose, searchParams, onPropert
       <div className="bg-white w-[90vw] h-[90vh] rounded-2xl overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-xl font-bold">Résultats de recherche</h2>
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              <span className="text-sm font-medium">Retour à l'accueil</span>
+            </button>
+            <h2 className="text-xl font-bold">Résultats de recherche</h2>
+          </div>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-full text-gray-600"

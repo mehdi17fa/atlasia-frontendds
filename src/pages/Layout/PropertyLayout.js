@@ -204,26 +204,26 @@ export default function PropertyLayout({
 
       {/* Image Gallery - One large image and two smaller images */}
       {photos && photos.length > 0 ? (
-        <div className="grid grid-cols-3 gap-2 rounded-2xl overflow-hidden shadow-lg">
+        <div className="grid grid-cols-3 rounded-2xl overflow-hidden shadow-lg" style={{ gap: '20px' }}>
           {/* Large main image - takes 2 columns */}
           <div className="col-span-2 relative">
             <S3Image 
               src={photos[0]} 
               alt={title} 
-              className="w-full h-96 object-cover" 
+              className="w-full h-96 object-cover rounded-lg" 
               fallbackSrc="/villa1.jpg"
             />
           </div>
           
           {/* One or two smaller images stacked on the right */}
-          <div className="col-span-1 flex flex-col gap-2 h-96">
+          <div className="col-span-1 flex flex-col h-96" style={{ gap: '20px' }}>
             {/* First small image */}
             {photos[1] && (
               <div className="relative flex-1">
                 <S3Image 
                   src={photos[1]} 
                   alt={`${title} - Image 2`} 
-                  className="w-full h-full object-cover" 
+                  className="w-full h-full object-cover rounded-lg" 
                   fallbackSrc="/villa1.jpg"
                 />
               </div>
@@ -235,7 +235,7 @@ export default function PropertyLayout({
                 <S3Image 
                   src={photos[2]} 
                   alt={`${title} - Image 3`} 
-                  className="w-full h-full object-cover" 
+                  className="w-full h-full object-cover rounded-lg" 
                   fallbackSrc="/villa1.jpg"
                 />
                 {photos.length > 3 && (
