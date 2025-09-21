@@ -40,8 +40,6 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    console.log("🔄 AuthContext logout called");
-    
     // Clear state immediately
     setUser(null);
     setToken(null);
@@ -54,8 +52,6 @@ export const AuthProvider = ({ children }) => {
     // Clear any other potential auth-related items
     localStorage.removeItem('token');
     localStorage.removeItem('authToken');
-    
-    console.log("✅ User logged out, state cleared");
   };
 
   return (
