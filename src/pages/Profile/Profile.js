@@ -64,18 +64,34 @@ export default function Profile() {
   };
   
   const handleLogoutClick = () => {
+    console.log('🔍 Logout button clicked');
+    console.log('🔍 Current showLogoutConfirm state:', showLogoutConfirm);
+    
+    // Try direct logout first to test if it works
+    if (window.confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+      console.log('🔍 User confirmed logout via window.confirm');
+      handleLogoutConfirm();
+    } else {
+      console.log('🔍 User cancelled logout via window.confirm');
+    }
+    
+    // Also try the modal approach
     setShowLogoutConfirm(true);
+    console.log('🔍 Setting showLogoutConfirm to true');
   };
   
   const handleLogoutConfirm = () => {
+    console.log('🔍 Logout confirmed, clearing user data');
     // Clear user data and tokens
     logout();
     
+    console.log('🔍 Redirecting to home page');
     // Navigate to home page and force reload to ensure clean state
     window.location.href = '/';
   };
   
   const handleLogoutCancel = () => {
+    console.log('🔍 Logout cancelled');
     setShowLogoutConfirm(false);
   };
   
@@ -85,6 +101,11 @@ export default function Profile() {
       setUser(profileData);
     }
   }, [profileData, user, setUser]);
+
+  // Debug showLogoutConfirm state changes
+  React.useEffect(() => {
+    console.log('🔍 showLogoutConfirm state changed to:', showLogoutConfirm);
+  }, [showLogoutConfirm]);
   
   // Refresh profile data when component mounts (e.g., returning from edit profile)
   React.useEffect(() => {
@@ -140,6 +161,9 @@ export default function Profile() {
           confirmButtonColor="bg-red-600 hover:bg-red-700"
           cancelButtonColor="bg-gray-500 hover:bg-gray-600"
         />
+        
+        {/* Debug info */}
+        {console.log('🔍 showLogoutConfirm state:', showLogoutConfirm)}
 
         {/* ADD THE MODAL OVERLAY */}
         {(showLogin || showSignup || showSignupConfirmation || showIdentification) && (
@@ -269,7 +293,11 @@ export default function Profile() {
         </button>
 
         <button
-          onClick={handleLogoutClick}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleLogoutClick();
+          }}
           className="bg-red-600 hover:bg-red-700 text-white py-2 px-6 rounded-full font-medium transition-colors duration-200"
         >
           Déconnexion

@@ -11,12 +11,30 @@ const ConfirmationModal = ({
   confirmButtonColor = "bg-red-600 hover:bg-red-700",
   cancelButtonColor = "bg-gray-500 hover:bg-gray-600"
 }) => {
-  if (!isOpen) return null;
+  console.log('🔍 ConfirmationModal rendered with isOpen:', isOpen);
+  
+  if (!isOpen) {
+    console.log('🔍 ConfirmationModal not rendering because isOpen is false');
+    return null;
+  }
+  
+  console.log('🔍 ConfirmationModal rendering modal');
 
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) {
+      console.log('🔍 ConfirmationModal backdrop clicked, closing modal');
       onClose();
     }
+  };
+
+  const handleConfirm = () => {
+    console.log('🔍 ConfirmationModal confirm button clicked');
+    onConfirm();
+  };
+
+  const handleCancel = () => {
+    console.log('🔍 ConfirmationModal cancel button clicked');
+    onClose();
   };
 
   return (
@@ -46,13 +64,13 @@ const ConfirmationModal = ({
         
         <div className="flex justify-end space-x-3">
           <button
-            onClick={onClose}
+            onClick={handleCancel}
             className={`px-4 py-2 text-white rounded-lg font-medium transition-colors duration-200 ${cancelButtonColor}`}
           >
             {cancelText}
           </button>
           <button
-            onClick={onConfirm}
+            onClick={handleConfirm}
             className={`px-4 py-2 text-white rounded-lg font-medium transition-colors duration-200 ${confirmButtonColor}`}
           >
             {confirmText}

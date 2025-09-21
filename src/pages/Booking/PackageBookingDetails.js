@@ -13,6 +13,7 @@ const PackageBookingDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+
   // Create API instance with proper headers
   const apiCall = async (endpoint, options = {}) => {
     const baseURL = process.env.REACT_APP_API_URL || "http://localhost:4000";
@@ -173,6 +174,7 @@ const PackageBookingDetails = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Chargement des détails de la réservation...</p>
+          <p className="mt-2 text-sm text-gray-500">Booking ID: {bookingId}</p>
         </div>
       </div>
     );
