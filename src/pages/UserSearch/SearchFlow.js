@@ -355,7 +355,7 @@ const SearchApp = () => {
       console.error('Property ID not found:', property);
     }
   };
-
+ 
   if (showResults) {
     // You would import your actual SearchResults component here
     return (
