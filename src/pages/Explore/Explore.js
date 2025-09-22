@@ -62,7 +62,7 @@ export default function Explore() {
 
   if (error) {
     return (
-      <div className="px-4 py-8">
+      <div className="px-4 md:px-20 pt-1">
         <SectionTitle title="Explorer" />
         <div className="text-center py-12">
           <div className="text-6xl mb-4">⚠️</div>
@@ -88,7 +88,7 @@ export default function Explore() {
   };
 
   return (
-    <div className="px-4 py-8 pb-28">
+    <div className="px-4 md:px-20 pt-1 pb-28">
       <SectionTitle title="Explorer" />
       
 

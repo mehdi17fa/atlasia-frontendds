@@ -42,7 +42,7 @@ export default function Restauration() {
   ];
 
   return (
-    <div className="min-h-screen bg-white pb-28">
+    <div className="min-h-screen bg-white pb-28 px-4 md:px-20">
       <RestaurationCardGrid title="Partenaire Atlasia:" listings={partenaires} />
       <RestaurationCardGrid title="Pour vos bon matins:" listings={matins} />
     </div>
