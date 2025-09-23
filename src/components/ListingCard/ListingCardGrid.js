@@ -94,7 +94,20 @@ export default function ListingCardGrid({ listings, onCardClick }) {
                 {/* Price */}
                 <div className="flex items-center space-x-1 leading-tight">
                   <span className="text-sm font-bold text-green-600 leading-tight">
-                    {listing.price ? `${listing.price} MAD` : "Prix sur demande"}
+                    {(() => {
+                      if (!listing.price) return "Prix sur demande";
+                      
+                      // Handle different price formats
+                      if (typeof listing.price === 'number') {
+                        return `${listing.price} MAD`;
+                      } else if (typeof listing.price === 'object') {
+                        // If price is an object, try to get a reasonable value
+                        const priceValue = listing.price.weekdays || listing.price.weekend || listing.price.price || listing.price.pricePerNight;
+                        return priceValue ? `${priceValue} MAD` : "Prix sur demande";
+                      } else {
+                        return `${listing.price} MAD`;
+                      }
+                    })()}
                   </span>
                   <span className="text-sm text-gray-500 leading-tight">pour 2 nuits</span>
                 </div>

@@ -2,6 +2,39 @@ import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import ListingCardGrid from "../../components/ListingCard/ListingCardGrid";
 
+// Helper function to extract price value from different price formats
+const getPriceValue = (property) => {
+  if (!property.price) return 0;
+  
+  if (typeof property.price === 'number') {
+    return property.price;
+  } else if (typeof property.price === 'object') {
+    // If price is an object, try to get a reasonable value
+    return property.price.weekdays || property.price.weekend || property.price.price || property.price.pricePerNight || 0;
+  } else {
+    return parseFloat(property.price) || 0;
+  }
+};
+
+const sortProperties = (properties, sortBy) => {
+  const sorted = [...properties];
+  
+  switch (sortBy) {
+    case 'price-low':
+      return sorted.sort((a, b) => getPriceValue(a) - getPriceValue(b));
+    case 'price-high':
+      return sorted.sort((a, b) => getPriceValue(b) - getPriceValue(a));
+    case 'rating':
+      return sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    case 'newest':
+      return sorted.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    case 'oldest':
+      return sorted.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+    default:
+      return sorted;
+  }
+};
+
 export default function SearchResultsPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -18,6 +51,7 @@ export default function SearchResultsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [sortBy, setSortBy] = useState('relevance');
 
   // Get search parameters from location state or URL params
   const searchParams = useMemo(() => location.state?.searchParams || {}, [location.state?.searchParams]);
@@ -146,7 +180,9 @@ export default function SearchResultsPage() {
         });
       }
       
-      setProperties(properties);
+      // Apply sorting
+      const sortedProperties = sortProperties(properties, sortBy);
+      setProperties(sortedProperties);
       setPagination(data.pagination || { page: 1, pages: 1 });
       
       // Use API equipment data if available, otherwise use a predefined list
@@ -166,7 +202,7 @@ export default function SearchResultsPage() {
     } finally {
       setLoading(false);
     }
-  }, [searchParams, filters, pagination.page]);
+  }, [searchParams, filters, pagination.page, sortBy]);
 
   useEffect(() => {
     fetchProperties();
@@ -186,6 +222,11 @@ export default function SearchResultsPage() {
     }));
     setPagination(prev => ({ ...prev, page: 1 }));
   };
+
+  const handleSortChange = (newSortBy) => {
+    setSortBy(newSortBy);
+  };
+
 
   const handlePageChange = (newPage) => {
     setPagination(prev => ({ ...prev, page: newPage }));
@@ -370,6 +411,23 @@ export default function SearchResultsPage() {
                       </label>
                     ))}
                   </div>
+                </div>
+
+                {/* Sort By */}
+                <div className="mb-6">
+                  <h4 className="font-medium mb-3">Trier par</h4>
+                  <select
+                    value={sortBy}
+                    onChange={e => handleSortChange(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  >
+                    <option value="relevance">Pertinence</option>
+                    <option value="price-low">Prix croissant</option>
+                    <option value="price-high">Prix décroissant</option>
+                    <option value="rating">Note</option>
+                    <option value="newest">Plus récent</option>
+                    <option value="oldest">Plus ancien</option>
+                  </select>
                 </div>
               </div>
 
@@ -606,6 +664,23 @@ export default function SearchResultsPage() {
                   </label>
                 ))}
               </div>
+            </div>
+
+            {/* Sort By */}
+            <div className="mb-6">
+              <h4 className="font-medium mb-3">Trier par</h4>
+              <select
+                value={sortBy}
+                onChange={e => handleSortChange(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              >
+                <option value="relevance">Pertinence</option>
+                <option value="price-low">Prix croissant</option>
+                <option value="price-high">Prix décroissant</option>
+                <option value="rating">Note</option>
+                <option value="newest">Plus récent</option>
+                <option value="oldest">Plus ancien</option>
+              </select>
             </div>
 
             {/* Apply Filters Button */}

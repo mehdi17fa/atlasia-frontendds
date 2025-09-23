@@ -90,7 +90,14 @@ const PropertyCard = ({ property }) => {
 
           {property.price && (
             <div className="text-sm font-medium text-gray-900">
-              {property.price.weekdays || property.price.weekend || 0}€/nuit
+              {(() => {
+                if (typeof property.price === 'number') return `${property.price}€/nuit`;
+                if (typeof property.price === 'object') {
+                  const priceValue = property.price.weekdays || property.price.weekend || property.price.price || property.price.pricePerNight;
+                  return priceValue ? `${priceValue}€/nuit` : 'Prix sur demande';
+                }
+                return `${property.price}€/nuit`;
+              })()}
             </div>
           )}
         </div>

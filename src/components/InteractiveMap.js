@@ -73,7 +73,15 @@ const InteractiveMap = ({ properties = [], onPropertyClick, selectedProperty, cl
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold ${
                         isSelected ? 'bg-red-500' : 'bg-green-500'
                       }`}>
-                        {property.price || '?'}€
+                        {(() => {
+                          if (!property.price) return '?';
+                          if (typeof property.price === 'number') return `${property.price}€`;
+                          if (typeof property.price === 'object') {
+                            const priceValue = property.price.weekdays || property.price.weekend || property.price.price || property.price.pricePerNight;
+                            return priceValue ? `${priceValue}€` : '?';
+                          }
+                          return `${property.price}€`;
+                        })()}
                       </div>
                       <h4 className="font-semibold text-gray-900">{property.title}</h4>
                     </div>
@@ -85,7 +93,17 @@ const InteractiveMap = ({ properties = [], onPropertyClick, selectedProperty, cl
                     <div className="flex items-center space-x-4 text-sm text-gray-600">
                       <span>🛏️ {property.bedrooms || 0} chambres</span>
                       <span>👥 {property.guests || 0} invités</span>
-                      <span className="font-semibold text-green-600">{property.price || '?'}€/nuit</span>
+                      <span className="font-semibold text-green-600">
+                        {(() => {
+                          if (!property.price) return '?€/nuit';
+                          if (typeof property.price === 'number') return `${property.price}€/nuit`;
+                          if (typeof property.price === 'object') {
+                            const priceValue = property.price.weekdays || property.price.weekend || property.price.price || property.price.pricePerNight;
+                            return priceValue ? `${priceValue}€/nuit` : '?€/nuit';
+                          }
+                          return `${property.price}€/nuit`;
+                        })()}
+                      </span>
                     </div>
                   </div>
                   
@@ -137,7 +155,17 @@ const InteractiveMap = ({ properties = [], onPropertyClick, selectedProperty, cl
               <div className="flex items-center space-x-4 text-sm text-gray-600">
                 <span>🛏️ {selectedProperty.bedrooms || 0} chambres</span>
                 <span>👥 {selectedProperty.guests || 0} invités</span>
-                <span className="font-semibold text-green-600">{selectedProperty.price || '?'}€/nuit</span>
+                <span className="font-semibold text-green-600">
+                  {(() => {
+                    if (!selectedProperty.price) return '?€/nuit';
+                    if (typeof selectedProperty.price === 'number') return `${selectedProperty.price}€/nuit`;
+                    if (typeof selectedProperty.price === 'object') {
+                      const priceValue = selectedProperty.price.weekdays || selectedProperty.price.weekend || selectedProperty.price.price || selectedProperty.price.pricePerNight;
+                      return priceValue ? `${priceValue}€/nuit` : '?€/nuit';
+                    }
+                    return `${selectedProperty.price}€/nuit`;
+                  })()}
+                </span>
               </div>
             </div>
             <button

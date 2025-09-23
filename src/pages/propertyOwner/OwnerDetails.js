@@ -220,7 +220,15 @@ export default function OwnerDetails() {
                       </div>
                       <div className="text-right">
                         <p className="font-semibold text-green-600">
-                          {property.price ? `${property.price} MAD` : 'Prix sur demande'}
+                          {(() => {
+                            if (!property.price) return 'Prix sur demande';
+                            if (typeof property.price === 'number') return `${property.price} MAD`;
+                            if (typeof property.price === 'object') {
+                              const priceValue = property.price.weekdays || property.price.weekend || property.price.price || property.price.pricePerNight;
+                              return priceValue ? `${priceValue} MAD` : 'Prix sur demande';
+                            }
+                            return `${property.price} MAD`;
+                          })()}
                         </p>
                         <p className="text-xs text-gray-500">par nuit</p>
                       </div>
