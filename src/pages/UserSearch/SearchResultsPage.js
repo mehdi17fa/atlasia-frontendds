@@ -345,7 +345,7 @@ export default function SearchResultsPage() {
         <div className="hidden md:block px-4">
           <div className="max-w-7xl mx-auto">
             <div className="flex gap-6">
-              <div className="w-72 bg-white rounded-lg shadow-md border border-gray-200 p-6 h-fit">
+              <div className="w-72 bg-white rounded-lg shadow-md border border-gray-200 p-6 h-fit sticky top-20 z-10">
                 <h3 className="text-lg font-semibold mb-4">Filtres</h3>
                 
                 {/* Price filter */}
@@ -415,19 +415,27 @@ export default function SearchResultsPage() {
 
                 {/* Sort By */}
                 <div className="mb-6">
-                  <h4 className="font-medium mb-3">Trier par</h4>
-                  <select
-                    value={sortBy}
-                    onChange={e => handleSortChange(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  >
-                    <option value="relevance">Pertinence</option>
-                    <option value="price-low">Prix croissant</option>
-                    <option value="price-high">Prix décroissant</option>
-                    <option value="rating">Note</option>
-                    <option value="newest">Plus récent</option>
-                    <option value="oldest">Plus ancien</option>
-                  </select>
+                  <h4 className="font-medium mb-3 text-gray-700">Trier par</h4>
+                  <div className="relative">
+                    <select
+                      value={sortBy}
+                      onChange={e => handleSortChange(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm bg-white shadow-sm hover:shadow-md transition-all duration-200 focus:ring-2 focus:ring-green-500 focus:border-green-500 appearance-none cursor-pointer"
+                    >
+                      <option value="relevance">Pertinence</option>
+                      <option value="price-low">Prix croissant</option>
+                      <option value="price-high">Prix décroissant</option>
+                      <option value="rating">Note</option>
+                      <option value="newest">Plus récent</option>
+                      <option value="oldest">Plus ancien</option>
+                    </select>
+                    {/* Custom dropdown arrow */}
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -668,19 +676,27 @@ export default function SearchResultsPage() {
 
             {/* Sort By */}
             <div className="mb-6">
-              <h4 className="font-medium mb-3">Trier par</h4>
-              <select
-                value={sortBy}
-                onChange={e => handleSortChange(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              >
-                <option value="relevance">Pertinence</option>
-                <option value="price-low">Prix croissant</option>
-                <option value="price-high">Prix décroissant</option>
-                <option value="rating">Note</option>
-                <option value="newest">Plus récent</option>
-                <option value="oldest">Plus ancien</option>
-              </select>
+              <h4 className="font-medium mb-3 text-gray-700">Trier par</h4>
+              <div className="relative">
+                <select
+                  value={sortBy}
+                  onChange={e => handleSortChange(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm bg-white shadow-sm hover:shadow-md transition-all duration-200 focus:ring-2 focus:ring-green-500 focus:border-green-500 appearance-none cursor-pointer"
+                >
+                  <option value="relevance">Pertinence</option>
+                  <option value="price-low">Prix croissant</option>
+                  <option value="price-high">Prix décroissant</option>
+                  <option value="rating">Note</option>
+                  <option value="newest">Plus récent</option>
+                  <option value="oldest">Plus ancien</option>
+                </select>
+                {/* Custom dropdown arrow */}
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
             </div>
 
             {/* Apply Filters Button */}
