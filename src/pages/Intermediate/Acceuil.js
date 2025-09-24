@@ -470,10 +470,10 @@ export default function PartnerDashboard() {
 
   const stats = {
     totalProperties: properties.length,
-    publishedProperties: properties.filter(p => p.status === 'published').length,
+    publishedProperties: properties.filter(p => p && p.status === 'published').length,
     totalPackages: packages.length,
-    publishedPackages: packages.filter(p => p.status === 'published').length,
-    draftPackages: packages.filter(p => p.status === 'draft').length,
+    publishedPackages: packages.filter(p => p && p.status === 'published').length,
+    draftPackages: packages.filter(p => p && p.status === 'draft').length,
   };
 
   const retryFetch = () => {
@@ -627,7 +627,7 @@ export default function PartnerDashboard() {
           </div>
         ) : properties.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {properties.map((property) => (
+            {properties.filter(property => property && property._id).map((property) => (
               <PropertyCard key={property._id} property={property} />
             ))}
           </div>
@@ -677,7 +677,7 @@ export default function PartnerDashboard() {
           </div>
         ) : packages.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {packages.map((pkg) => (
+            {packages.filter(pkg => pkg && pkg._id).map((pkg) => (
               <PackageCard key={pkg._id} package={pkg} />
             ))}
           </div>
@@ -712,7 +712,7 @@ export default function PartnerDashboard() {
           </div>
         ) : packageBookings.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {packageBookings.map((booking) => (
+            {packageBookings.filter(booking => booking && booking._id).map((booking) => (
               <PackageBookingCard 
                 key={booking._id} 
                 booking={booking} 

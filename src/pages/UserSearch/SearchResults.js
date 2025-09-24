@@ -190,7 +190,7 @@ export default function SearchResults({ isOpen, onClose, searchParams, onPropert
                 {properties.map(property => (
                   <div
                     key={property._id}
-                    onClick={() => onPropertySelect(property)}
+                    onClick={() => onPropertySelect(property._id)}
                     className="bg-white rounded-xl shadow hover:shadow-lg transition cursor-pointer overflow-hidden"
                   >
                     {property.photos && property.photos.length > 0 ? (

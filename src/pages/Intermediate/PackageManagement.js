@@ -213,7 +213,7 @@ export default function PackageManagement() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Publiés</p>
                 <p className="text-2xl font-semibold text-gray-900">
-                  {packages.filter(pkg => pkg.status === 'published').length}
+                  {packages.filter(pkg => pkg && pkg.status === 'published').length}
                 </p>
               </div>
             </div>
@@ -227,7 +227,7 @@ export default function PackageManagement() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Brouillons</p>
                 <p className="text-2xl font-semibold text-gray-900">
-                  {packages.filter(pkg => pkg.status === 'draft').length}
+                  {packages.filter(pkg => pkg && pkg.status === 'draft').length}
                 </p>
               </div>
             </div>

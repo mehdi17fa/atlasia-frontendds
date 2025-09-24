@@ -42,8 +42,8 @@ export const useFavorites = () => {
         headers: { Authorization: `Bearer ${authToken}` }
       });
       console.log('✅ Favorites fetched successfully:', response.data);
-      setFavorites(response.data.favorites.map(fav => fav.item._id));
-      console.log('📝 Favorites state updated:', response.data.favorites.map(fav => fav.item._id));
+      setFavorites(response.data.favorites.filter(fav => fav && fav.item && fav.item._id).map(fav => fav.item._id));
+      console.log('📝 Favorites state updated:', response.data.favorites.filter(fav => fav && fav.item && fav.item._id).map(fav => fav.item._id));
     } catch (err) {
       console.error('❌ Error fetching favorites:', err);
       console.error('❌ Error response:', err.response?.data);

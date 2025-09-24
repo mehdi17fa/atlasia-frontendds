@@ -318,8 +318,8 @@ export default function Packages() {
             <h3 className="font-semibold text-blue-900 mb-2">Debug Info:</h3>
             <p className="text-sm text-blue-700">
               Total packages: {packages.length} | 
-              Individual: {packages.filter(p => p.type === 'individual').length} | 
-              Property: {packages.filter(p => p.type === 'property').length} | 
+              Individual: {packages.filter(p => p && p.type === 'individual').length} | 
+              Property: {packages.filter(p => p && p.type === 'property').length} | 
               Filter: {filter}
             </p>
           </div>

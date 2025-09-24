@@ -60,8 +60,8 @@ export default function MyProperties() {
         console.log("🏠 Fetched properties:", properties.length);
         console.log("🔍 First property sample:", properties[0]);
 
-        const draftProps = properties.filter((p) => p.status === "draft");
-        const publishedProps = properties.filter((p) => p.status === "published");
+        const draftProps = properties.filter((p) => p && p.status === "draft");
+        const publishedProps = properties.filter((p) => p && p.status === "published");
         
         console.log("📝 Draft properties:", draftProps.length);
         console.log("✅ Published properties:", publishedProps.length);
