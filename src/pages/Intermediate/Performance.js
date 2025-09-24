@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaStar, FaHome, FaCalendarAlt, FaDollarSign, FaChartLine } from 'react-icons/fa';
-import { AuthContext } from '../../contexts/AuthContext';
+import { AuthContext } from '../../context/AuthContext';
 import axios from 'axios';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:4000';

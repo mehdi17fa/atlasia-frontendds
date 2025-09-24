@@ -74,6 +74,8 @@ import CohostingExplore from './pages/Explore/CohostingExplore';
 import CoHostPropertyPreview from './pages/Intermediate/CoHostPropertyPreview'; 
 import PartnerCohostingManagement from './pages/Intermediate/PartnerCohostingManagement';
 import PackageCreationFlow from './pages/Intermediate/PackageCreationFlow';
+import PackageManagement from './pages/Intermediate/PackageManagement';
+import EditPackage from './pages/Intermediate/EditPackage';
 import PackageBooking from './pages/Booking/PackageBooking';
 
 // Inbox / Chat
@@ -260,6 +262,10 @@ function App() {
         <Route path='/performance' element={<Performance />} />
         <Route path="/data" element={<DocumentUpload />} />
         <Route path="/acceuill" element={<HomeIntermédiaire />} />
+        
+        {/* Package Management */}
+        <Route path="/package-management" element={<PackageManagement />} />
+        <Route path="/edit-package/:packageId" element={<EditPackage />} />
 
       </Routes>
 
