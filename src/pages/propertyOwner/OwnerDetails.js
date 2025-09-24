@@ -21,14 +21,27 @@ export default function OwnerDetails() {
       try {
         console.log("🔍 Fetching owner with ID:", id);
 
+        // Get authentication token
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+          console.log("❌ No access token found");
+          setError("Veuillez vous connecter pour voir les détails de l'hôte");
+          setLoading(false);
+          return;
+        }
+
+        const headers = {
+          Authorization: `Bearer ${token}`
+        };
+
         // Fetch owner data
-        const ownerRes = await axios.get(`${API_BASE}/api/auth/user/${id}`);
+        const ownerRes = await axios.get(`${API_BASE}/api/auth/user/${id}`, { headers });
         console.log("👤 Owner data received:", ownerRes.data);
         setOwner(ownerRes.data.user);
 
         // Fetch owner's properties
         console.log("🏠 Fetching properties for owner...");
-        const propertiesRes = await axios.get(`${API_BASE}/api/property/owner/${id}`);
+        const propertiesRes = await axios.get(`${API_BASE}/api/property/owner/${id}`, { headers });
         console.log("🏠 Properties received:", propertiesRes.data);
         setProperties(propertiesRes.data.properties || []);
 
@@ -37,7 +50,11 @@ export default function OwnerDetails() {
         console.error("Error fetching owner or properties:", err);
         console.error("Error response:", err.response?.data);
 
-        if (err.response?.status === 404) setError("Hôte introuvable");
+        if (err.response?.status === 401) {
+          setError("Session expirée. Veuillez vous reconnecter.");
+          // Optionally redirect to login
+          navigate('/login');
+        } else if (err.response?.status === 404) setError("Hôte introuvable");
         else if (err.response?.status === 400) setError("ID d'hôte invalide");
         else setError("Erreur lors du chargement des informations de l'hôte");
       } finally {

@@ -9,7 +9,7 @@ const useReviews = () => {
   const [reviewableBookings, setReviewableBookings] = useState([]);
   const { user, token } = useContext(AuthContext);
 
-  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 
   // Get reviews for a property
   const getPropertyReviews = async (propertyId, page = 1, limit = 10, sort = 'newest') => {
@@ -19,7 +19,7 @@ const useReviews = () => {
       
       console.log('📖 Fetching reviews for property:', propertyId);
       
-      const response = await axios.get(`${API_BASE_URL}/reviews/property/${propertyId}`, {
+      const response = await axios.get(`${API_BASE_URL}/api/reviews/property/${propertyId}`, {
         params: { page, limit, sort }
       });
 
@@ -48,7 +48,7 @@ const useReviews = () => {
       
       console.log('📋 Fetching reviewable bookings');
       
-      const response = await axios.get(`${API_BASE_URL}/reviews/reviewable`, {
+      const response = await axios.get(`${API_BASE_URL}/api/reviews/reviewable`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -90,7 +90,7 @@ const useReviews = () => {
       
       console.log('📝 Submitting review:', reviewData);
       
-      const response = await axios.post(`${API_BASE_URL}/reviews`, reviewData, {
+      const response = await axios.post(`${API_BASE_URL}/api/reviews`, reviewData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -124,7 +124,7 @@ const useReviews = () => {
       
       console.log('✏️ Updating review:', reviewId, reviewData);
       
-      const response = await axios.patch(`${API_BASE_URL}/reviews/${reviewId}`, reviewData, {
+      const response = await axios.patch(`${API_BASE_URL}/api/reviews/${reviewId}`, reviewData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -154,7 +154,7 @@ const useReviews = () => {
       
       console.log('🗑️ Deleting review:', reviewId);
       
-      const response = await axios.delete(`${API_BASE_URL}/reviews/${reviewId}`, {
+      const response = await axios.delete(`${API_BASE_URL}/api/reviews/${reviewId}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }

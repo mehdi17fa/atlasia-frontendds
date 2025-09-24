@@ -50,7 +50,12 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
       if (response.ok) {
         const data = await response.json();
         console.log('✅ Properties data received:', data);
-        setAvailableProperties(data.properties || []);
+        // Filter out any null/undefined properties and ensure they have _id
+        const validProperties = (data.properties || []).filter(property => 
+          property && property._id && typeof property._id === 'string'
+        );
+        console.log('✅ Valid properties after filtering:', validProperties);
+        setAvailableProperties(validProperties);
       } else {
         const errorText = await response.text();
         console.error('❌ Error response:', response.status, errorText);
@@ -281,102 +286,171 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
   };
 
   const steps = [
-    'Choose Property',
-    'Select Items',
-    'Set Dates',
-    'Basic Info',
-    'Set Price',
-    'Review & Publish'
+    'Choisir Propriété',
+    'Sélectionner Éléments',
+    'Définir Dates',
+    'Informations De Base',
+    'Définir Prix',
+    'Réviser & Publier'
   ];
 
   return (
-    <div className="max-w-4xl mx-auto p-6 pb-28 bg-white rounded-lg shadow-lg">
-      {/* Progress Bar */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          {steps.map((step, index) => (
-            <div 
-              key={index} 
-              className="flex flex-col items-center cursor-pointer"
-              onClick={() => handleStepClick(index + 1)}
-            >
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
-                index + 1 <= currentStep 
-                  ? 'bg-green-500 text-white hover:bg-green-600' 
-                  : 'bg-gray-200 text-gray-600 cursor-not-allowed'
-              }`}>
-                {index + 1}
-              </div>
-              <span className="text-xs mt-2 text-gray-600">{step}</span>
-            </div>
-          ))}
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-2">
-          <div 
-            className="bg-green-500 h-2 rounded-full transition-all duration-300"
-            style={{ width: `${(currentStep / steps.length) * 100}%` }}
-          ></div>
-        </div>
-      </div>
-
-      {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
-          <p className="text-red-600 text-sm">{error}</p>
-        </div>
-      )}
-
-      {/* Step Content */}
-      <div className="min-h-96">
-        {/* Step 1: Choose Property */}
-        {currentStep === 1 && (
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Choose Property</h2>
-            {loadingProperties ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto"></div>
-                <p className="text-gray-600 mt-4">Loading your properties...</p>
-              </div>
-            ) : availableProperties.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-600">You don't have any properties to create packages for.</p>
-                <p className="text-sm text-gray-500 mt-2">You need to be accepted as a co-host first.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {availableProperties.map((property) => (
-                  <div 
-                    key={property._id}
-                    className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                      formData.property === property._id
-                        ? 'border-green-500 bg-green-50'
-                        : 'border-gray-200 hover:border-green-300'
-                    }`}
-                    onClick={() => handleInputChange('property', property._id)}
-                  >
-                    {property.photos && property.photos.length > 0 && (
-                      <S3Image 
-                        src={property.photos[0]} 
-                        alt={property.title}
-                        className="w-full h-32 object-cover rounded-md mb-3"
-                        fallbackSrc="/placeholder.jpg"
-                      />
-                    )}
-                    <h3 className="font-semibold text-gray-900">{property.title}</h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {property.localisation?.city || 'Location not specified'}
-                    </p>
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-28">
+        {/* Mobile-Optimized Progress Bar */}
+        <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 mb-6">
+          <div className="mb-6">
+            {/* Mobile Progress Steps - No scrolling, compact design */}
+            <div className="flex items-center justify-between mb-4">
+              {steps.map((step, index) => (
+                <div 
+                  key={index} 
+                  className="flex flex-col items-center cursor-pointer flex-1 px-1"
+                  onClick={() => handleStepClick(index + 1)}
+                >
+                  <div className={`w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold transition-all duration-300 shadow-md ${
+                    index + 1 <= currentStep 
+                      ? 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 transform hover:scale-105' 
+                      : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  }`}>
+                    {index + 1}
                   </div>
-                ))}
+                  <span className="text-xs mt-1 sm:mt-2 text-gray-600 font-medium text-center leading-tight hidden sm:block">
+                    {step}
+                  </span>
+                  {/* Mobile: Show French abbreviated step names */}
+                  <span className="text-xs mt-1 text-gray-600 font-medium text-center leading-tight sm:hidden">
+                    {(() => {
+                      const frenchSteps = ['Propriété', 'Éléments', 'Dates', 'Infos', 'Prix', 'Publier'];
+                      return frenchSteps[index] || step.split(' ')[0];
+                    })()}
+                  </span>
+                </div>
+              ))}
+            </div>
+            
+            {/* Enhanced Progress Bar */}
+            <div className="relative w-full bg-gray-200 rounded-full h-3 shadow-inner">
+              <div 
+                className="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full transition-all duration-500 ease-out shadow-lg"
+                style={{ width: `${(currentStep / steps.length) * 100}%` }}
+              >
+                <div className="absolute right-0 top-0 w-3 h-3 bg-white rounded-full shadow-md transform translate-x-1 -translate-y-0.5"></div>
               </div>
-            )}
+            </div>
+            
+            {/* Progress Text */}
+            <div className="text-center mt-3">
+              <span className="text-sm font-medium text-gray-600">
+                Step {currentStep} of {steps.length}
+              </span>
+              {/* Mobile: Show current step name */}
+              <div className="mt-1 sm:hidden">
+                <span className="text-sm font-semibold text-gray-800">
+                  {steps[currentStep - 1]}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Enhanced Error Display */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-400 rounded-lg shadow-sm">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-red-800 text-sm font-medium">{error}</p>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Step 2: Select Items */}
-        {currentStep === 2 && (
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Select Items</h2>
-            <p className="text-gray-600 mb-6">Add restaurants, activities, or services to your package (at least one required)</p>
+        {/* Step Content - Enhanced Mobile Layout */}
+        <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 min-h-96">
+          {/* Step 1: Choose Property - Enhanced Mobile Design */}
+          {currentStep === 1 && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Choisir Propriété</h2>
+                <p className="text-gray-600">Sélectionnez la propriété pour votre package</p>
+              </div>
+              
+              {loadingProperties ? (
+                <div className="text-center py-12">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
+                  </div>
+                  <p className="text-gray-600 font-medium">Loading your properties...</p>
+                  <p className="text-sm text-gray-500 mt-1">Please wait while we fetch your available properties</p>
+                </div>
+              ) : availableProperties.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </div>
+                  <p className="text-gray-600 font-medium">No properties available</p>
+                  <p className="text-sm text-gray-500 mt-2">You need to be accepted as a co-host first to create packages.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                  {availableProperties.filter(property => property && property._id).map((property) => (
+                    <div 
+                      key={property._id}
+                      className={`border-2 rounded-xl p-4 cursor-pointer transition-all duration-300 transform hover:scale-105 hover:shadow-lg ${
+                        formData.property === property._id
+                          ? 'border-green-500 bg-green-50 shadow-lg scale-105'
+                          : 'border-gray-200 hover:border-green-300 bg-white'
+                      }`}
+                      onClick={() => handleInputChange('property', property._id)}
+                    >
+                      {property.photos && property.photos.length > 0 && (
+                        <S3Image 
+                          src={property.photos[0]} 
+                          alt={property.title}
+                          className="w-full h-40 sm:h-32 object-cover rounded-lg mb-4 shadow-sm"
+                          fallbackSrc="/placeholder.jpg"
+                        />
+                      )}
+                      <div className="space-y-2">
+                        <h3 className="font-semibold text-gray-900 text-lg">{property.title}</h3>
+                        <div className="flex items-center text-sm text-gray-600">
+                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          {property.localisation?.city || 'Location not specified'}
+                        </div>
+                        {formData.property === property._id && (
+                          <div className="flex items-center text-green-600 text-sm font-medium">
+                            <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                            Selected
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Step 2: Select Items - Enhanced Mobile Design */}
+          {currentStep === 2 && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Sélectionner Éléments</h2>
+                <p className="text-gray-600">Ajoutez des restaurants, activités ou services à votre package</p>
+                <p className="text-sm text-gray-500 mt-1">Au moins un élément est requis</p>
+              </div>
             
             <div className="space-y-8">
               {/* Existing Items */}
@@ -409,158 +483,214 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
                 onEditItem={editItem}
               />
             </div>
-          </div>
-        )}
-
-        {/* Step 3: Set Dates */}
-        {currentStep === 3 && (
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Set Package Dates</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
-                <input
-                  type="date"
-                  value={formData.startDate}
-                  onChange={(e) => handleInputChange('startDate', e.target.value)}
-                  min={new Date().toISOString().split('T')[0]}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
-                <input
-                  type="date"
-                  value={formData.endDate}
-                  onChange={(e) => handleInputChange('endDate', e.target.value)}
-                  min={formData.startDate || new Date().toISOString().split('T')[0]}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Step 4: Basic Info */}
-        {currentStep === 4 && (
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Package Information</h2>
+          {/* Step 3: Set Dates - Enhanced Mobile Design */}
+          {currentStep === 3 && (
             <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Package Name</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  placeholder="Enter package name"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
+              <div className="text-center">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Définir Dates</h2>
+                <p className="text-gray-600">Choisissez la période de disponibilité pour votre package</p>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
-                  rows="4"
-                  placeholder="Describe your package..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                ></textarea>
+              
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-700">Start Date</label>
+                    <input
+                      type="date"
+                      value={formData.startDate}
+                      onChange={(e) => handleInputChange('startDate', e.target.value)}
+                      min={new Date().toISOString().split('T')[0]}
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 text-gray-900"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-700">End Date</label>
+                    <input
+                      type="date"
+                      value={formData.endDate}
+                      onChange={(e) => handleInputChange('endDate', e.target.value)}
+                      min={formData.startDate || new Date().toISOString().split('T')[0]}
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 text-gray-900"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+          {/* Step 4: Basic Info - Enhanced Mobile Design */}
+          {currentStep === 4 && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Informations De Base</h2>
+                <p className="text-gray-600">Fournissez les détails de votre package</p>
+              </div>
+              
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">Package Name</label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    placeholder="Enter package name"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 text-gray-900"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">Description</label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => handleInputChange('description', e.target.value)}
+                    rows="4"
+                    placeholder="Describe your package..."
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 text-gray-900 resize-none"
+                  ></textarea>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Step 5: Set Price */}
-        {currentStep === 5 && (
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Set Package Price</h2>
-            <div className="max-w-md">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Total Price (MAD)</label>
-              <input
-                type="number"
-                value={formData.totalPrice}
-                onChange={(e) => handleInputChange('totalPrice', e.target.value)}
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              />
+          {/* Step 5: Set Price - Enhanced Mobile Design */}
+          {currentStep === 5 && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Définir Prix</h2>
+                <p className="text-gray-600">Définissez le prix total pour votre package</p>
+              </div>
+              
+              <div className="max-w-md mx-auto">
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">Total Price (MAD)</label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      value={formData.totalPrice}
+                      onChange={(e) => handleInputChange('totalPrice', e.target.value)}
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                      className="w-full px-4 py-3 pl-8 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 text-gray-900 text-lg"
+                    />
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">MAD</span>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Step 6: Review */}
-        {currentStep === 6 && (
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Review & Publish</h2>
-            <PackagePreview formData={formData} availableProperties={availableProperties} />
-          </div>
-        )}
-      </div>
-
-      {/* Navigation Buttons */}
-      <div className="flex justify-between mt-8">
-        <div className="flex space-x-2">
-          {currentStep > 1 && (
-            <>
-              <button
-                onClick={() => handleStepClick(1)}
-                className="px-3 py-2 text-sm text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-                disabled={isLoading}
-              >
-                First
-              </button>
-              <button
-                onClick={() => handleStepClick(currentStep - 1)}
-                className="px-4 py-2 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-                disabled={isLoading}
-              >
-                Back
-              </button>
-            </>
+          {/* Step 6: Review - Enhanced Mobile Design */}
+          {currentStep === 6 && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Réviser & Publier</h2>
+                <p className="text-gray-600">Révisez les détails de votre package avant de publier</p>
+              </div>
+              
+              <PackagePreview formData={formData} availableProperties={availableProperties} />
+            </div>
           )}
         </div>
 
-        <div className="flex space-x-3">
-          {currentStep < 6 ? (
-            <>
-              <button
-                onClick={handleSaveDraft}
-                className="px-4 py-2 text-green-600 bg-green-100 rounded-md hover:bg-green-200 transition-colors disabled:opacity-50"
-                disabled={isLoading}
-              >
-                {isLoading ? 'Saving...' : 'Save Draft'}
-              </button>
-              <button
-                onClick={handleNext}
-                className={`px-4 py-2 text-white rounded-md transition-colors ${
-                  validateStep(currentStep)
-                    ? 'bg-green-500 hover:bg-green-600'
-                    : 'bg-gray-300 cursor-not-allowed'
-                }`}
-                disabled={!validateStep(currentStep) || isLoading}
-              >
-                Next
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={handleSaveDraft}
-                className="px-4 py-2 text-green-600 bg-green-100 rounded-md hover:bg-green-200 transition-colors disabled:opacity-50"
-                disabled={isLoading}
-              >
-                {isLoading ? 'Saving...' : 'Save as Draft'}
-              </button>
-              <button
-                onClick={handlePublish}
-                className="px-6 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors disabled:opacity-50"
-                disabled={isLoading}
-              >
-                {isLoading ? 'Publishing...' : 'Publish Package'}
-              </button>
-            </>
-          )}
+        {/* Enhanced Mobile Navigation Buttons */}
+        <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 mt-6">
+          <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 sm:space-x-4">
+            {/* Left Side - Back Navigation */}
+            <div className="flex space-x-2 w-full sm:w-auto">
+              {currentStep > 1 && (
+                <>
+                  <button
+                    onClick={() => handleStepClick(1)}
+                    className="flex-1 sm:flex-none px-4 py-3 text-sm font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all duration-200 disabled:opacity-50"
+                    disabled={isLoading}
+                  >
+                    <div className="flex items-center justify-center">
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                      </svg>
+                      First
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => handleStepClick(currentStep - 1)}
+                    className="flex-1 sm:flex-none px-6 py-3 font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all duration-200 disabled:opacity-50"
+                    disabled={isLoading}
+                  >
+                    <div className="flex items-center justify-center">
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                      Back
+                    </div>
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Right Side - Action Buttons */}
+            <div className="flex space-x-3 w-full sm:w-auto">
+              {currentStep < 6 ? (
+                <>
+                  <button
+                    onClick={handleSaveDraft}
+                    className="flex-1 sm:flex-none px-4 py-3 font-medium text-green-600 bg-green-100 rounded-xl hover:bg-green-200 transition-all duration-200 disabled:opacity-50"
+                    disabled={isLoading}
+                  >
+                    <div className="flex items-center justify-center">
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                      </svg>
+                      {isLoading ? 'Saving...' : 'Save Draft'}
+                    </div>
+                  </button>
+                  <button
+                    onClick={handleNext}
+                    className={`flex-1 sm:flex-none px-6 py-3 font-semibold text-white rounded-xl transition-all duration-200 ${
+                      validateStep(currentStep)
+                        ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-lg hover:shadow-xl transform hover:scale-105'
+                        : 'bg-gray-300 cursor-not-allowed'
+                    }`}
+                    disabled={!validateStep(currentStep) || isLoading}
+                  >
+                    <div className="flex items-center justify-center">
+                      Next
+                      <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={handleSaveDraft}
+                    className="flex-1 sm:flex-none px-4 py-3 font-medium text-green-600 bg-green-100 rounded-xl hover:bg-green-200 transition-all duration-200 disabled:opacity-50"
+                    disabled={isLoading}
+                  >
+                    <div className="flex items-center justify-center">
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                      </svg>
+                      {isLoading ? 'Saving...' : 'Save as Draft'}
+                    </div>
+                  </button>
+                  <button
+                    onClick={handlePublish}
+                    className="flex-1 sm:flex-none px-6 py-3 font-semibold text-white bg-gradient-to-r from-green-500 to-green-600 rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50"
+                    disabled={isLoading}
+                  >
+                    <div className="flex items-center justify-center">
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                      </svg>
+                      {isLoading ? 'Publishing...' : 'Publish Package'}
+                    </div>
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -597,37 +727,40 @@ const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditIt
   };
 
   return (
-    <div className="border rounded-lg p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+    <div className="border-2 border-gray-200 rounded-xl p-4 sm:p-6 bg-gray-50">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 space-y-2 sm:space-y-0">
+        <h3 className="text-lg font-bold text-gray-900">{title}</h3>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
-          className="text-green-500 hover:text-green-600 font-medium"
+          className="flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all duration-200 font-medium"
         >
-          + Add {title.slice(0, -1)}
+          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Add {title.slice(0, -1)}
         </button>
       </div>
 
       {/* Existing Items */}
       {items.length > 0 && (
-        <div className="space-y-3 mb-4">
+        <div className="space-y-4 mb-6">
           {items.map((item, index) => (
-            <div key={index} className="bg-gray-50 p-3 rounded-md">
+            <div key={index} className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
               {editingIndex === index ? (
                 // Edit Mode
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <input
                     type="text"
                     placeholder="Name"
                     value={editingItem.name}
                     onChange={(e) => setEditingItem({...editingItem, name: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
                   />
                   <textarea
                     placeholder="Description"
                     value={editingItem.description}
                     onChange={(e) => setEditingItem({...editingItem, description: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 resize-none"
                     rows="2"
                   ></textarea>
                   <input
@@ -635,7 +768,7 @@ const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditIt
                     placeholder="Price (MAD)"
                     value={editingItem.price}
                     onChange={(e) => setEditingItem({...editingItem, price: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
                     min="0"
                     step="0.01"
                   />
@@ -647,17 +780,17 @@ const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditIt
                       className="w-full"
                     />
                   </div>
-                  <div className="flex space-x-2">
+                  <div className="flex space-x-3">
                     <button
                       onClick={saveEdit}
-                      className="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 text-sm disabled:opacity-50"
+                      className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all duration-200 font-medium disabled:opacity-50"
                       disabled={!editingItem.name || !editingItem.price}
                     >
-                      Save
+                      Save Changes
                     </button>
                     <button
                       onClick={cancelEditing}
-                      className="px-3 py-1 text-gray-600 bg-gray-200 rounded-md hover:bg-gray-300 text-sm"
+                      className="px-4 py-2 text-gray-600 bg-gray-200 rounded-lg hover:bg-gray-300 transition-all duration-200 font-medium"
                     >
                       Cancel
                     </button>
@@ -686,13 +819,13 @@ const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditIt
                   <div className="flex space-x-2 ml-4">
                     <button
                       onClick={() => startEditing(index, item)}
-                      className="text-blue-500 hover:text-blue-600 text-sm font-medium"
+                      className="px-3 py-1 text-blue-600 bg-blue-100 rounded-lg hover:bg-blue-200 transition-all duration-200 text-sm font-medium"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => onRemoveItem(category, index)}
-                      className="text-red-500 hover:text-red-600 text-sm font-medium"
+                      className="px-3 py-1 text-red-600 bg-red-100 rounded-lg hover:bg-red-200 transition-all duration-200 text-sm font-medium"
                     >
                       Remove
                     </button>
@@ -706,19 +839,19 @@ const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditIt
 
       {/* Add Form */}
       {showAddForm && (
-        <div className="space-y-3 border-t pt-4">
+        <div className="space-y-4 border-t border-gray-300 pt-6 bg-white rounded-xl p-4">
           <input
             type="text"
             placeholder="Name"
             value={newItem.name}
             onChange={(e) => setNewItem({...newItem, name: e.target.value})}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
           />
           <textarea
             placeholder="Description"
             value={newItem.description}
             onChange={(e) => setNewItem({...newItem, description: e.target.value})}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 resize-none"
             rows="2"
           ></textarea>
           <input
@@ -726,29 +859,29 @@ const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditIt
             placeholder="Price (MAD)"
             value={newItem.price}
             onChange={(e) => setNewItem({...newItem, price: e.target.value})}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
             min="0"
             step="0.01"
           />
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Image (Optional)</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Image (Optional)</label>
             <S3ImageUpload
               onUpload={(url) => setNewItem({...newItem, thumbnail: url})}
               currentImage={newItem.thumbnail}
               className="w-full"
             />
           </div>
-          <div className="flex space-x-2">
+          <div className="flex space-x-3">
             <button
               onClick={handleAdd}
-              className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:opacity-50"
+              className="px-6 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-all duration-200 font-semibold disabled:opacity-50"
               disabled={!newItem.name || !newItem.price}
             >
-              Add
+              Add Item
             </button>
             <button
               onClick={() => setShowAddForm(false)}
-              className="px-4 py-2 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200"
+              className="px-6 py-3 text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all duration-200 font-semibold"
             >
               Cancel
             </button>
@@ -761,7 +894,7 @@ const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditIt
 
 // Package Preview Component
 const PackagePreview = ({ formData, availableProperties }) => {
-  const selectedProperty = availableProperties.find(p => p._id === formData.property);
+  const selectedProperty = availableProperties.filter(p => p && p._id).find(p => p._id === formData.property);
   const totalItems = formData.restaurants.length + formData.activities.length + formData.services.length;
 
   return (
