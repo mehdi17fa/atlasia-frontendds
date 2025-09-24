@@ -27,20 +27,32 @@ const Performance = () => {
     try {
       const token = localStorage.getItem("accessToken") || localStorage.getItem("token");
       if (!token) {
+        console.log("No token found, redirecting to login");
         navigate("/login");
         return;
       }
 
+      console.log("Fetching performance data with token:", token.substring(0, 20) + "...");
+      
       // Fetch partner performance data
       const response = await axios.get(`${API_BASE}/api/partner/performance`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
+      console.log("Performance API response:", response.data);
+      
       if (response.data.success) {
-        setPerformanceData(response.data.performance);
+        setPerformanceData(response.data.data || response.data.performance);
       }
     } catch (error) {
       console.error('Error fetching performance data:', error);
+      console.error('Error details:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message
+      });
+      
       // Use mock data if API fails
       setPerformanceData({
         managedProperties: 7,
@@ -160,7 +172,7 @@ const Performance = () => {
           <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 md:p-6 rounded-lg border border-green-200 transition-transform hover:shadow-lg hover:scale-[1.02]">
             <div className="flex items-center justify-between mb-2">
               <FaHome className="text-green-600 w-5 h-5 md:w-6 md:h-6" />
-              <span className="text-2xl md:text-3xl font-bold text-green-700">{performanceData.managedProperties}</span>
+              <span className="text-2xl md:text-3xl font-bold text-green-700">{performanceData.managedProperties || 0}</span>
             </div>
             <p className="text-sm md:text-base text-gray-700">Propriétés Gérées</p>
           </div>
@@ -168,7 +180,7 @@ const Performance = () => {
           <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 md:p-6 rounded-lg border border-blue-200 transition-transform hover:shadow-lg hover:scale-[1.02]">
             <div className="flex items-center justify-between mb-2">
               <FaCalendarAlt className="text-blue-600 w-5 h-5 md:w-6 md:h-6" />
-              <span className="text-2xl md:text-3xl font-bold text-blue-700">{performanceData.monthlyReservations}</span>
+              <span className="text-2xl md:text-3xl font-bold text-blue-700">{performanceData.monthlyReservations || 0}</span>
             </div>
             <p className="text-sm md:text-base text-gray-700">Réservations du mois</p>
           </div>
@@ -176,7 +188,7 @@ const Performance = () => {
           <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-4 md:p-6 rounded-lg border border-yellow-200 transition-transform hover:shadow-lg hover:scale-[1.02]">
             <div className="flex items-center justify-between mb-2">
               <FaDollarSign className="text-yellow-600 w-5 h-5 md:w-6 md:h-6" />
-              <span className="text-xl md:text-2xl font-bold text-yellow-700">{performanceData.totalRevenue.toLocaleString()} MAD</span>
+              <span className="text-xl md:text-2xl font-bold text-yellow-700">{(performanceData.totalRevenue || 0).toLocaleString()} MAD</span>
             </div>
             <p className="text-sm md:text-base text-gray-700">Revenu Total</p>
           </div>
@@ -184,7 +196,7 @@ const Performance = () => {
           <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 md:p-6 rounded-lg border border-purple-200 transition-transform hover:shadow-lg hover:scale-[1.02]">
             <div className="flex items-center justify-between mb-2">
               <FaChartLine className="text-purple-600 w-5 h-5 md:w-6 md:h-6" />
-              <span className="text-2xl md:text-3xl font-bold text-purple-700">{performanceData.occupancyRate}%</span>
+              <span className="text-2xl md:text-3xl font-bold text-purple-700">{performanceData.occupancyRate || 0}%</span>
             </div>
             <p className="text-sm md:text-base text-gray-700">Taux d'occupation</p>
           </div>
@@ -196,13 +208,13 @@ const Performance = () => {
           <div className="bg-white border border-gray-200 rounded-lg p-4 md:p-6">
             <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4">Note Moyenne</h3>
             <div className="flex items-center gap-3 mb-4">
-              {renderStars(performanceData.rating)}
+              {renderStars(performanceData.rating || 0)}
               <span className="text-lg md:text-xl font-medium text-gray-700">
-                {performanceData.rating.toFixed(1)} sur 5
+                {(performanceData.rating || 0).toFixed(1)} sur 5
               </span>
             </div>
             <div className="text-sm text-gray-600">
-              Basé sur {performanceData.reviews.length} avis clients
+              Basé sur {performanceData.reviews?.length || 0} avis clients
             </div>
           </div>
 
@@ -214,7 +226,7 @@ const Performance = () => {
                 <span className="text-gray-600">Revenu moyen par propriété</span>
                 <span className="font-semibold text-gray-900">
                   {performanceData.managedProperties > 0 
-                    ? Math.round(performanceData.totalRevenue / performanceData.managedProperties).toLocaleString() 
+                    ? Math.round((performanceData.totalRevenue || 0) / performanceData.managedProperties).toLocaleString() 
                     : 0} MAD
                 </span>
               </div>
@@ -222,18 +234,18 @@ const Performance = () => {
                 <span className="text-gray-600">Réservations moyennes</span>
                 <span className="font-semibold text-gray-900">
                   {performanceData.managedProperties > 0 
-                    ? Math.round(performanceData.monthlyReservations / performanceData.managedProperties) 
+                    ? Math.round((performanceData.monthlyReservations || 0) / performanceData.managedProperties) 
                     : 0} / mois
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Performance</span>
                 <span className={`font-semibold ${
-                  performanceData.occupancyRate >= 80 ? 'text-green-600' :
-                  performanceData.occupancyRate >= 60 ? 'text-yellow-600' : 'text-red-600'
+                  (performanceData.occupancyRate || 0) >= 80 ? 'text-green-600' :
+                  (performanceData.occupancyRate || 0) >= 60 ? 'text-yellow-600' : 'text-red-600'
                 }`}>
-                  {performanceData.occupancyRate >= 80 ? 'Excellent' :
-                   performanceData.occupancyRate >= 60 ? 'Bon' : 'À améliorer'}
+                  {(performanceData.occupancyRate || 0) >= 80 ? 'Excellent' :
+                   (performanceData.occupancyRate || 0) >= 60 ? 'Bon' : 'À améliorer'}
                 </span>
               </div>
             </div>
@@ -244,7 +256,7 @@ const Performance = () => {
         <div className="mt-8">
           <h2 className="text-xl md:text-2xl font-semibold text-gray-800 mb-6">Avis Clients</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            {performanceData.reviews.map((review) => (
+            {(performanceData.reviews || []).map((review) => (
               <div key={review.id} className="bg-white border border-gray-200 rounded-lg p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between mb-3">
                   <p className="font-medium text-gray-800">{review.customerName}</p>

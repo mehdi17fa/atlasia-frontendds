@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
+import { AuthContext } from '../../context/AuthContext';
+import { FaArrowLeft, FaUser } from 'react-icons/fa';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL ? `${process.env.REACT_APP_API_URL}/api` : 'http://localhost:4000/api';
 
 const OwnerIncomePage = () => {
+  const { user } = useContext(AuthContext);
   const [incomeData, setIncomeData] = useState({ income: 0, bookingCount: 0, properties: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -101,9 +104,45 @@ const OwnerIncomePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center py-8 px-4 sm:px-6 lg:px-8 pb-28">
+    <div className="min-h-screen bg-gray-50 pb-28">
       <Toaster position="top-right" reverseOrder={false} />
-      <h1 className="text-3xl font-bold text-green-600 mb-6">Your Income Overview</h1>
+      
+      {/* Header Section */}
+      <div className="sticky top-0 z-50 bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            {/* Left: Back Button */}
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center justify-center w-10 h-10 text-green-700 hover:text-green-800 hover:bg-green-50 rounded-full transition-colors"
+            >
+              <FaArrowLeft className="w-5 h-5" />
+            </button>
+
+            {/* Center: Atlasia Branding */}
+            <div className="text-center">
+              <div className="font-bold text-green-700 text-2xl">
+                Atlasia
+              </div>
+            </div>
+
+            {/* Right: Account Icon */}
+            <button
+              onClick={() => navigate('/profile')}
+              className="flex items-center justify-center w-10 h-10 bg-green-600 text-white hover:bg-green-700 rounded-full transition-colors font-semibold text-sm"
+            >
+              {user?.fullName ? user.fullName.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Section Title */}
+        <div className="mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Vos Revenus</h1>
+          <p className="text-gray-600">Consultez vos revenus et statistiques de réservation</p>
+        </div>
 
       {/* Date Filter */}
       <div className="w-full max-w-lg bg-white rounded-lg shadow-md p-6 mb-6">
@@ -202,6 +241,7 @@ const OwnerIncomePage = () => {
             booking requests
           </a>.
         </p>
+      </div>
       </div>
     </div>
   );

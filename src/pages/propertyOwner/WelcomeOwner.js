@@ -9,6 +9,7 @@ import Calendar from "../../components/shared/Calendar";
 import OwnerBottomNavbar from "../../components/shared/NavbarPropriétaire";
 import { AuthContext } from "../../context/AuthContext";
 import toast, { Toaster } from "react-hot-toast";
+import { FaArrowLeft, FaUser } from 'react-icons/fa';
 import { 
   PlusIcon, 
   HomeIcon, 
@@ -493,38 +494,40 @@ export default function WelcomeOwner() {
   const propertiesToShow = showAllProperties ? ownerProperties : ownerProperties.slice(0, 6);
 
   return (
-    <div className="min-h-screen bg-white flex flex-col pb-28">
+    <div className="min-h-screen bg-gray-50 flex flex-col pb-28">
       <Toaster position="top-right" reverseOrder={false} />
       
-      <div className="w-full max-w-7xl mx-auto px-4 pt-4 md:px-8 lg:px-16">
-        {/* App name and profile avatar on top */}
-        <div className="flex items-center justify-between py-4 px-4 bg-white shadow-sm">
-          <div className="w-12"></div> {/* Empty div for spacing */}
-          <span className="text-2xl font-bold text-green-700">ATLASIA</span>
-          
-          {/* User avatar */}
-          <button
-            onClick={() => navigate('/profile')}
-            className="flex items-center justify-center"
-            aria-label="Go to profile"
-          >
-            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center overflow-hidden">
-              {user?.profilePic ? (
-                <img 
-                  src={user.profilePic} 
-                  alt={user.fullName || user.name || 'User'} 
-                  className="w-full h-full object-cover" 
-                />
-              ) : (
-                <div className="w-8 h-8 bg-green-800 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-bold">
-                    {user?.firstName ? user.firstName.charAt(0).toUpperCase() : (user?.fullName ? user.fullName.charAt(0).toUpperCase() : (user?.name ? user.name.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'U')))}
-                  </span>
-                </div>
-              )}
+      {/* Header Section */}
+      <div className="sticky top-0 z-50 bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            {/* Left: Back Button */}
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center justify-center w-10 h-10 text-green-700 hover:text-green-800 hover:bg-green-50 rounded-full transition-colors"
+            >
+              <FaArrowLeft className="w-5 h-5" />
+            </button>
+
+            {/* Center: Atlasia Branding */}
+            <div className="text-center">
+              <div className="font-bold text-green-700 text-2xl">
+                Atlasia
+              </div>
             </div>
-          </button>
+
+            {/* Right: Account Icon */}
+            <button
+              onClick={() => navigate('/profile')}
+              className="flex items-center justify-center w-10 h-10 bg-green-600 text-white hover:bg-green-700 rounded-full transition-colors font-semibold text-sm"
+            >
+              {user?.fullName ? user.fullName.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+            </button>
+          </div>
         </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         
         <h1 className="text-2xl font-bold text-green-900 mb-2 mt-4">
           Bienvenue {user?.firstName || user?.fullName || "Propriétaire"} 👋

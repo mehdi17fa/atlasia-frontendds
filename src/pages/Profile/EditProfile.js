@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import defaultProfilePic from '../assets/default-pp.png';
 import { ReactComponent as MyEditIcon } from '../../assets/icons/pen.svg';
+import { FaArrowLeft, FaUser, FaSave } from 'react-icons/fa';
 import axios from 'axios';
 
 export default function EditProfileScreen() {
@@ -96,22 +97,46 @@ export default function EditProfileScreen() {
   if (!user) return <div className="text-center mt-20">Please log in to edit profile.</div>;
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      {/* Header */}
-      <div className="bg-green-800 text-white pt-8 flex justify-between relative">
-        <h1 className="text-lg font-semibold w-full text-center mb-4">Modifier mon profil</h1>
-        <button
-          onClick={() => navigate('/profile')}
-          className="absolute left-4 top-4 w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center"
-        >
-          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
+    <div className="min-h-screen bg-gray-50 pb-28">
+      {/* Header Section */}
+      <div className="sticky top-0 z-50 bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            {/* Left: Back Button */}
+            <button
+              onClick={() => navigate('/profile')}
+              className="flex items-center justify-center w-10 h-10 text-green-700 hover:text-green-800 hover:bg-green-50 rounded-full transition-colors"
+            >
+              <FaArrowLeft className="w-5 h-5" />
+            </button>
+
+            {/* Center: Atlasia Branding */}
+            <div className="text-center">
+              <div className="font-bold text-green-700 text-2xl">
+                Atlasia
+              </div>
+            </div>
+
+            {/* Right: Account Icon */}
+            <button
+              onClick={() => navigate('/profile')}
+              className="flex items-center justify-center w-10 h-10 bg-green-600 text-white hover:bg-green-700 rounded-full transition-colors font-semibold text-sm"
+            >
+              {user?.fullName ? user.fullName.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Profile photo */}
-      <div className="flex flex-col mt-12 items-center">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Section Title */}
+        <div className="mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Modifier mon profil</h1>
+          <p className="text-gray-600">Mettez à jour vos informations personnelles</p>
+        </div>
+
+        {/* Profile photo */}
+        <div className="flex flex-col items-center mb-8">
         <div className="relative">
           <img
             src={profileImage}
@@ -137,8 +162,8 @@ export default function EditProfileScreen() {
         </p>
       </div>
 
-      {/* Form fields */}
-      <div className="mt-12 px-4 md:px-40 space-y-6 pb-28">
+        {/* Form fields */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-6 mb-8">
         {[
           { label: 'Nom complet', value: profile.fullName, key: 'fullName' },
           { label: 'Adresse email', value: profile.email, key: 'email', disabled: true },
@@ -159,17 +184,23 @@ export default function EditProfileScreen() {
             </div>
           </div>
         ))}
-      </div>
+        </div>
 
-      {/* Save button */}
-      <div className="mt-8 px-4 md:px-40">
-        <button
-          onClick={handleSave}
-          className={`bg-green-700 w-full text-white py-3 rounded-full font-medium mt-8 text-center ${loading ? 'opacity-60 cursor-not-allowed' : ''}`}
-          disabled={loading}
-        >
-          {loading ? 'Sauvegarde...' : 'Appliquer les changements'}
-        </button>
+        {/* Save button - More prominent */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="text-center mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Mettre à jour le profil</h3>
+            <p className="text-gray-600 text-sm">Cliquez sur le bouton ci-dessous pour sauvegarder vos modifications</p>
+          </div>
+          <button
+            onClick={handleSave}
+            className={`w-full bg-green-600 hover:bg-green-700 text-white py-4 px-6 rounded-lg font-semibold text-lg flex items-center justify-center gap-3 transition-colors shadow-lg hover:shadow-xl ${loading ? 'opacity-60 cursor-not-allowed' : ''}`}
+            disabled={loading}
+          >
+            <FaSave className="w-5 h-5" />
+            {loading ? 'Sauvegarde en cours...' : 'Mettre à jour le profil'}
+          </button>
+        </div>
       </div>
     </div>
   );
