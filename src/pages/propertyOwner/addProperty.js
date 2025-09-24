@@ -4,6 +4,7 @@ import axios from "axios";
 import { usePropertyCreation } from "../../context/PropertyCreationContext";
 import { AuthContext } from "../../context/AuthContext";
 import NavigationButton from "../../components/shared/NavigationButtons";
+import { FaArrowLeft, FaUser } from 'react-icons/fa';
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:4000";
 
@@ -135,10 +136,39 @@ export default function AddProperty() {
   const stepsAfter = stepOrder.slice(currentStepIndex + 1);
 
   return (
-    <div className="min-h-screen bg-white flex flex-col pb-24">
+    <div className="min-h-screen bg-gray-50 flex flex-col pb-24">
+      {/* Header Section */}
+      <div className="sticky top-0 z-50 bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            {/* Left: Back Button */}
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center justify-center w-10 h-10 text-green-700 hover:text-green-800 hover:bg-green-50 rounded-full transition-colors"
+            >
+              <FaArrowLeft className="w-5 h-5" />
+            </button>
+
+            {/* Center: Atlasia Branding */}
+            <div className="text-center">
+              <div className="font-bold text-green-700 text-2xl">
+                Atlasia
+              </div>
+            </div>
+
+            {/* Right: Account Icon */}
+            <button
+              onClick={() => navigate('/profile')}
+              className="flex items-center justify-center w-10 h-10 bg-green-600 text-white hover:bg-green-700 rounded-full transition-colors font-semibold text-sm"
+            >
+              {user?.fullName ? user.fullName.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Progress bar */}
       <div className="w-full max-w-md mx-auto mt-6 mb-2 px-4">
-        <h1 className="text-green-800 text-2xl font-bold text-center mb-2">Atlasia</h1>
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 pt-4">
           <div className="mb-4">
             {stepOrder.slice(0, currentStepIndex).map((step) =>

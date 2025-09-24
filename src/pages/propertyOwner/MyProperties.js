@@ -5,6 +5,7 @@ import ListingCardGrid from "../../components/ListingCard/ListingCardGrid";
 import SectionTitle from "../../components/shared/SectionTitle";
 import { AuthContext } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { FaArrowLeft, FaUser } from 'react-icons/fa';
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:4000";
 
@@ -97,7 +98,37 @@ export default function MyProperties() {
   // Loading state
   if (loading) {
     return (
-      <div className="px-4 py-8 max-w-5xl mx-auto pb-28">
+      <div className="min-h-screen bg-gray-50 pb-28">
+        {/* Header Section */}
+        <div className="sticky top-0 z-50 bg-white shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="flex items-center justify-between">
+              {/* Left: Back Button */}
+              <button
+                onClick={() => navigate('/')}
+                className="flex items-center justify-center w-10 h-10 text-green-700 hover:text-green-800 hover:bg-green-50 rounded-full transition-colors"
+              >
+                <FaArrowLeft className="w-5 h-5" />
+              </button>
+
+              {/* Center: Atlasia Branding */}
+              <div className="text-center">
+                <div className="font-bold text-green-700 text-2xl">
+                  Atlasia
+                </div>
+              </div>
+
+              {/* Right: Account Icon */}
+              <button
+                onClick={() => navigate('/profile')}
+                className="flex items-center justify-center w-10 h-10 bg-green-600 text-white hover:bg-green-700 rounded-full transition-colors font-semibold text-sm"
+              >
+                {user?.fullName ? user.fullName.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+              </button>
+            </div>
+          </div>
+        </div>
+        
         <div className="flex items-center justify-center min-h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-700 mx-auto mb-4"></div>
@@ -111,7 +142,37 @@ export default function MyProperties() {
   // Error state
   if (error) {
     return (
-      <div className="px-4 py-8 max-w-5xl mx-auto pb-28">
+      <div className="min-h-screen bg-gray-50 pb-28">
+        {/* Header Section */}
+        <div className="sticky top-0 z-50 bg-white shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="flex items-center justify-between">
+              {/* Left: Back Button */}
+              <button
+                onClick={() => navigate('/')}
+                className="flex items-center justify-center w-10 h-10 text-green-700 hover:text-green-800 hover:bg-green-50 rounded-full transition-colors"
+              >
+                <FaArrowLeft className="w-5 h-5" />
+              </button>
+
+              {/* Center: Atlasia Branding */}
+              <div className="text-center">
+                <div className="font-bold text-green-700 text-2xl">
+                  Atlasia
+                </div>
+              </div>
+
+              {/* Right: Account Icon */}
+              <button
+                onClick={() => navigate('/profile')}
+                className="flex items-center justify-center w-10 h-10 bg-green-600 text-white hover:bg-green-700 rounded-full transition-colors font-semibold text-sm"
+              >
+                {user?.fullName ? user.fullName.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+              </button>
+            </div>
+          </div>
+        </div>
+        
         <div className="flex items-center justify-center min-h-64">
           <div className="text-center">
             <div className="text-red-500 text-6xl mb-4">⚠️</div>
@@ -130,27 +191,43 @@ export default function MyProperties() {
   }
 
   return (
-    <div className="px-4 py-8 max-w-5xl mx-auto pb-28">
-      {/* Header with Back Button */}
-      <div className="flex items-center justify-center mb-6 relative">
-        <button
-          onClick={() => navigate(-1)}
-          className="absolute left-0 text-green-700 hover:text-green-900 transition-colors flex items-center gap-2"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-6 h-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-          <span className="font-medium">Retour</span>
-        </button>
-        <h1 className="text-2xl font-bold text-gray-800">Mes Propriétés</h1>
+    <div className="min-h-screen bg-gray-50 pb-28">
+      {/* Header Section */}
+      <div className="sticky top-0 z-50 bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            {/* Left: Back Button */}
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center justify-center w-10 h-10 text-green-700 hover:text-green-800 hover:bg-green-50 rounded-full transition-colors"
+            >
+              <FaArrowLeft className="w-5 h-5" />
+            </button>
+
+            {/* Center: Atlasia Branding */}
+            <div className="text-center">
+              <div className="font-bold text-green-700 text-2xl">
+                Atlasia
+              </div>
+            </div>
+
+            {/* Right: Account Icon */}
+            <button
+              onClick={() => navigate('/profile')}
+              className="flex items-center justify-center w-10 h-10 bg-green-600 text-white hover:bg-green-700 rounded-full transition-colors font-semibold text-sm"
+            >
+              {user?.fullName ? user.fullName.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+            </button>
+          </div>
+        </div>
       </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Section Title */}
+        <div className="mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Mes Propriétés</h1>
+          <p className="text-gray-600">Gérez vos propriétés et suivez leur statut</p>
+        </div>
 
       {/* Stats Summary */}
       <div className="grid grid-cols-2 gap-4 mb-8">
@@ -206,6 +283,7 @@ export default function MyProperties() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
           </svg>
         </button>
+      </div>
       </div>
     </div>
   );
