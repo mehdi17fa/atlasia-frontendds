@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import ImageCarousel from "../../components/ImageCarousel";
 import S3Image from "../../components/S3Image";
+import { FaArrowLeft, FaStar, FaTimes, FaCamera, FaCheck } from "react-icons/fa";
 
 const TouristBookings = () => {
   const { user, token, logout } = useContext(AuthContext);
@@ -18,6 +19,17 @@ const TouristBookings = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [statusFilter, setStatusFilter] = useState("");
   const [activeTab, setActiveTab] = useState("properties"); // "properties" or "packages"
+  
+  // Review functionality
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [reviewData, setReviewData] = useState({
+    rating: 0,
+    comment: "",
+    photos: []
+  });
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [existingReviews, setExistingReviews] = useState({});
 
   // Create API instance with proper headers
   const apiCall = async (endpoint, options = {}) => {
@@ -199,6 +211,97 @@ const TouristBookings = () => {
     }
   };
 
+  // Review functions
+  const openReviewModal = (booking) => {
+    setSelectedBooking(booking);
+    setReviewData({
+      rating: 0,
+      comment: "",
+      photos: []
+    });
+    setShowReviewModal(true);
+  };
+
+  const closeReviewModal = () => {
+    setShowReviewModal(false);
+    setSelectedBooking(null);
+    setReviewData({
+      rating: 0,
+      comment: "",
+      photos: []
+    });
+  };
+
+  const handleRatingChange = (rating) => {
+    setReviewData(prev => ({ ...prev, rating }));
+  };
+
+  const handleCommentChange = (e) => {
+    setReviewData(prev => ({ ...prev, comment: e.target.value }));
+  };
+
+  const handlePhotoUpload = (e) => {
+    const files = Array.from(e.target.files);
+    setReviewData(prev => ({ ...prev, photos: [...prev.photos, ...files] }));
+  };
+
+  const removePhoto = (index) => {
+    setReviewData(prev => ({
+      ...prev,
+      photos: prev.photos.filter((_, i) => i !== index)
+    }));
+  };
+
+  const submitReview = async () => {
+    if (!selectedBooking || reviewData.rating === 0) {
+      alert("Please provide a rating");
+      return;
+    }
+
+    setReviewLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('propertyId', selectedBooking.property._id);
+      formData.append('bookingId', selectedBooking._id);
+      formData.append('rating', reviewData.rating);
+      formData.append('comment', reviewData.comment);
+      
+      // Add photos if any
+      reviewData.photos.forEach((photo, index) => {
+        formData.append(`photos`, photo);
+      });
+
+      const response = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:4000"}/api/reviews/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (response.ok) {
+        alert("Review submitted successfully!");
+        closeReviewModal();
+        // Refresh bookings to show updated review status
+        fetchBookings();
+      } else {
+        const errorData = await response.json();
+        alert(`Error: ${errorData.message || 'Failed to submit review'}`);
+      }
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      alert('Failed to submit review. Please try again.');
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
+  const canReviewBooking = (booking) => {
+    const today = new Date();
+    const checkOutDate = new Date(booking.checkOut);
+    return booking.status === 'confirmed' && checkOutDate < today;
+  };
+
   const PackageBookingCard = ({ booking }) => {
     return (
       <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 hover:shadow-lg transition-shadow">
@@ -311,12 +414,43 @@ const TouristBookings = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6 pb-28">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Mes Réservations</h1>
-        <p className="text-gray-600 mt-2">Gérez et suivez toutes vos réservations</p>
+    <div className="min-h-screen bg-gray-50 pb-28">
+      {/* Header Section */}
+      <div className="sticky top-0 z-50 bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            {/* Left: Back Button */}
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center justify-center w-10 h-10 text-green-700 hover:text-green-800 hover:bg-green-50 rounded-full transition-colors"
+            >
+              <FaArrowLeft className="w-5 h-5" />
+            </button>
+
+            {/* Center: Atlasia Branding */}
+            <div className="text-center">
+              <div className="font-bold text-green-700 text-2xl">
+                Atlasia
+              </div>
+            </div>
+
+            {/* Right: Account Icon */}
+            <button
+              onClick={() => navigate('/profile')}
+              className="flex items-center justify-center w-10 h-10 bg-green-600 text-white hover:bg-green-700 rounded-full transition-colors font-semibold text-sm"
+            >
+              {user?.fullName ? user.fullName.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+            </button>
+          </div>
+        </div>
       </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Section Title */}
+        <div className="mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Mes Réservations</h1>
+          <p className="text-gray-600">Gérez et suivez toutes vos réservations</p>
+        </div>
 
       {/* Tab Navigation */}
       <div className="mb-6">
@@ -554,6 +688,18 @@ const TouristBookings = () => {
                       Cancel
                     </button>
                   )}
+                  
+                  {/* Review Button for completed bookings */}
+                  {canReviewBooking(booking) && (
+                    <button
+                      onClick={() => openReviewModal(booking)}
+                      className="flex-1 bg-yellow-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition-colors flex items-center justify-center gap-1"
+                    >
+                      <FaStar className="w-3 h-3" />
+                      Review
+                    </button>
+                  )}
+                  
                   <button
                     onClick={() => navigate(`/booking/${booking._id}`)}
                     className="flex-1 bg-green-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors"
@@ -603,6 +749,141 @@ const TouristBookings = () => {
           ))}
         </div>
       )}
+
+      {/* Review Modal */}
+      {showReviewModal && selectedBooking && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">Write a Review</h3>
+              <button
+                onClick={closeReviewModal}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <FaTimes className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6">
+              {/* Property Info */}
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-900 mb-1">
+                  {selectedBooking.property?.title || "Property"}
+                </h4>
+                <p className="text-sm text-gray-600">
+                  {new Date(selectedBooking.checkIn).toLocaleDateString()} - {new Date(selectedBooking.checkOut).toLocaleDateString()}
+                </p>
+              </div>
+
+              {/* Rating */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Rating *
+                </label>
+                <div className="flex space-x-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      onClick={() => handleRatingChange(star)}
+                      className={`p-1 ${
+                        star <= reviewData.rating
+                          ? 'text-yellow-400'
+                          : 'text-gray-300'
+                      } hover:text-yellow-400 transition-colors`}
+                    >
+                      <FaStar className="w-6 h-6" />
+                    </button>
+                  ))}
+                </div>
+                {reviewData.rating > 0 && (
+                  <p className="text-sm text-gray-600 mt-1">
+                    {reviewData.rating} star{reviewData.rating !== 1 ? 's' : ''}
+                  </p>
+                )}
+              </div>
+
+              {/* Comment */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Comment
+                </label>
+                <textarea
+                  value={reviewData.comment}
+                  onChange={handleCommentChange}
+                  placeholder="Share your experience..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                  rows={4}
+                />
+              </div>
+
+              {/* Photo Upload */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Photos (Optional)
+                </label>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+                
+                {/* Display selected photos */}
+                {reviewData.photos.length > 0 && (
+                  <div className="mt-3 grid grid-cols-3 gap-2">
+                    {reviewData.photos.map((photo, index) => (
+                      <div key={index} className="relative">
+                        <img
+                          src={URL.createObjectURL(photo)}
+                          alt={`Preview ${index + 1}`}
+                          className="w-full h-20 object-cover rounded-md"
+                        />
+                        <button
+                          onClick={() => removePhoto(index)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                        >
+                          <FaTimes className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex space-x-3">
+                <button
+                  onClick={closeReviewModal}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={submitReview}
+                  disabled={reviewLoading || reviewData.rating === 0}
+                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                >
+                  {reviewLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <FaCheck className="w-4 h-4" />
+                      Submit Review
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      </div>
     </div>
   );
 };

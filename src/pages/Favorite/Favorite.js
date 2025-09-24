@@ -3,7 +3,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import SectionTitle from '../../components/shared/SectionTitle';
-import { FaHeart, FaMapMarkerAlt, FaCalendarAlt, FaUsers } from 'react-icons/fa';
+import { FaHeart, FaMapMarkerAlt, FaCalendarAlt, FaUsers, FaArrowLeft } from 'react-icons/fa';
 import S3Image from '../../components/S3Image';
 import axios from 'axios';
 
@@ -225,19 +225,85 @@ export default function Favorites() {
 
   if (!user || user.role !== 'tourist') {
     return (
-      <div className="pb-28 px-4 mt-24 text-center">
-        <SectionTitle title="Ma Liste" />
-        <p className="text-gray-600 mt-8">Please log in as a tourist to view your favorites.</p>
+      <div className="min-h-screen bg-gray-50 pb-28">
+        {/* Header Section */}
+        <div className="sticky top-0 z-50 bg-white shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="flex items-center justify-between">
+              {/* Left: Back Button */}
+              <button
+                onClick={() => navigate('/')}
+                className="flex items-center justify-center w-10 h-10 text-green-700 hover:text-green-800 hover:bg-green-50 rounded-full transition-colors"
+              >
+                <FaArrowLeft className="w-5 h-5" />
+              </button>
+
+              {/* Center: Atlasia Branding */}
+              <div className="text-center">
+                <div className="font-bold text-green-700 text-2xl">
+                  Atlasia
+                </div>
+              </div>
+
+              {/* Right: Account Icon */}
+              <button
+                onClick={() => navigate('/profile')}
+                className="flex items-center justify-center w-10 h-10 bg-green-600 text-white hover:bg-green-700 rounded-full transition-colors font-semibold text-sm"
+              >
+                {user?.fullName ? user.fullName.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="text-center">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Ma Liste</h1>
+            <p className="text-gray-600 mt-8">Please log in as a tourist to view your favorites.</p>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (loading) {
     return (
-      <div className="pb-28 px-4 mt-24">
-        <SectionTitle title="Ma Liste" />
-        <div className="text-center mt-8">
-          <p className="text-gray-600">Loading your favorites...</p>
+      <div className="min-h-screen bg-gray-50 pb-28">
+        {/* Header Section */}
+        <div className="sticky top-0 z-50 bg-white shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="flex items-center justify-between">
+              {/* Left: Back Button */}
+              <button
+                onClick={() => navigate('/')}
+                className="flex items-center justify-center w-10 h-10 text-green-700 hover:text-green-800 hover:bg-green-50 rounded-full transition-colors"
+              >
+                <FaArrowLeft className="w-5 h-5" />
+              </button>
+
+              {/* Center: Atlasia Branding */}
+              <div className="text-center">
+                <div className="font-bold text-green-700 text-2xl">
+                  Atlasia
+                </div>
+              </div>
+
+              {/* Right: Account Icon */}
+              <button
+                onClick={() => navigate('/profile')}
+                className="flex items-center justify-center w-10 h-10 bg-green-600 text-white hover:bg-green-700 rounded-full transition-colors font-semibold text-sm"
+              >
+                {user?.fullName ? user.fullName.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="text-center">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Ma Liste</h1>
+            <p className="text-gray-600 mt-8">Loading your favorites...</p>
+          </div>
         </div>
       </div>
     );
@@ -245,24 +311,93 @@ export default function Favorites() {
 
   if (error) {
     return (
-      <div className="pb-28 px-4 mt-24">
-        <SectionTitle title="Ma Liste" />
-        <div className="text-center mt-8">
-          <p className="text-red-600">{error}</p>
-          <button
-            onClick={fetchFavorites}
-            className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-          >
-            Retry
-          </button>
+      <div className="min-h-screen bg-gray-50 pb-28">
+        {/* Header Section */}
+        <div className="sticky top-0 z-50 bg-white shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="flex items-center justify-between">
+              {/* Left: Back Button */}
+              <button
+                onClick={() => navigate('/')}
+                className="flex items-center justify-center w-10 h-10 text-green-700 hover:text-green-800 hover:bg-green-50 rounded-full transition-colors"
+              >
+                <FaArrowLeft className="w-5 h-5" />
+              </button>
+
+              {/* Center: Atlasia Branding */}
+              <div className="text-center">
+                <div className="font-bold text-green-700 text-2xl">
+                  Atlasia
+                </div>
+              </div>
+
+              {/* Right: Account Icon */}
+              <button
+                onClick={() => navigate('/profile')}
+                className="flex items-center justify-center w-10 h-10 bg-green-600 text-white hover:bg-green-700 rounded-full transition-colors font-semibold text-sm"
+              >
+                {user?.fullName ? user.fullName.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="text-center">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Ma Liste</h1>
+            <div className="mt-8">
+              <p className="text-red-600">{error}</p>
+              <button
+                onClick={fetchFavorites}
+                className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="pb-28 px-4 mt-24">
-      <SectionTitle title="Ma Liste" />
+    <div className="min-h-screen bg-gray-50 pb-28">
+      {/* Header Section */}
+      <div className="sticky top-0 z-50 bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            {/* Left: Back Button */}
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center justify-center w-10 h-10 text-green-700 hover:text-green-800 hover:bg-green-50 rounded-full transition-colors"
+            >
+              <FaArrowLeft className="w-5 h-5" />
+            </button>
+
+            {/* Center: Atlasia Branding */}
+            <div className="text-center">
+              <div className="font-bold text-green-700 text-2xl">
+                Atlasia
+              </div>
+            </div>
+
+            {/* Right: Account Icon */}
+            <button
+              onClick={() => navigate('/profile')}
+              className="flex items-center justify-center w-10 h-10 bg-green-600 text-white hover:bg-green-700 rounded-full transition-colors font-semibold text-sm"
+            >
+              {user?.fullName ? user.fullName.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Section Title */}
+        <div className="mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Ma Liste</h1>
+          <p className="text-gray-600">Vos propriétés et packages favoris</p>
+        </div>
       
       {/* Header with refresh button */}
       <div className="flex justify-between items-center mt-6 mb-6">
@@ -344,6 +479,7 @@ export default function Favorites() {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }

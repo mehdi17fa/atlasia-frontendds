@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import S3Image from "../../components/S3Image";
 import ImageCarousel from "../../components/ImageCarousel";
+import { FaArrowLeft, FaStar, FaCheck } from "react-icons/fa";
 
 const BookingDetails = () => {
   const { user, token, logout } = useContext(AuthContext);
@@ -12,6 +13,16 @@ const BookingDetails = () => {
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  
+  // Review functionality
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewData, setReviewData] = useState({
+    rating: 0,
+    comment: ""
+  });
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [existingReview, setExistingReview] = useState(null);
+  const [hasReviewed, setHasReviewed] = useState(false);
 
   // Create API instance with proper headers
   const apiCall = async (endpoint, options = {}) => {
@@ -159,6 +170,114 @@ const BookingDetails = () => {
     return `${localisation.city || ''}, ${localisation.address || ''}`.replace(/^, |, $/, '') || "Location not specified";
   };
 
+  // Review functions
+  const openReviewModal = () => {
+    setReviewData({
+      rating: existingReview?.rating || 0,
+      comment: existingReview?.comment || "",
+      photos: []
+    });
+    setShowReviewModal(true);
+  };
+
+  const closeReviewModal = () => {
+    setShowReviewModal(false);
+    setReviewData({
+      rating: 0,
+      comment: "",
+      photos: []
+    });
+  };
+
+  const handleRatingChange = (rating) => {
+    setReviewData(prev => ({ ...prev, rating }));
+  };
+
+  const handleCommentChange = (e) => {
+    setReviewData(prev => ({ ...prev, comment: e.target.value }));
+  };
+
+
+  const submitReview = async () => {
+    if (!booking || reviewData.rating === 0) {
+      alert("Please provide a rating");
+      return;
+    }
+
+    setReviewLoading(true);
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:4000"}/api/reviews/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          propertyId: booking.property._id,
+          bookingId: booking._id,
+          rating: reviewData.rating,
+          comment: reviewData.comment
+        })
+      });
+
+      if (response.ok) {
+        alert("Review submitted successfully!");
+        setReviewData({ rating: 0, comment: "" });
+        setHasReviewed(true);
+        // Refresh booking details
+        fetchBookingDetails();
+      } else {
+        const errorData = await response.json();
+        alert(`Error: ${errorData.message || 'Failed to submit review'}`);
+      }
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      alert('Failed to submit review. Please try again.');
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
+  const canReviewBooking = (booking) => {
+    if (!booking) return false;
+    
+    const today = new Date();
+    const checkOutDate = new Date(booking.checkOut);
+    
+    return booking.status === 'confirmed' && checkOutDate < today;
+  };
+
+  // Check if user has already reviewed this booking
+  const checkExistingReview = async () => {
+    if (!booking || !user) return;
+    
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:4000"}/api/reviews/property/${booking.property._id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const userReview = data.reviews?.find(review => review.user._id === user._id);
+        if (userReview) {
+          setExistingReview(userReview);
+          setHasReviewed(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking existing review:', error);
+    }
+  };
+
+  // Load existing review when booking is loaded
+  useEffect(() => {
+    if (booking && user) {
+      checkExistingReview();
+    }
+  }, [booking, user]);
+
   if (!user) {
     return (
       <div className="max-w-4xl mx-auto p-6 pb-28">
@@ -239,81 +358,135 @@ const BookingDetails = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 pb-28">
-      {/* Header */}
-      <div className="mb-6">
-        <button
-          onClick={() => navigate("/my-bookings")}
-          className="flex items-center text-green-600 hover:text-green-700 mb-4"
-        >
-          <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Back to My Bookings
-        </button>
-        
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-gray-900">Booking Details</h1>
-          <div className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(booking.status)}`}>
-            {getStatusLabel(booking.status)}
+    <div className="min-h-screen bg-gray-50 pb-28">
+      {/* Header Section */}
+      <div className="sticky top-0 z-50 bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            {/* Left: Back Button */}
+            <button
+              onClick={() => navigate('/my-bookings')}
+              className="flex items-center justify-center w-10 h-10 text-green-700 hover:text-green-800 hover:bg-green-50 rounded-full transition-colors"
+            >
+              <FaArrowLeft className="w-5 h-5" />
+            </button>
+
+            {/* Center: Atlasia Branding */}
+            <div className="text-center">
+              <div className="font-bold text-green-700 text-2xl">
+                Atlasia
+              </div>
+            </div>
+
+            {/* Right: Account Icon */}
+            <button
+              onClick={() => navigate('/profile')}
+              className="flex items-center justify-center w-10 h-10 bg-green-600 text-white hover:bg-green-700 rounded-full transition-colors font-semibold text-sm"
+            >
+              {user?.fullName ? user.fullName.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+            </button>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Property Info */}
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <div className="aspect-w-16 aspect-h-9">
-              {booking.property?.photos && booking.property.photos.length > 0 ? (
-                <ImageCarousel
-                  images={booking.property.photos}
-                  className="h-64"
-                  showDots={booking.property.photos.length > 1}
-                  showArrows={booking.property.photos.length > 1}
-                />
-              ) : (
-                <S3Image
-                  src={booking.property?.photos?.[0] || "/placeholder.jpg"}
-                  alt={booking.property?.title || "Property"}
-                  className="w-full h-64 object-cover"
-                  fallbackSrc="/placeholder.jpg"
-                />
-              )}
-            </div>
-            <div className="p-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                {booking.property?.title || "Unknown Property"}
-              </h2>
-              <p className="text-gray-600 flex items-center mb-4">
-                <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                {formatLocation(booking.property?.localisation)}
-              </p>
-              
-              {/* Property Equipment/Amenities */}
-              {booking.property?.equipments && booking.property.equipments.length > 0 && (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          {/* Header Section */}
+          <div className="mb-8">
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">Amenities</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {booking.property.equipments.map((equipment, index) => (
-                      <span key={index} className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                        {equipment}
-                      </span>
-                    ))}
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
+                    Booking Details
+                  </h1>
+                  <p className="text-gray-600 text-sm sm:text-base">
+                    Manage your reservation and share your experience
+                  </p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className={`px-4 py-2 rounded-full text-sm font-semibold border-2 ${getStatusColor(booking.status)}`}>
+                    {getStatusLabel(booking.status)}
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-500">Booking ID</p>
+                    <p className="text-sm font-mono text-gray-700">{booking._id.slice(-8)}</p>
                   </div>
                 </div>
-              )}
+              </div>
             </div>
           </div>
 
-          {/* Booking Timeline */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">Booking Timeline</h3>
-            <div className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+            {/* Main Content - Left Column */}
+            <div className="lg:col-span-8 space-y-6">
+              {/* Property Card */}
+              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+                {/* Property Image */}
+                <div className="relative h-64 sm:h-80 lg:h-96">
+                  {booking.property?.photos && booking.property.photos.length > 0 ? (
+                    <ImageCarousel
+                      images={booking.property.photos}
+                      className="h-full"
+                      showDots={booking.property.photos.length > 1}
+                      showArrows={booking.property.photos.length > 1}
+                    />
+                  ) : (
+                    <div className="h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                      <div className="text-center">
+                        <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <p className="text-gray-500 font-medium">No images available</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Property Details */}
+                <div className="p-6 sm:p-8">
+                  <div className="mb-6">
+                    <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
+                      {booking.property?.title || "Unknown Property"}
+                    </h2>
+                    <div className="flex items-center text-gray-600 mb-4">
+                      <svg className="h-5 w-5 mr-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      <span className="text-lg">{formatLocation(booking.property?.localisation)}</span>
+                    </div>
+                  </div>
+                  
+                  {/* Amenities */}
+                  {booking.property?.equipments && booking.property.equipments.length > 0 && (
+                    <div className="border-t border-gray-100 pt-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Amenities</h3>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {booking.property.equipments.map((equipment, index) => (
+                          <div key={index} className="flex items-center p-3 bg-green-50 rounded-xl border border-green-100">
+                            <svg className="w-4 h-4 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span className="text-sm font-medium text-green-800">{equipment}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Booking Timeline */}
+              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8">
+                <div className="flex items-center mb-6">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900">Booking Timeline</h3>
+                </div>
+                <div className="space-y-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
                   <svg className="h-4 w-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
@@ -384,11 +557,263 @@ const BookingDetails = () => {
           )}
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Booking Summary */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">Booking Summary</h3>
+        {/* Existing Review Section */}
+        {hasReviewed && existingReview && (
+          <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-xl p-8 shadow-lg">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mr-4">
+                <FaStar className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-green-900">Your Review</h3>
+                <p className="text-green-700">Thank you for sharing your experience!</p>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-lg p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <FaStar
+                      key={star}
+                      className={`w-6 h-6 ${
+                        star <= existingReview.rating ? 'text-yellow-400' : 'text-gray-300'
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="text-lg font-semibold text-green-800">
+                  {existingReview.rating} star{existingReview.rating !== 1 ? 's' : ''} - {
+                    existingReview.rating === 1 ? 'Poor' :
+                    existingReview.rating === 2 ? 'Fair' :
+                    existingReview.rating === 3 ? 'Good' :
+                    existingReview.rating === 4 ? 'Very Good' :
+                    existingReview.rating === 5 ? 'Excellent' : ''
+                  }
+                </span>
+              </div>
+              
+              {existingReview.comment && (
+                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                  <p className="text-sm font-semibold text-gray-700 mb-2">Your Comment:</p>
+                  <p className="text-gray-800 italic leading-relaxed">
+                    "{existingReview.comment}"
+                  </p>
+                </div>
+              )}
+              
+              <div className="flex items-center text-sm text-green-600">
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Reviewed on {new Date(existingReview.createdAt).toLocaleDateString()}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Review Section - Always visible for now */}
+        {!hasReviewed && (
+          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
+            <div className="mb-8">
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mr-4">
+                  <FaStar className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-900">Rate Your Stay</h3>
+                  <p className="text-gray-600">
+                    Share your experience and help other travelers make informed decisions.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Inline Review Form */}
+            <div className="space-y-4">
+              {/* Rating Section */}
+              <div className="bg-gray-50 rounded-lg p-6">
+                <label className="block text-lg font-semibold text-gray-900 mb-4">
+                  Overall Rating *
+                </label>
+                <div className="flex space-x-2 mb-4">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      onClick={() => handleRatingChange(star)}
+                      className={`p-3 rounded-full transition-all duration-200 ${
+                        star <= reviewData.rating
+                          ? 'text-yellow-400 bg-yellow-50 shadow-md'
+                          : 'text-gray-300 hover:text-yellow-400 hover:bg-yellow-50'
+                      }`}
+                    >
+                      <FaStar className="w-8 h-8" />
+                    </button>
+                  ))}
+                </div>
+                {reviewData.rating > 0 && (
+                  <div className="bg-white rounded-lg p-4 border border-gray-200">
+                    <p className="text-lg font-semibold text-gray-900">
+                      {reviewData.rating} star{reviewData.rating !== 1 ? 's' : ''} - {
+                        reviewData.rating === 1 ? 'Poor' :
+                        reviewData.rating === 2 ? 'Fair' :
+                        reviewData.rating === 3 ? 'Good' :
+                        reviewData.rating === 4 ? 'Very Good' :
+                        reviewData.rating === 5 ? 'Excellent' : ''
+                      }
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Comment Section */}
+              <div className="bg-gray-50 rounded-lg p-6">
+                <label className="block text-lg font-semibold text-gray-900 mb-4">
+                  Your Review
+                </label>
+                <textarea
+                  value={reviewData.comment}
+                  onChange={handleCommentChange}
+                  placeholder="Tell us about your stay... What did you like? What could be improved?"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none text-gray-700 placeholder-gray-500"
+                  rows={5}
+                />
+                <p className="text-sm text-gray-600 mt-2 flex items-center">
+                  <svg className="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Your review will help other travelers and the property owner.
+                </p>
+              </div>
+
+
+              {/* Submit Button */}
+              <div className="flex justify-end pt-6 border-t border-gray-200">
+                <button
+                  onClick={submitReview}
+                  disabled={reviewLoading || reviewData.rating === 0}
+                  className="bg-gradient-to-r from-green-600 to-green-700 text-white px-8 py-3 rounded-lg hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-3 font-semibold text-lg shadow-lg hover:shadow-xl"
+                >
+                  {reviewLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      Submitting Review...
+                    </>
+                  ) : (
+                    <>
+                      <FaCheck className="w-5 h-5" />
+                      Submit Review
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+              {/* Review Section */}
+              <div className="bg-gradient-to-br from-white to-blue-50 rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8">
+                <div className="text-center mb-8">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full mb-4 shadow-lg">
+                    <FaStar className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Share Your Experience</h3>
+                  <p className="text-gray-600">Help other travelers by rating your stay</p>
+                </div>
+                
+                <div className="max-w-2xl mx-auto space-y-6">
+                  {/* Rating */}
+                  <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                    <label className="block text-lg font-semibold text-gray-900 mb-4 text-center">
+                      How was your stay? *
+                    </label>
+                    <div className="flex justify-center space-x-2 mb-4">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          onClick={() => handleRatingChange(star)}
+                          className={`p-3 rounded-full transition-all duration-300 transform hover:scale-110 ${
+                            star <= reviewData.rating
+                              ? 'text-yellow-400 bg-yellow-50 shadow-lg'
+                              : 'text-gray-300 hover:text-yellow-400 hover:bg-yellow-50'
+                          }`}
+                        >
+                          <FaStar className="w-8 h-8" />
+                        </button>
+                      ))}
+                    </div>
+                    {reviewData.rating > 0 && (
+                      <div className="text-center">
+                        <div className="inline-block bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg px-6 py-3 border border-yellow-200">
+                          <p className="text-lg font-semibold text-gray-900">
+                            {reviewData.rating} star{reviewData.rating !== 1 ? 's' : ''} - {
+                              reviewData.rating === 1 ? 'Poor' :
+                              reviewData.rating === 2 ? 'Fair' :
+                              reviewData.rating === 3 ? 'Good' :
+                              reviewData.rating === 4 ? 'Very Good' :
+                              reviewData.rating === 5 ? 'Excellent' : ''
+                            }
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Comment */}
+                  <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                    <label className="block text-lg font-semibold text-gray-900 mb-4">
+                      Tell us more about your experience
+                    </label>
+                    <textarea
+                      value={reviewData.comment}
+                      onChange={handleCommentChange}
+                      placeholder="What did you like? What could be improved? Share your thoughts..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none text-gray-700 placeholder-gray-500"
+                      rows={4}
+                    />
+                    <p className="text-sm text-gray-500 mt-2 flex items-center">
+                      <svg className="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Your review helps other travelers make informed decisions
+                    </p>
+                  </div>
+
+                  {/* Submit Button */}
+                  <div className="text-center">
+                    <button
+                      onClick={submitReview}
+                      disabled={reviewLoading || reviewData.rating === 0}
+                      className="bg-gradient-to-r from-green-600 to-green-700 text-white px-8 py-4 rounded-xl hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-4 focus:ring-green-300 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center gap-3 font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 mx-auto"
+                    >
+                      {reviewLoading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                          Submitting Review...
+                        </>
+                      ) : (
+                        <>
+                          <FaCheck className="w-5 h-5" />
+                          Submit Review
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+            {/* Sidebar - Right Column */}
+            <div className="lg:col-span-4 space-y-6">
+              {/* Booking Summary */}
+              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8">
+                <div className="flex items-center mb-6">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-4">
+                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900">Booking Summary</h3>
+                </div>
             
             <div className="space-y-3">
               <div className="flex items-center text-sm">
@@ -463,7 +888,7 @@ const BookingDetails = () => {
           {/* Host Info */}
           {booking.owner && (
             <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Host Information</h3>
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">Host Information</h3>
               <div className="flex items-center">
                 <img
                   src={booking.owner.profileImage || "https://via.placeholder.com/50x50?text=Host"}
@@ -484,7 +909,7 @@ const BookingDetails = () => {
           {/* Actions */}
           {(booking.status === "pending" || booking.status === "confirmed") && (
             <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Actions</h3>
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">Actions</h3>
               <button
                 onClick={handleCancel}
                 className="w-full bg-red-600 text-white px-4 py-2 rounded-md font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
@@ -511,6 +936,108 @@ const BookingDetails = () => {
               </p>
             </div>
           )}
+            </div>
+          </div>
+
+          {/* Review Modal */}
+      {showReviewModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">Write a Review</h3>
+              <button
+                onClick={closeReviewModal}
+                className="text-gray-400 hover:text-gray-600 transition-colors text-2xl font-bold"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6">
+              {/* Property Info */}
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-900 mb-1">
+                  {booking.property?.title || "Property"}
+                </h4>
+                <p className="text-sm text-gray-600">
+                  {new Date(booking.checkIn).toLocaleDateString()} - {new Date(booking.checkOut).toLocaleDateString()}
+                </p>
+              </div>
+
+              {/* Rating */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Rating *
+                </label>
+                <div className="flex space-x-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      onClick={() => handleRatingChange(star)}
+                      className={`p-1 ${
+                        star <= reviewData.rating
+                          ? 'text-yellow-400'
+                          : 'text-gray-300'
+                      } hover:text-yellow-400 transition-colors`}
+                    >
+                      <FaStar className="w-6 h-6" />
+                    </button>
+                  ))}
+                </div>
+                {reviewData.rating > 0 && (
+                  <p className="text-sm text-gray-600 mt-1">
+                    {reviewData.rating} star{reviewData.rating !== 1 ? 's' : ''}
+                  </p>
+                )}
+              </div>
+
+              {/* Comment */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Comment
+                </label>
+                <textarea
+                  value={reviewData.comment}
+                  onChange={handleCommentChange}
+                  placeholder="Share your experience..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                  rows={4}
+                />
+              </div>
+
+
+              {/* Action Buttons */}
+              <div className="flex space-x-3">
+                <button
+                  onClick={closeReviewModal}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={submitReview}
+                  disabled={reviewLoading || reviewData.rating === 0}
+                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                >
+                  {reviewLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <FaCheck className="w-4 h-4" />
+                      Submit Review
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
         </div>
       </div>
     </div>

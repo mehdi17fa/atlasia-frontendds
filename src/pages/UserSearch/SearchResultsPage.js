@@ -232,17 +232,12 @@ export default function SearchResultsPage() {
     setPagination(prev => ({ ...prev, page: newPage }));
   };
 
-  const handlePropertySelect = (property) => {
-    console.log('Property selected:', property);
-    console.log('Property ID:', property._id);
-    console.log('Property ID type:', typeof property._id);
-    console.log('All property keys:', Object.keys(property));
-    
-    const propertyId = property._id || property.id || property.propertyId;
-    console.log('Using property ID:', propertyId);
+  const handlePropertySelect = (propertyId) => {
+    console.log('Property ID selected:', propertyId);
+    console.log('Property ID type:', typeof propertyId);
     
     if (!propertyId) {
-      console.error('No valid property ID found:', property);
+      console.error('No valid property ID found:', propertyId);
       alert('Error: Property ID not found');
       return;
     }

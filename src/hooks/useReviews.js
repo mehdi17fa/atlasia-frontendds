@@ -41,7 +41,9 @@ const useReviews = () => {
       setError(null);
       
       if (!token) {
-        throw new Error('User not authenticated');
+        console.log('⚠️ No token available, skipping reviewable bookings fetch');
+        setReviewableBookings([]);
+        return { bookings: [] };
       }
       
       console.log('📋 Fetching reviewable bookings');
@@ -57,8 +59,20 @@ const useReviews = () => {
       return response.data;
     } catch (err) {
       console.error('❌ Error fetching reviewable bookings:', err);
+      console.error('❌ Error response:', err.response);
+      console.error('❌ Error status:', err.response?.status);
+      console.error('❌ Error data:', err.response?.data);
+      
+      // Don't throw error for 404s, just log and continue
+      if (err.response?.status === 404) {
+        console.log('⚠️ Reviewable bookings endpoint not found, continuing without error');
+        setReviewableBookings([]);
+        return { bookings: [] };
+      }
+      
       setError(err.response?.data?.message || 'Error fetching reviewable bookings');
-      throw err;
+      // Don't throw the error to prevent app crashes
+      return { bookings: [] };
     } finally {
       setLoading(false);
     }
@@ -175,7 +189,8 @@ const useReviews = () => {
 
   // Load reviewable bookings on mount if user is authenticated
   useEffect(() => {
-    if (user && token) {
+    if (user && token && user.role === 'tourist') {
+      console.log('🔄 Auto-loading reviewable bookings for tourist user');
       getReviewableBookings();
     }
   }, [user, token]);
