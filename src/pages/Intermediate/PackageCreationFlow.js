@@ -24,6 +24,9 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
     totalPrice: ''
   });
 
+  // Expanded section state
+  const [expandedSection, setExpandedSection] = useState(null);
+
   // Properties that partner can cohost
   const [availableProperties, setAvailableProperties] = useState([]);
   const [loadingProperties, setLoadingProperties] = useState(true);
@@ -36,6 +39,13 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
   const fetchPartnerProperties = async () => {
     try {
       console.log('🔍 Fetching properties with token:', token ? 'EXISTS' : 'MISSING');
+      
+      // Check if token exists
+      if (!token) {
+        setError('Veuillez vous connecter pour accéder à vos propriétés');
+        setLoadingProperties(false);
+        return;
+      }
       
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:4000'}/api/partner/my-properties`, {
         headers: {
@@ -57,13 +67,27 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
         console.log('✅ Valid properties after filtering:', validProperties);
         setAvailableProperties(validProperties);
       } else {
-        const errorText = await response.text();
-        console.error('❌ Error response:', response.status, errorText);
-        setError(`Failed to load properties (${response.status}): ${errorText.substring(0, 100)}`);
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        console.error('❌ Error response:', response.status, errorData);
+        
+        // Handle token expiration specifically
+        if (response.status === 401) {
+          setError('Votre session a expiré. Veuillez vous reconnecter.');
+          // Clear expired tokens
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('user');
+          localStorage.removeItem('refreshToken');
+          // Redirect to login after a short delay
+          setTimeout(() => {
+            navigate('/login');
+          }, 2000);
+        } else {
+          setError(`Échec du chargement des propriétés (${response.status}): ${errorData.message || 'Erreur inconnue'}`);
+        }
       }
     } catch (err) {
       console.error('❌ Fetch error:', err);
-      setError(`Error loading properties: ${err.message}`);
+      setError(`Erreur lors du chargement des propriétés: ${err.message}`);
     } finally {
       setLoadingProperties(false);
     }
@@ -113,6 +137,14 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
         i === index ? { ...updatedItem, price: parseFloat(updatedItem.price) } : item
       )
     }));
+  };
+
+  const handleToggleExpanded = (category, shouldExpand) => {
+    if (shouldExpand) {
+      setExpandedSection(category);
+    } else {
+      setExpandedSection(null);
+    }
   };
 
   const validateStep = (step) => {
@@ -169,18 +201,30 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
         console.log('✅ Draft saved successfully:', data);
         
         // Show success message
-        alert('Draft saved successfully!');
+        alert('Brouillon enregistré avec succès!');
         
         // Navigate to partner dashboard after successful draft save
         navigate('/partner-welcome');
       } else {
         const errorData = await response.json().catch(() => ({ message: 'Failed to save draft' }));
         console.error('❌ Draft save error:', response.status, errorData);
-        setError(errorData.message || 'Failed to save draft');
+        
+        // Handle token expiration
+        if (response.status === 401) {
+          setError('Votre session a expiré. Veuillez vous reconnecter.');
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('user');
+          localStorage.removeItem('refreshToken');
+          setTimeout(() => {
+            navigate('/login');
+          }, 2000);
+        } else {
+          setError(errorData.message || 'Échec de l\'enregistrement du brouillon');
+        }
       }
     } catch (err) {
       console.error('❌ Draft save error:', err);
-      setError(`Error saving draft: ${err.message}`);
+      setError(`Erreur lors de l'enregistrement du brouillon: ${err.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -263,23 +307,47 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
           console.log('✅ Package published successfully:', publishData);
           
           // Show success message
-          alert('Package created and published successfully!');
+          alert('Package créé et publié avec succès!');
           
           // Navigate to partner dashboard after successful publish
           navigate('/partner-welcome');
         } else {
           const errorData = await publishResponse.json().catch(() => ({ message: 'Failed to publish package' }));
           console.error('❌ Publish error:', publishResponse.status, errorData);
-          setError(errorData.message || 'Failed to publish package');
+          
+          // Handle token expiration
+          if (publishResponse.status === 401) {
+            setError('Votre session a expiré. Veuillez vous reconnecter.');
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('user');
+            localStorage.removeItem('refreshToken');
+            setTimeout(() => {
+              navigate('/login');
+            }, 2000);
+          } else {
+            setError(errorData.message || 'Échec de la publication du package');
+          }
         }
       } else {
         const errorData = await createResponse.json().catch(() => ({ message: 'Failed to create package' }));
         console.error('❌ Create error:', createResponse.status, errorData);
-        setError(errorData.message || 'Failed to create package');
+        
+        // Handle token expiration
+        if (createResponse.status === 401) {
+          setError('Votre session a expiré. Veuillez vous reconnecter.');
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('user');
+          localStorage.removeItem('refreshToken');
+          setTimeout(() => {
+            navigate('/login');
+          }, 2000);
+        } else {
+          setError(errorData.message || 'Échec de la création du package');
+        }
       }
     } catch (err) {
       console.error('❌ Publish error:', err);
-      setError(`Error publishing package: ${err.message}`);
+      setError(`Erreur lors de la publication du package: ${err.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -301,20 +369,20 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
         <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 mb-6">
           <div className="mb-6">
             {/* Mobile Progress Steps - No scrolling, compact design */}
-            <div className="flex items-center justify-between mb-4">
-              {steps.map((step, index) => (
-                <div 
-                  key={index} 
+        <div className="flex items-center justify-between mb-4">
+          {steps.map((step, index) => (
+            <div 
+              key={index} 
                   className="flex flex-col items-center cursor-pointer flex-1 px-1"
-                  onClick={() => handleStepClick(index + 1)}
-                >
+              onClick={() => handleStepClick(index + 1)}
+            >
                   <div className={`w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold transition-all duration-300 shadow-md ${
-                    index + 1 <= currentStep 
+                index + 1 <= currentStep 
                       ? 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 transform hover:scale-105' 
                       : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  }`}>
-                    {index + 1}
-                  </div>
+              }`}>
+                {index + 1}
+              </div>
                   <span className="text-xs mt-1 sm:mt-2 text-gray-600 font-medium text-center leading-tight hidden sm:block">
                     {step}
                   </span>
@@ -325,20 +393,20 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
                       return frenchSteps[index] || step.split(' ')[0];
                     })()}
                   </span>
-                </div>
-              ))}
             </div>
+          ))}
+        </div>
             
             {/* Enhanced Progress Bar */}
             <div className="relative w-full bg-gray-200 rounded-full h-3 shadow-inner">
-              <div 
+          <div 
                 className="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full transition-all duration-500 ease-out shadow-lg"
-                style={{ width: `${(currentStep / steps.length) * 100}%` }}
+            style={{ width: `${(currentStep / steps.length) * 100}%` }}
               >
                 <div className="absolute right-0 top-0 w-3 h-3 bg-white rounded-full shadow-md transform translate-x-1 -translate-y-0.5"></div>
-              </div>
-            </div>
-            
+        </div>
+      </div>
+
             {/* Progress Text */}
             <div className="text-center mt-3">
               <span className="text-sm font-medium text-gray-600">
@@ -355,7 +423,7 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
         </div>
 
         {/* Enhanced Error Display */}
-        {error && (
+      {error && (
           <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-400 rounded-lg shadow-sm">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -367,57 +435,57 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
                 <p className="text-red-800 text-sm font-medium">{error}</p>
               </div>
             </div>
-          </div>
-        )}
+        </div>
+      )}
 
         {/* Step Content - Enhanced Mobile Layout */}
         <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 min-h-96">
           {/* Step 1: Choose Property - Enhanced Mobile Design */}
-          {currentStep === 1 && (
+        {currentStep === 1 && (
             <div className="space-y-6">
               <div className="text-center">
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Choisir Propriété</h2>
                 <p className="text-gray-600">Sélectionnez la propriété pour votre package</p>
               </div>
               
-              {loadingProperties ? (
+            {loadingProperties ? (
                 <div className="text-center py-12">
                   <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
                   </div>
-                  <p className="text-gray-600 font-medium">Loading your properties...</p>
-                  <p className="text-sm text-gray-500 mt-1">Please wait while we fetch your available properties</p>
-                </div>
-              ) : availableProperties.length === 0 ? (
+                <p className="text-gray-600 font-medium">Chargement de vos propriétés...</p>
+                <p className="text-sm text-gray-500 mt-1">Veuillez patienter pendant que nous récupérons vos propriétés disponibles</p>
+              </div>
+            ) : availableProperties.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
                     <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
                   </div>
-                  <p className="text-gray-600 font-medium">No properties available</p>
-                  <p className="text-sm text-gray-500 mt-2">You need to be accepted as a co-host first to create packages.</p>
-                </div>
-              ) : (
+                  <p className="text-gray-600 font-medium">Aucune propriété disponible</p>
+                  <p className="text-sm text-gray-500 mt-2">Vous devez d'abord être accepté comme co-hôte pour créer des packages.</p>
+              </div>
+            ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                  {availableProperties.filter(property => property && property._id).map((property) => (
-                    <div 
-                      key={property._id}
+                {availableProperties.filter(property => property && property._id).map((property) => (
+                  <div 
+                    key={property._id}
                       className={`border-2 rounded-xl p-4 cursor-pointer transition-all duration-300 transform hover:scale-105 hover:shadow-lg ${
-                        formData.property === property._id
+                      formData.property === property._id
                           ? 'border-green-500 bg-green-50 shadow-lg scale-105'
                           : 'border-gray-200 hover:border-green-300 bg-white'
-                      }`}
-                      onClick={() => handleInputChange('property', property._id)}
-                    >
-                      {property.photos && property.photos.length > 0 && (
-                        <S3Image 
-                          src={property.photos[0]} 
-                          alt={property.title}
+                    }`}
+                    onClick={() => handleInputChange('property', property._id)}
+                  >
+                    {property.photos && property.photos.length > 0 && (
+                      <S3Image 
+                        src={property.photos[0]} 
+                        alt={property.title}
                           className="w-full h-40 sm:h-32 object-cover rounded-lg mb-4 shadow-sm"
-                          fallbackSrc="/placeholder.jpg"
-                        />
-                      )}
+                        fallbackSrc="/placeholder.jpg"
+                      />
+                    )}
                       <div className="space-y-2">
                         <h3 className="font-semibold text-gray-900 text-lg">{property.title}</h3>
                         <div className="flex items-center text-sm text-gray-600">
@@ -425,26 +493,26 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                           </svg>
-                          {property.localisation?.city || 'Location not specified'}
+                          {property.localisation?.city || 'Localisation non spécifiée'}
                         </div>
                         {formData.property === property._id && (
                           <div className="flex items-center text-green-600 text-sm font-medium">
                             <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                             </svg>
-                            Selected
+                            Sélectionné
                           </div>
                         )}
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
           {/* Step 2: Select Items - Enhanced Mobile Design */}
-          {currentStep === 2 && (
+        {currentStep === 2 && (
             <div className="space-y-6">
               <div className="text-center">
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Sélectionner Éléments</h2>
@@ -461,16 +529,20 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
                 onAddItem={addItem}
                 onRemoveItem={removeItem}
                 onEditItem={editItem}
+                isExpanded={expandedSection === 'restaurants'}
+                onToggleExpanded={handleToggleExpanded}
               />
               
               {/* Activities */}
               <ItemSection 
-                title="Activities" 
+                title="Activités" 
                 category="activities"
                 items={formData.activities}
                 onAddItem={addItem}
                 onRemoveItem={removeItem}
                 onEditItem={editItem}
+                isExpanded={expandedSection === 'activities'}
+                onToggleExpanded={handleToggleExpanded}
               />
               
               {/* Services */}
@@ -481,13 +553,15 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
                 onAddItem={addItem}
                 onRemoveItem={removeItem}
                 onEditItem={editItem}
+                isExpanded={expandedSection === 'services'}
+                onToggleExpanded={handleToggleExpanded}
               />
             </div>
-            </div>
-          )}
+          </div>
+        )}
 
           {/* Step 3: Set Dates - Enhanced Mobile Design */}
-          {currentStep === 3 && (
+        {currentStep === 3 && (
             <div className="space-y-6">
               <div className="text-center">
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Définir Dates</h2>
@@ -496,31 +570,31 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
               
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">Start Date</label>
-                    <input
-                      type="date"
-                      value={formData.startDate}
-                      onChange={(e) => handleInputChange('startDate', e.target.value)}
-                      min={new Date().toISOString().split('T')[0]}
+                    <label className="block text-sm font-semibold text-gray-700">Date de Début</label>
+                <input
+                  type="date"
+                  value={formData.startDate}
+                  onChange={(e) => handleInputChange('startDate', e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
                       className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 text-gray-900"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">End Date</label>
-                    <input
-                      type="date"
-                      value={formData.endDate}
-                      onChange={(e) => handleInputChange('endDate', e.target.value)}
-                      min={formData.startDate || new Date().toISOString().split('T')[0]}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 text-gray-900"
-                    />
-                  </div>
-                </div>
+                />
               </div>
-            )}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-700">Date de Fin</label>
+                <input
+                  type="date"
+                  value={formData.endDate}
+                  onChange={(e) => handleInputChange('endDate', e.target.value)}
+                  min={formData.startDate || new Date().toISOString().split('T')[0]}
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 text-gray-900"
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
           {/* Step 4: Basic Info - Enhanced Mobile Design */}
-          {currentStep === 4 && (
+        {currentStep === 4 && (
             <div className="space-y-6">
               <div className="text-center">
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Informations De Base</h2>
@@ -529,31 +603,31 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
               
               <div className="space-y-6">
                 <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-gray-700">Package Name</label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
-                    placeholder="Enter package name"
+                  <label className="block text-sm font-semibold text-gray-700">Nom du Package</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                    placeholder="Entrez le nom du package"
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 text-gray-900"
-                  />
-                </div>
+                />
+              </div>
                 <div className="space-y-2">
                   <label className="block text-sm font-semibold text-gray-700">Description</label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) => handleInputChange('description', e.target.value)}
-                    rows="4"
-                    placeholder="Describe your package..."
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  rows="4"
+                    placeholder="Décrivez votre package..."
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 text-gray-900 resize-none"
-                  ></textarea>
-                </div>
+                ></textarea>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
           {/* Step 5: Set Price - Enhanced Mobile Design */}
-          {currentStep === 5 && (
+        {currentStep === 5 && (
             <div className="space-y-6">
               <div className="text-center">
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Définir Prix</h2>
@@ -562,133 +636,133 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
               
               <div className="max-w-md mx-auto">
                 <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-gray-700">Total Price (MAD)</label>
+                  <label className="block text-sm font-semibold text-gray-700">Prix Total (MAD)</label>
                   <div className="relative">
-                    <input
-                      type="number"
-                      value={formData.totalPrice}
-                      onChange={(e) => handleInputChange('totalPrice', e.target.value)}
-                      min="0"
-                      step="0.01"
-                      placeholder="0.00"
+              <input
+                type="number"
+                value={formData.totalPrice}
+                onChange={(e) => handleInputChange('totalPrice', e.target.value)}
+                min="0"
+                step="0.01"
+                placeholder="0.00"
                       className="w-full px-4 py-3 pl-8 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 text-gray-900 text-lg"
-                    />
+              />
                     <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">MAD</span>
                   </div>
                 </div>
-              </div>
             </div>
-          )}
+          </div>
+        )}
 
           {/* Step 6: Review - Enhanced Mobile Design */}
-          {currentStep === 6 && (
+        {currentStep === 6 && (
             <div className="space-y-6">
               <div className="text-center">
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Réviser & Publier</h2>
                 <p className="text-gray-600">Révisez les détails de votre package avant de publier</p>
               </div>
               
-              <PackagePreview formData={formData} availableProperties={availableProperties} />
-            </div>
-          )}
-        </div>
+            <PackagePreview formData={formData} availableProperties={availableProperties} />
+          </div>
+        )}
+      </div>
 
         {/* Enhanced Mobile Navigation Buttons */}
         <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 mt-6">
           <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 sm:space-x-4">
             {/* Left Side - Back Navigation */}
             <div className="flex space-x-2 w-full sm:w-auto">
-              {currentStep > 1 && (
-                <>
-                  <button
-                    onClick={() => handleStepClick(1)}
+          {currentStep > 1 && (
+            <>
+              <button
+                onClick={() => handleStepClick(1)}
                     className="flex-1 sm:flex-none px-4 py-3 text-sm font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all duration-200 disabled:opacity-50"
-                    disabled={isLoading}
-                  >
+                disabled={isLoading}
+              >
                     <div className="flex items-center justify-center">
                       <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
                       </svg>
-                      First
+                      Premier
                     </div>
-                  </button>
-                  <button
-                    onClick={() => handleStepClick(currentStep - 1)}
+              </button>
+              <button
+                onClick={() => handleStepClick(currentStep - 1)}
                     className="flex-1 sm:flex-none px-6 py-3 font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all duration-200 disabled:opacity-50"
-                    disabled={isLoading}
-                  >
+                disabled={isLoading}
+              >
                     <div className="flex items-center justify-center">
                       <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                       </svg>
-                      Back
+                      Retour
                     </div>
-                  </button>
-                </>
-              )}
-            </div>
+              </button>
+            </>
+          )}
+        </div>
 
             {/* Right Side - Action Buttons */}
             <div className="flex space-x-3 w-full sm:w-auto">
-              {currentStep < 6 ? (
-                <>
-                  <button
-                    onClick={handleSaveDraft}
+          {currentStep < 6 ? (
+            <>
+              <button
+                onClick={handleSaveDraft}
                     className="flex-1 sm:flex-none px-4 py-3 font-medium text-green-600 bg-green-100 rounded-xl hover:bg-green-200 transition-all duration-200 disabled:opacity-50"
-                    disabled={isLoading}
-                  >
+                disabled={isLoading}
+              >
                     <div className="flex items-center justify-center">
                       <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                       </svg>
-                      {isLoading ? 'Saving...' : 'Save Draft'}
+                      {isLoading ? 'Enregistrement...' : 'Enregistrer Brouillon'}
                     </div>
-                  </button>
-                  <button
-                    onClick={handleNext}
+              </button>
+              <button
+                onClick={handleNext}
                     className={`flex-1 sm:flex-none px-6 py-3 font-semibold text-white rounded-xl transition-all duration-200 ${
-                      validateStep(currentStep)
+                  validateStep(currentStep)
                         ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-lg hover:shadow-xl transform hover:scale-105'
-                        : 'bg-gray-300 cursor-not-allowed'
-                    }`}
-                    disabled={!validateStep(currentStep) || isLoading}
-                  >
+                    : 'bg-gray-300 cursor-not-allowed'
+                }`}
+                disabled={!validateStep(currentStep) || isLoading}
+              >
                     <div className="flex items-center justify-center">
-                      Next
+                      Suivant
                       <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
                     </div>
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={handleSaveDraft}
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={handleSaveDraft}
                     className="flex-1 sm:flex-none px-4 py-3 font-medium text-green-600 bg-green-100 rounded-xl hover:bg-green-200 transition-all duration-200 disabled:opacity-50"
-                    disabled={isLoading}
-                  >
+                disabled={isLoading}
+              >
                     <div className="flex items-center justify-center">
                       <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                       </svg>
-                      {isLoading ? 'Saving...' : 'Save as Draft'}
+                      {isLoading ? 'Enregistrement...' : 'Enregistrer comme Brouillon'}
                     </div>
-                  </button>
-                  <button
-                    onClick={handlePublish}
+              </button>
+              <button
+                onClick={handlePublish}
                     className="flex-1 sm:flex-none px-6 py-3 font-semibold text-white bg-gradient-to-r from-green-500 to-green-600 rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50"
-                    disabled={isLoading}
-                  >
+                disabled={isLoading}
+              >
                     <div className="flex items-center justify-center">
                       <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                       </svg>
-                      {isLoading ? 'Publishing...' : 'Publish Package'}
+                      {isLoading ? 'Publication...' : 'Publier Package'}
                     </div>
-                  </button>
-                </>
-              )}
+              </button>
+            </>
+          )}
             </div>
           </div>
         </div>
@@ -698,16 +772,35 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
 };
 
 // Item Section Component with inline editing
-const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditItem }) => {
+const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditItem, isExpanded, onToggleExpanded }) => {
   const [newItem, setNewItem] = useState({ name: '', description: '', price: '', thumbnail: '' });
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
   const [editingItem, setEditingItem] = useState({ name: '', description: '', price: '', thumbnail: '' });
 
+  // Auto-show add form when section becomes expanded
+  useEffect(() => {
+    if (isExpanded && !showAddForm) {
+      setShowAddForm(true);
+    } else if (!isExpanded && showAddForm) {
+      setShowAddForm(false);
+    }
+  }, [isExpanded, showAddForm]);
+
   const handleAdd = () => {
     onAddItem(category, newItem);
     setNewItem({ name: '', description: '', price: '', thumbnail: '' });
     setShowAddForm(false);
+    onToggleExpanded(category, false); // Collapse the section after adding
+  };
+
+  const handleToggleAddForm = () => {
+    if (!showAddForm) {
+      onToggleExpanded(category, true); // Expand this section and collapse others
+      setShowAddForm(true); // Show the add form immediately
+    } else {
+      setShowAddForm(false); // Hide the add form
+    }
   };
 
   const startEditing = (index, item) => {
@@ -720,6 +813,12 @@ const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditIt
     setEditingItem({ name: '', description: '', price: '', thumbnail: '' });
   };
 
+  const handleCancelAdd = () => {
+    setShowAddForm(false);
+    setNewItem({ name: '', description: '', price: '', thumbnail: '' });
+    onToggleExpanded(category, false); // Collapse the section when canceling
+  };
+
   const saveEdit = () => {
     onEditItem(category, editingIndex, editingItem);
     setEditingIndex(null);
@@ -727,22 +826,24 @@ const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditIt
   };
 
   return (
-    <div className="border-2 border-gray-200 rounded-xl p-4 sm:p-6 bg-gray-50">
+    <div className={`border-2 rounded-xl p-4 sm:p-6 transition-all duration-300 ${
+      isExpanded ? 'border-green-300 bg-green-50' : 'border-gray-200 bg-gray-50'
+    }`}>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 space-y-2 sm:space-y-0">
         <h3 className="text-lg font-bold text-gray-900">{title}</h3>
         <button
-          onClick={() => setShowAddForm(!showAddForm)}
+          onClick={handleToggleAddForm}
           className="flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all duration-200 font-medium"
         >
           <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          Add {title.slice(0, -1)}
+          Ajouter {title.slice(0, -1)}
         </button>
       </div>
 
-      {/* Existing Items */}
-      {items.length > 0 && (
+      {/* Existing Items - Only show when expanded */}
+      {isExpanded && items.length > 0 && (
         <div className="space-y-4 mb-6">
           {items.map((item, index) => (
             <div key={index} className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
@@ -751,7 +852,7 @@ const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditIt
                 <div className="space-y-4">
                   <input
                     type="text"
-                    placeholder="Name"
+                    placeholder="Nom"
                     value={editingItem.name}
                     onChange={(e) => setEditingItem({...editingItem, name: e.target.value})}
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
@@ -765,7 +866,7 @@ const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditIt
                   ></textarea>
                   <input
                     type="number"
-                    placeholder="Price (MAD)"
+                    placeholder="Prix (MAD)"
                     value={editingItem.price}
                     onChange={(e) => setEditingItem({...editingItem, price: e.target.value})}
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
@@ -786,13 +887,13 @@ const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditIt
                       className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all duration-200 font-medium disabled:opacity-50"
                       disabled={!editingItem.name || !editingItem.price}
                     >
-                      Save Changes
+                      Enregistrer Modifications
                     </button>
                     <button
                       onClick={cancelEditing}
                       className="px-4 py-2 text-gray-600 bg-gray-200 rounded-lg hover:bg-gray-300 transition-all duration-200 font-medium"
                     >
-                      Cancel
+                      Annuler
                     </button>
                   </div>
                 </div>
@@ -821,13 +922,13 @@ const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditIt
                       onClick={() => startEditing(index, item)}
                       className="px-3 py-1 text-blue-600 bg-blue-100 rounded-lg hover:bg-blue-200 transition-all duration-200 text-sm font-medium"
                     >
-                      Edit
+                      Modifier
                     </button>
                     <button
                       onClick={() => onRemoveItem(category, index)}
                       className="px-3 py-1 text-red-600 bg-red-100 rounded-lg hover:bg-red-200 transition-all duration-200 text-sm font-medium"
                     >
-                      Remove
+                      Supprimer
                     </button>
                   </div>
                 </div>
@@ -837,12 +938,12 @@ const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditIt
         </div>
       )}
 
-      {/* Add Form */}
-      {showAddForm && (
+      {/* Add Form - Only show when expanded and form is active */}
+      {isExpanded && showAddForm && (
         <div className="space-y-4 border-t border-gray-300 pt-6 bg-white rounded-xl p-4">
           <input
             type="text"
-            placeholder="Name"
+            placeholder="Nom"
             value={newItem.name}
             onChange={(e) => setNewItem({...newItem, name: e.target.value})}
             className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
@@ -856,7 +957,7 @@ const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditIt
           ></textarea>
           <input
             type="number"
-            placeholder="Price (MAD)"
+            placeholder="Prix (MAD)"
             value={newItem.price}
             onChange={(e) => setNewItem({...newItem, price: e.target.value})}
             className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
@@ -864,26 +965,26 @@ const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditIt
             step="0.01"
           />
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Image (Optional)</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Image (Optionnel)</label>
             <S3ImageUpload
               onUpload={(url) => setNewItem({...newItem, thumbnail: url})}
               currentImage={newItem.thumbnail}
               className="w-full"
             />
           </div>
-          <div className="flex space-x-3">
+          <div className="flex justify-center space-x-3">
             <button
               onClick={handleAdd}
-              className="px-6 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-all duration-200 font-semibold disabled:opacity-50"
+              className="flex-1 max-w-32 px-6 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-all duration-200 font-semibold disabled:opacity-50"
               disabled={!newItem.name || !newItem.price}
             >
-              Add Item
+              Ajouter
             </button>
             <button
-              onClick={() => setShowAddForm(false)}
-              className="px-6 py-3 text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all duration-200 font-semibold"
+              onClick={handleCancelAdd}
+              className="flex-1 max-w-32 px-6 py-3 text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all duration-200 font-semibold"
             >
-              Cancel
+              Annuler
             </button>
           </div>
         </div>
@@ -900,26 +1001,26 @@ const PackagePreview = ({ formData, availableProperties }) => {
   return (
     <div className="space-y-6">
       <div className="bg-gray-50 p-6 rounded-lg">
-        <h3 className="text-xl font-semibold text-gray-900 mb-4">Package Summary</h3>
+        <h3 className="text-xl font-semibold text-gray-900 mb-4">Résumé du Package</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <h4 className="font-medium text-gray-700 mb-2">Basic Information</h4>
-            <p><strong>Name:</strong> {formData.name}</p>
+            <h4 className="font-medium text-gray-700 mb-2">Informations de Base</h4>
+            <p><strong>Nom:</strong> {formData.name}</p>
             <p><strong>Description:</strong> {formData.description}</p>
-            <p><strong>Price:</strong> {formData.totalPrice} MAD</p>
+            <p><strong>Prix:</strong> {formData.totalPrice} MAD</p>
           </div>
           
           <div>
-            <h4 className="font-medium text-gray-700 mb-2">Property & Dates</h4>
-            <p><strong>Property:</strong> {selectedProperty?.title}</p>
-            <p><strong>Start Date:</strong> {new Date(formData.startDate).toLocaleDateString()}</p>
-            <p><strong>End Date:</strong> {new Date(formData.endDate).toLocaleDateString()}</p>
+            <h4 className="font-medium text-gray-700 mb-2">Propriété & Dates</h4>
+            <p><strong>Propriété:</strong> {selectedProperty?.title}</p>
+            <p><strong>Date de Début:</strong> {new Date(formData.startDate).toLocaleDateString()}</p>
+            <p><strong>Date de Fin:</strong> {new Date(formData.endDate).toLocaleDateString()}</p>
           </div>
         </div>
 
         <div className="mt-6">
-          <h4 className="font-medium text-gray-700 mb-2">Included Items ({totalItems} total)</h4>
+          <h4 className="font-medium text-gray-700 mb-2">Éléments Inclus ({totalItems} au total)</h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {formData.restaurants.length > 0 && (
               <div>
