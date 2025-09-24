@@ -3,6 +3,7 @@ import React, { useEffect, useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { AuthContext } from '../../context/AuthContext';
+import { FaArrowLeft, FaUser } from 'react-icons/fa';
 
 export default function Inbox() {
   const navigate = useNavigate();
@@ -111,12 +112,37 @@ export default function Inbox() {
 
   if (loading) {
     return (
-      <div className="max-w-md mx-auto bg-white min-h-screen">
-        <div className="sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm">
-          <div className="px-6 py-4">
-            <h1 className="text-2xl font-bold text-gray-900">Messages</h1>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header Section */}
+        <div className="sticky top-0 z-50 bg-white shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="flex items-center justify-between">
+              {/* Left: Back Button */}
+              <button
+                onClick={() => navigate('/')}
+                className="flex items-center justify-center w-10 h-10 text-green-700 hover:text-green-800 hover:bg-green-50 rounded-full transition-colors"
+              >
+                <FaArrowLeft className="w-5 h-5" />
+              </button>
+
+              {/* Center: Atlasia Branding */}
+              <div className="text-center">
+                <div className="font-bold text-green-700 text-2xl">
+                  Atlasia
+                </div>
+              </div>
+
+              {/* Right: Account Icon */}
+              <button
+                onClick={() => navigate('/profile')}
+                className="flex items-center justify-center w-10 h-10 bg-green-600 text-white hover:bg-green-700 rounded-full transition-colors font-semibold text-sm"
+              >
+                {user?.fullName ? user.fullName.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+              </button>
+            </div>
           </div>
         </div>
+        
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
         </div>
@@ -125,24 +151,48 @@ export default function Inbox() {
   }
 
   return (
-    <div className="max-w-md mx-auto bg-white min-h-screen">
-      {/* Header */}
+    <div className="min-h-screen bg-gray-50">
+      {/* Header Section */}
+      <div className="sticky top-0 z-50 bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            {/* Left: Back Button */}
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center justify-center w-10 h-10 text-green-700 hover:text-green-800 hover:bg-green-50 rounded-full transition-colors"
+            >
+              <FaArrowLeft className="w-5 h-5" />
+            </button>
 
+            {/* Center: Atlasia Branding */}
+            <div className="text-center">
+              <div className="font-bold text-green-700 text-2xl">
+                Atlasia
+              </div>
+            </div>
 
-      
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm">
-        
-        <div className="px-6 py-4">
-          
-          <h1 className="text-2xl font-bold text-gray-900">Messages</h1>
-          <p className="text-sm text-gray-600 mt-1">
-            {conversations.length} conversation{conversations.length !== 1 ? 's' : ''}
-          </p>
+            {/* Right: Account Icon */}
+            <button
+              onClick={() => navigate('/profile')}
+              className="flex items-center justify-center w-10 h-10 bg-green-600 text-white hover:bg-green-700 rounded-full transition-colors font-semibold text-sm"
+            >
+              {user?.fullName ? user.fullName.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Conversations List */}
-      <div className="divide-y divide-gray-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Section Title */}
+        <div className="mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Messages</h1>
+          <p className="text-gray-600">
+            {conversations.length} conversation{conversations.length !== 1 ? 's' : ''}
+          </p>
+        </div>
+
+        {/* Conversations List */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 divide-y divide-gray-100">
         {conversations.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-6">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
@@ -208,6 +258,7 @@ export default function Inbox() {
             );
           })
         )}
+        </div>
       </div>
 
       {/* Bottom spacing for mobile navigation */}

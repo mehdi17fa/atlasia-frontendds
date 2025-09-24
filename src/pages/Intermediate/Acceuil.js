@@ -16,6 +16,7 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 
+import { FaArrowLeft, FaUser } from 'react-icons/fa';
 import { AuthContext } from '../../context/AuthContext';
 
 // API configuration
@@ -345,7 +346,7 @@ const PackageBookingCard = ({ booking, onStatusUpdate }) => {
 
 export default function PartnerDashboard() {
   const navigate = useNavigate();
-  const { token } = useContext(AuthContext);
+  const { token, user } = useContext(AuthContext);
 
   const [properties, setProperties] = useState([]);
   const [packages, setPackages] = useState([]);
@@ -482,250 +483,275 @@ export default function PartnerDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-28">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      {/* Header Section */}
+      <div className="sticky top-0 z-50 bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-            <div className="mb-4 sm:mb-0">
-              <h1 className="text-2xl font-bold text-gray-900">Tableau de bord partenaire</h1>
-              <p className="text-gray-600">Gérez vos propriétés co-hôtes et vos packages</p>
+          <div className="flex items-center justify-between">
+            {/* Left: Back Button */}
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center justify-center w-10 h-10 text-green-700 hover:text-green-800 hover:bg-green-50 rounded-full transition-colors"
+            >
+              <FaArrowLeft className="w-5 h-5" />
+            </button>
+
+            {/* Center: Atlasia Branding */}
+            <div className="text-center">
+              <div className="font-bold text-green-700 text-2xl">
+                Atlasia
+              </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-              <button
-                onClick={() => navigate('/cohosting-explore')}
-                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-center"
-              >
-                Explorer les propriétés
-              </button>
-              <button
-                onClick={() => navigate('/create-package')}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-center"
-              >
-                Créer un package
-              </button>
+            {/* Right: Account Icon */}
+            <button
+              onClick={() => navigate('/profile')}
+              className="flex items-center justify-center w-10 h-10 bg-green-600 text-white hover:bg-green-700 rounded-full transition-colors font-semibold text-sm"
+            >
+              {user?.fullName ? user.fullName.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Section Title */}
+        <div className="mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Tableau de bord partenaire</h1>
+          <p className="text-gray-600">Gérez vos propriétés co-hôtes et vos packages</p>
+          
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 mt-4">
+            <button
+              onClick={() => navigate('/cohosting-explore')}
+              className="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors text-center"
+            >
+              Explorer les propriétés
+            </button>
+            <button
+              onClick={() => navigate('/create-package')}
+              className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors text-center"
+            >
+              Créer un package
+            </button>
+          </div>
+        </div>
+
+      {/* Stats Cards - Compact version */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="flex items-center">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <HomeIcon className="h-5 w-5 text-blue-600" />
+            </div>
+            <div className="ml-3">
+              <p className="text-xs text-gray-600">Propriétés</p>
+              <p className="text-lg font-semibold text-gray-900">{stats.totalProperties}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="flex items-center">
+            <div className="p-2 bg-green-100 rounded-lg">
+              <CheckCircleIcon className="h-5 w-5 text-green-600" />
+            </div>
+            <div className="ml-3">
+              <p className="text-xs text-gray-600">Publiées</p>
+              <p className="text-lg font-semibold text-gray-900">{stats.publishedProperties}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="flex items-center">
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <ArchiveBoxIcon className="h-5 w-5 text-purple-600" />
+            </div>
+            <div className="ml-3">
+              <p className="text-xs text-gray-600">Packages</p>
+              <p className="text-lg font-semibold text-gray-900">{stats.totalPackages}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="flex items-center">
+            <div className="p-2 bg-yellow-100 rounded-lg">
+              <RocketLaunchIcon className="h-5 w-5 text-yellow-600" />
+            </div>
+            <div className="ml-3">
+              <p className="text-xs text-gray-600">Actifs</p>
+              <p className="text-lg font-semibold text-gray-900">{stats.publishedPackages}</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <HomeIcon className="h-6 w-6 text-blue-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm text-gray-600">Propriétés co-hôtes</p>
-                <p className="text-2xl font-semibold text-gray-900">{stats.totalProperties}</p>
-              </div>
+      {/* Error Alert */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <ExclamationTriangleIcon className="h-5 w-5 text-red-400" />
             </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <CheckCircleIcon className="h-6 w-6 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm text-gray-600">Propriétés publiées</p>
-                <p className="text-2xl font-semibold text-gray-900">{stats.publishedProperties}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <ArchiveBoxIcon className="h-6 w-6 text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm text-gray-600">Total packages</p>
-                <p className="text-2xl font-semibold text-gray-900">{stats.totalPackages}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <RocketLaunchIcon className="h-6 w-6 text-yellow-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm text-gray-600">Packages publiés</p>
-                <p className="text-2xl font-semibold text-gray-900">{stats.publishedPackages}</p>
-              </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Erreur</h3>
+              <p className="text-sm text-red-700 mt-1">{error}</p>
+              <button 
+                onClick={retryFetch}
+                className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
+              >
+                Réessayer
+              </button>
             </div>
           </div>
         </div>
+      )}
 
-        {/* Error Alert */}
-        {error && (
-          <ErrorAlert message={error} onRetry={retryFetch} />
-        )}
+      {/* Properties Section */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-gray-900">Mes propriétés co-hôtes</h2>
+          <button
+            onClick={() => navigate('/cohosting-explore')}
+            className="text-green-600 hover:text-green-700 font-medium text-sm flex items-center"
+          >
+            Explorer plus de propriétés
+            <ArrowRightIcon className="h-4 w-4 ml-1" />
+          </button>
+        </div>
 
-        {/* Properties Section */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">Mes propriétés co-hôtes</h2>
+        {isLoadingProperties ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+          </div>
+        ) : properties.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {properties.map((property) => (
+              <PropertyCard key={property._id} property={property} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">🏠</div>
+            <h3 className="text-lg font-semibold text-gray-700 mb-2">
+              Aucune propriété co-hôte
+            </h3>
+            <p className="text-gray-500 text-sm mb-4">
+              Vous ne co-hébergez aucune propriété pour le moment. Explorez les opportunités de co-hébergement disponibles.
+            </p>
             <button
               onClick={() => navigate('/cohosting-explore')}
+              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+            >
+              Explorer les propriétés
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Packages Section */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-gray-900">Mes packages</h2>
+          <div className="flex items-center space-x-4">
+            {stats.draftPackages > 0 && (
+              <span className="text-sm text-amber-600 flex items-center">
+                <ClockIcon className="h-4 w-4 mr-1" />
+                {stats.draftPackages} brouillon{stats.draftPackages > 1 ? 's' : ''}
+              </span>
+            )}
+            <button
+              onClick={() => navigate('/create-package')}
               className="text-green-600 hover:text-green-700 font-medium text-sm flex items-center"
             >
-              Explorer plus de propriétés
+              Créer un nouveau package
               <ArrowRightIcon className="h-4 w-4 ml-1" />
             </button>
           </div>
-
-          {isLoadingProperties ? (
-            <LoadingSpinner />
-          ) : properties.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {properties.map((property) => (
-                <PropertyCard key={property._id} property={property} />
-              ))}
-            </div>
-          ) : (
-            <EmptyState
-              type="properties"
-              icon={HomeIcon}
-              title="Aucune propriété co-hôte"
-              description="Vous ne co-hébergez aucune propriété pour le moment. Explorez les opportunités de co-hébergement disponibles."
-              onAction={() => navigate('/cohosting-explore')}
-              actionText="Explorer les propriétés"
-            />
-          )}
         </div>
 
-        {/* Services Section - Combined Co-hosted Properties and Packages */}
-        <div>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">Mes services</h2>
-            <div className="flex items-center space-x-4">
-              {stats.draftPackages > 0 && (
-                <span className="text-sm text-amber-600 flex items-center">
-                  <ClockIcon className="h-4 w-4 mr-1" />
-                  {stats.draftPackages} brouillon{stats.draftPackages > 1 ? 's' : ''}
-                </span>
-              )}
-              <button
-                onClick={() => navigate('/create-package')}
-                className="text-green-600 hover:text-green-700 font-medium text-sm flex items-center"
-              >
-                Créer un nouveau package
-                <ArrowRightIcon className="h-4 w-4 ml-1" />
-              </button>
-            </div>
+        {isLoadingPackages ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
           </div>
-
-          {/* Co-hosted Properties Subsection */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900 flex items-center">
-                <HomeIcon className="h-5 w-5 mr-2 text-green-600" />
-                Propriétés co-hébergées ({properties.length})
-              </h3>
-              <button
-                onClick={() => navigate('/cohosting-explore')}
-                className="text-green-600 hover:text-green-700 font-medium text-sm flex items-center"
-              >
-                Explorer plus de propriétés
-                <ArrowRightIcon className="h-4 w-4 ml-1" />
-              </button>
-            </div>
-            
-            {properties.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {properties.map((property) => (
-                  <PropertyCard key={property._id} property={property} isCohosted={true} />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                <HomeIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 mb-4">Aucune propriété co-hébergée</p>
-                <button
-                  onClick={() => navigate('/cohosting-explore')}
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  Explorer les propriétés disponibles
-                </button>
-              </div>
-            )}
+        ) : packages.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {packages.map((pkg) => (
+              <PackageCard key={pkg._id} package={pkg} />
+            ))}
           </div>
-
-          {/* Packages Subsection */}
-          <div className="mb-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-              <ArchiveBoxIcon className="h-5 w-5 mr-2 text-green-600" />
-              Packages d'expériences ({packages.length})
+        ) : (
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">📦</div>
+            <h3 className="text-lg font-semibold text-gray-700 mb-2">
+              Aucun package créé
             </h3>
-            
-            {isLoadingPackages ? (
-              <LoadingSpinner />
-            ) : packages.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {packages.map((pkg) => (
-                  <PackageCard key={pkg._id} package={pkg} />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                <ArchiveBoxIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 mb-4">Aucun package créé</p>
-                <button
-                  onClick={() => navigate('/create-package')}
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  Créer votre premier package
-                </button>
-              </div>
-            )}
+            <p className="text-gray-500 text-sm mb-4">
+              Créez votre premier package d'expériences pour commencer à attirer des clients.
+            </p>
+            <button
+              onClick={() => navigate('/create-package')}
+              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+            >
+              Créer votre premier package
+            </button>
           </div>
+        )}
+      </div>
 
-          {/* Package Bookings Subsection */}
-          <div className="mb-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-              <CalendarDaysIcon className="h-5 w-5 mr-2 text-green-600" />
-              Réservations de packages ({packageBookings.length})
-            </h3>
-            
-            {isLoadingBookings ? (
-              <LoadingSpinner />
-            ) : packageBookings.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {packageBookings.map((booking) => (
-                  <PackageBookingCard 
-                    key={booking._id} 
-                    booking={booking} 
-                    onStatusUpdate={handleBookingStatusUpdate}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                <CalendarDaysIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 mb-4">Aucune réservation de package</p>
-                <p className="text-sm text-gray-500">Les réservations de vos packages apparaîtront ici</p>
-              </div>
-            )}
-          </div>
-
-          {/* Empty State - Only show if all services are empty */}
-          {properties.length === 0 && packages.length === 0 && packageBookings.length === 0 && 
-           !isLoadingProperties && !isLoadingPackages && !isLoadingBookings && (
-            <EmptyState
-              type="services"
-              icon={UserGroupIcon}
-              title="Aucun service disponible"
-              description="Vous n'avez pas encore de propriétés co-hébergées, packages ou réservations. Commencez par postuler pour co-héberger une propriété ou créer votre premier package d'expériences."
-              onAction={() => navigate('/cohosting-explore')}
-              actionText="Explorer les propriétés à co-héberger"
-            />
-          )}
+      {/* Package Bookings Section */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-gray-900">Réservations récentes</h2>
         </div>
+
+        {isLoadingBookings ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+          </div>
+        ) : packageBookings.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {packageBookings.map((booking) => (
+              <PackageBookingCard 
+                key={booking._id} 
+                booking={booking} 
+                onStatusUpdate={handleBookingStatusUpdate}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">📅</div>
+            <h3 className="text-lg font-semibold text-gray-700 mb-2">
+              Aucune réservation
+            </h3>
+            <p className="text-gray-500 text-sm">
+              Les réservations de vos packages apparaîtront ici
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Empty State - Only show if all services are empty */}
+      {properties.length === 0 && packages.length === 0 && packageBookings.length === 0 && 
+       !isLoadingProperties && !isLoadingPackages && !isLoadingBookings && (
+        <div className="text-center py-12">
+          <div className="text-6xl mb-4">🤝</div>
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">
+            Aucun service disponible
+          </h3>
+          <p className="text-gray-500 text-sm mb-4">
+            Vous n'avez pas encore de propriétés co-hébergées, packages ou réservations. Commencez par postuler pour co-héberger une propriété ou créer votre premier package d'expériences.
+          </p>
+          <button
+            onClick={() => navigate('/cohosting-explore')}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+          >
+            Explorer les propriétés à co-héberger
+          </button>
+        </div>
+      )}
       </div>
     </div>
   );
