@@ -9,7 +9,7 @@ export const useProfileData = (userId, shouldFetch = true) => {
   const [error, setError] = useState(null);
 
   const fetchProfileData = async () => {
-    if (!userId || !shouldFetch) return;
+    if (!shouldFetch) return;
     
     setLoading(true);
     setError(null);
@@ -20,30 +20,35 @@ export const useProfileData = (userId, shouldFetch = true) => {
         throw new Error('No authentication token found');
       }
 
-      console.log('🔍 Fetching profile for userId:', userId);
-      console.log('🔍 API URL:', `${API_BASE_URL}/auth/user/${userId}`);
+      console.log('🔍 Fetching current user profile');
+      console.log('🔍 API URL:', `${API_BASE_URL}/auth/me`);
       console.log('🔍 Token exists:', !!token);
 
-      const response = await axios.get(`${API_BASE_URL}/auth/user/${userId}`, {
+      const response = await axios.get(`${API_BASE_URL}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       console.log('🔍 Response received:', response.data);
 
-      if (response.data.success && response.data.user) {
-        setProfileData(response.data.user);
+      // The /auth/me endpoint returns the user directly, not wrapped in success/user
+      if (response.data && response.data._id) {
+        setProfileData(response.data);
       } else {
-        console.log('❌ Response validation failed:', {
-          hasSuccess: !!response.data.success,
-          hasUser: !!response.data.user,
-          success: response.data.success,
-          user: response.data.user
-        });
-        throw new Error(response.data.message || 'Failed to fetch profile data');
+        console.log('❌ Response validation failed:', response.data);
+        throw new Error('Failed to fetch profile data - invalid response format');
       }
     } catch (err) {
       console.error('Error fetching profile data:', err);
-      setError(err.response?.data?.message || err.message || 'Failed to fetch profile data');
+      
+      // Handle 401 specifically - token might be expired
+      if (err.response?.status === 401) {
+        console.log('🔐 Token expired or invalid, clearing auth data');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('user');
+        setError('Session expired. Please log in again.');
+      } else {
+        setError(err.response?.data?.message || err.message || 'Failed to fetch profile data');
+      }
     } finally {
       setLoading(false);
     }

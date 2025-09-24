@@ -8,6 +8,12 @@ export default function ListingCardGrid({ listings, onCardClick }) {
   const { favorites, isFavorited, toggleFavorite, isAuthenticated } = useFavorites();
   const [visibleCards, setVisibleCards] = useState([]);
 
+  // Debug logging
+  console.log("🔍 ListingCardGrid received listings:", listings);
+  if (listings && listings.length > 0) {
+    console.log("🔍 First listing data:", listings[0]);
+  }
+
   const handleToggleFavorite = async (e, id) => {
     e.stopPropagation();
     
@@ -70,8 +76,8 @@ export default function ListingCardGrid({ listings, onCardClick }) {
                   />
                 ) : (
                   <S3Image
-                    src={listing.image || "/placeholder.jpg"}
-                    alt={listing.title}
+                    src={listing.image || listing.photos?.[0] || "/placeholder.jpg"}
+                    alt={listing.title || "Property"}
                     className="w-full h-40 object-cover rounded-xl"
                     fallbackSrc="/placeholder.jpg"
                   />
@@ -88,7 +94,7 @@ export default function ListingCardGrid({ listings, onCardClick }) {
               
               {/* Title */}
               <h2 className="font-semibold text-lg text-gray-900 mb-1 line-clamp-1 leading-tight">
-                {listing.title}
+                {listing.title || "Propriété sans titre"}
               </h2>
               
                 {/* Price */}
