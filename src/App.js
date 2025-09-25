@@ -93,6 +93,9 @@ import VillaMakarska from './pages/Propriétés/VillaMakarska';
 import EditProfileScreen from './pages/Profile/EditProfile';
 import DocumentUpload from './utilities/DocumentUpload';
 
+// Admin Dashboard
+import AdminDashboard from './pages/AdminDashboard';
+
 // Explore affiché en fond avec modal devant
 function ModalLayout({ children }) {
   return (
@@ -200,6 +203,9 @@ function App() {
 
         <Route path="/search" element={<PropertySearchFlow />} />
         <Route path="/search/results" element={<SearchResultsPage />} />
+        
+        {/* Admin Dashboard - Public access */}
+        <Route path="/admin-dashboard" element={<AdminDashboard />} />
         
         {/* General / Auth - Only accessible when NOT authenticated */}
         <Route path="/login" element={<ProtectedRoute requireAuth={false}><LoginScreen /></ProtectedRoute>} />
