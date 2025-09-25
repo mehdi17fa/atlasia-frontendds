@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import axios from "axios";
+import { api } from "../../api";
 import SectionTitle from "../../components/shared/SectionTitle";
 import S3Image from "../../components/S3Image";
 import ImageCarousel from "../../components/ImageCarousel";
+import ListingCardGrid from "../../components/ListingCard/ListingCardGrid";
 
 import Calendar from "../../components/shared/Calendar";
 import OwnerBottomNavbar from "../../components/shared/NavbarPropriétaire";
 import { AuthContext } from "../../context/AuthContext";
+import { tokenStorage } from "../../utils/tokenStorage";
 import toast, { Toaster } from "react-hot-toast";
 import { FaArrowLeft, FaUser } from 'react-icons/fa';
 import { 
@@ -26,55 +28,6 @@ import {
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:4000";
 
-// Property Grid Card Component
-function PropertyGridCard({ property, onClick }) {
-  return (
-    <div 
-      className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition-all duration-300 hover:-translate-y-1"
-      onClick={() => onClick(property)}
-    >
-      <div className="relative h-48 bg-gray-200">
-        {property.photos?.[0] || property.image ? (
-          <S3Image
-            src={property.photos?.[0] || property.image}
-            alt={property.title}
-            className="w-full h-full object-cover"
-            fallbackSrc="/placeholder.jpg"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gray-100">
-            <HomeIcon className="w-12 h-12 text-gray-400" />
-          </div>
-        )}
-        <div className="absolute top-2 right-2">
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-            property.status === 'published' 
-              ? 'bg-green-100 text-green-800' 
-              : property.status === 'draft'
-              ? 'bg-yellow-100 text-yellow-800'
-              : 'bg-gray-100 text-gray-800'
-          }`}>
-            {property.status === 'published' ? '🌟 Publié' : 
-             property.status === 'draft' ? '📝 Brouillon' : 
-             property.status}
-          </span>
-        </div>
-      </div>
-      <div className="p-4">
-        <h3 className="font-semibold text-gray-900 mb-1 line-clamp-1">
-          {property.title || "Titre non défini"}
-        </h3>
-        <p className="text-sm text-gray-600 mb-2 line-clamp-2">
-          {property.description || "Description non disponible"}
-        </p>
-        <div className="flex items-center text-xs text-gray-500">
-          <MapPinIcon className="w-4 h-4 mr-1" />
-          <span className="line-clamp-1">{property.location || "Localisation non définie"}</span>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function CoHostRequestCard({ request, onAccept, onReject, loading, isHighlighted = false }) {
   return (
@@ -238,22 +191,9 @@ export default function WelcomeOwner() {
       setLoadingProperties(true);
       setPropertiesError(null);
       
-      const token = localStorage.getItem("accessToken");
-      
       console.log("🔍 Fetching owner properties...");
-      console.log("🔑 Token found:", token ? "YES" : "NO");
-      
-      if (!token) {
-        console.log("❌ No token found in localStorage");
-        toast.error("Veuillez vous reconnecter");
-        return;
-      }
 
-      const response = await axios.get(`${API_BASE}/api/property/mine/all`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      const response = await api.get(`/api/property/mine/all`);
       
       console.log("📡 Properties API Response:", response.data);
       
@@ -291,18 +231,7 @@ export default function WelcomeOwner() {
       setLoadingReservations(true);
       setReservationsError(null);
       
-      const token = localStorage.getItem("accessToken");
-      
-      if (!token) {
-        toast.error("Veuillez vous reconnecter");
-        return;
-      }
-
-      const response = await axios.get(`${API_BASE}/api/booking/owner`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      const response = await api.get(`/api/booking/owner`);
       
       if (response.data.success && response.data.bookings) {
         setReservations(response.data.bookings);
@@ -326,23 +255,11 @@ export default function WelcomeOwner() {
 
   const handleBookingResponse = async (bookingId, action) => {
     try {
-      const token = localStorage.getItem("accessToken");
-      
-      if (!token) {
-        toast.error("Veuillez vous reconnecter");
-        return;
-      }
-
-      const response = await axios.patch(
-        `${API_BASE}/api/booking/${bookingId}/respond`,
+      const response = await api.patch(
+        `/api/booking/${bookingId}/respond`,
         { 
           action: action, 
           message: action === 'reject' ? 'Demande refusée par le propriétaire' : '' 
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
         }
       );
 
@@ -361,24 +278,9 @@ export default function WelcomeOwner() {
 
   const fetchCoHostRequests = async () => {
     try {
-      // Check both possible token locations
-      const token = localStorage.getItem("accessToken");
-      
       console.log("🔍 Fetching co-host requests...");
-      console.log("🔑 Token found:", token ? "YES" : "NO");
-      console.log("📦 Token value:", token ? token.substring(0, 20) + "..." : "NULL");
-      
-      if (!token) {
-        console.log("❌ No token found in localStorage");
-        toast.error("Veuillez vous reconnecter");
-        return;
-      }
 
-      const response = await axios.get(`${API_BASE}/api/partner/requests`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      const response = await api.get(`/api/partner/requests`);
       
       console.log("📡 API Response:", response.data);
       
@@ -411,16 +313,7 @@ export default function WelcomeOwner() {
   const handleAcceptRequest = async (requestId) => {
     setActionLoading(true);
     try {
-      const token = localStorage.getItem("accessToken");
-      const response = await axios.patch(
-        `${API_BASE}/api/partner/accept/${requestId}`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      const response = await api.patch(`/api/partner/accept/${requestId}`, {});
 
       if (response.data.success) {
         // Remove accepted request from list
@@ -444,16 +337,7 @@ export default function WelcomeOwner() {
   const handleRejectRequest = async (requestId) => {
     setActionLoading(true);
     try {
-      const token = localStorage.getItem("accessToken");
-      const response = await axios.patch(
-        `${API_BASE}/api/partner/reject/${requestId}`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      const response = await api.patch(`/api/partner/reject/${requestId}`, {});
 
       if (response.data.success) {
         // Remove rejected request from list
@@ -595,18 +479,14 @@ export default function WelcomeOwner() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                {propertiesToShow.map((property) => (
-                  <PropertyGridCard
-                    key={property._id}
-                    property={property}
-                    onClick={handleCardClick}
-                  />
-                ))}
-              </div>
+              <ListingCardGrid
+                listings={propertiesToShow}
+                onCardClick={handleCardClick}
+                actionButtonText="Gérer"
+              />
               
               {ownerProperties.length > 6 && (
-                <div className="text-center">
+                <div className="text-center mt-6">
                   <button
                     onClick={() => setShowAllProperties(!showAllProperties)}
                     className="bg-white border border-green-600 text-green-600 px-6 py-2 rounded-lg hover:bg-green-50 transition-colors font-medium flex items-center mx-auto"

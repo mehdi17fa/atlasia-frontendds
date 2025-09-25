@@ -6,6 +6,7 @@ import SectionTitle from "../../components/shared/SectionTitle";
 import SearchBar from "../../components/explore/SearchBar";
 import InteractiveMap from "../../components/InteractiveMap";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 
 export default function Explore() {
   const [properties, setProperties] = useState([]);
@@ -14,12 +15,31 @@ export default function Explore() {
   const [isMapView, setIsMapView] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState(null);
   const navigate = useNavigate();
+  const { user, isLoading: authLoading, isAuthenticated } = useAuth();
 
   useEffect(() => {
     const fetchProperties = async () => {
+      // Wait for auth to load first
+      if (authLoading) {
+        console.log('⏳ Waiting for auth to load...');
+        return;
+      }
+
       try {
-        console.log('Making API call to: /api/property');
-        const res = await api.get('/api/property');
+        let endpoint = '/api/property';
+        let logMessage = 'Making API call to: /api/property (public)';
+        
+        // For intermediate/partner users, fetch properties available for cohosting
+        if (isAuthenticated && user?.role === 'partner') {
+          endpoint = '/api/property/available-for-cohosting';
+          logMessage = 'Making API call to: /api/property/available-for-cohosting (partner)';
+        }
+        
+        console.log(logMessage);
+        console.log('User role:', user?.role);
+        console.log('Is authenticated:', isAuthenticated);
+        
+        const res = await api.get(endpoint);
         console.log('Full API response:', res);
         console.log('Response data:', res.data);
         console.log('Response status:', res.status);
@@ -44,11 +64,17 @@ export default function Explore() {
         setLoading(false);
       }
     };
+    
     fetchProperties();
-  }, []);
+  }, [authLoading, isAuthenticated, user?.role]); // Re-run when auth state changes
 
   const handleCardClick = (id) => {
-    navigate(`/property/${id}`);
+    // For intermediate/partner users, navigate to cohosting preview
+    if (isAuthenticated && user?.role === 'partner') {
+      navigate(`/cohosting-preview/${id}`);
+    } else {
+      navigate(`/property/${id}`);
+    }
   };
 
   const handleMapPropertyClick = (propertyId) => {
@@ -87,10 +113,33 @@ export default function Explore() {
     setIsMapView(!isMapView);
   };
 
+  // Get the appropriate title and action button text based on user role
+  const getTitle = () => {
+    if (isAuthenticated && user?.role === 'partner') {
+      return "Propriétés disponibles pour co-hébergement";
+    }
+    return "Explorer";
+  };
+
+  const getActionButtonText = () => {
+    if (isAuthenticated && user?.role === 'partner') {
+      return "Voir pour co-hébergement";
+    }
+    return undefined; // Default button text
+  };
+
   return (
     <div className="px-4 md:px-20 pt-1 pb-28">
-      <SectionTitle title="Explorer" />
+      <SectionTitle title={getTitle()} />
       
+      {/* Show role-specific info for partners */}
+      {isAuthenticated && user?.role === 'partner' && (
+        <div className="mb-6 text-center bg-green-50 border border-green-200 rounded-lg p-4">
+          <p className="text-green-800 text-sm">
+            En tant que partenaire, vous voyez ici toutes les propriétés disponibles pour le co-hébergement.
+          </p>
+        </div>
+      )}
 
       {properties.length === 0 ? (
         <div className="text-center py-12">
@@ -99,11 +148,27 @@ export default function Explore() {
             Aucune propriété disponible
           </h3>
           <p className="text-gray-500 text-sm">
-            Il n'y a actuellement aucune propriété publiée à explorer.
+            {isAuthenticated && user?.role === 'partner' 
+              ? "Il n'y a actuellement aucune propriété disponible pour le co-hébergement."
+              : "Il n'y a actuellement aucune propriété publiée à explorer."
+            }
           </p>
         </div>
       ) : (
-        <ListingCardGrid listings={properties} onCardClick={handleCardClick} />
+        <>
+          {isAuthenticated && user?.role === 'partner' && (
+            <div className="mb-6 text-center">
+              <p className="text-gray-600">
+                {properties.length} propriété{properties.length > 1 ? 's' : ''} disponible{properties.length > 1 ? 's' : ''} pour le co-hébergement
+              </p>
+            </div>
+          )}
+          <ListingCardGrid 
+            listings={properties} 
+            onCardClick={handleCardClick}
+            actionButtonText={getActionButtonText()}
+          />
+        </>
       )}
     </div>
   );

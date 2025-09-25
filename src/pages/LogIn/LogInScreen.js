@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { AuthContext } from '../../context/AuthContext';
+import { tokenStorage } from '../../utils/tokenStorage';
 import PasswordInput from '../../components/shared/PasswordInput';
 
 export default function LoginScreen({onClose}) {
@@ -40,26 +41,42 @@ export default function LoginScreen({onClose}) {
           throw new Error(response.data.message || 'Login failed');
         }
 
-        // Store refreshToken directly (since login function only handles accessToken)
-        if (response.data.refreshToken) {
-          localStorage.setItem('refreshToken', response.data.refreshToken);
-        }
-
-        // Update global auth state and store accessToken
-        login(response.data.user, response.data.accessToken);
-    
-        // Verify tokens are stored
-        console.log("🔍 Stored tokens:", {
-          accessToken: !!localStorage.getItem('accessToken'),
-          refreshToken: !!localStorage.getItem('refreshToken')
+        // Debug: Check what we received from the server
+        console.log("🔍 Login response data:", {
+          hasUser: !!response.data.user,
+          hasAccessToken: !!response.data.accessToken,
+          hasRefreshToken: !!response.data.refreshToken,
+          userData: response.data.user,
+          tokenPreview: response.data.accessToken ? response.data.accessToken.substring(0, 20) + '...' : null
         });
+
+        // Update global auth state and store both tokens
+        console.log("🔄 Calling login function...");
+        login(response.data.user, response.data.accessToken, response.data.refreshToken);
+    
+        // Verify tokens are stored immediately after login
+        const storageStatus = tokenStorage.getStorageStatus();
+        console.log("🔍 Stored tokens immediately after login:", storageStatus);
+        
+        // Additional verification after a short delay
+        setTimeout(() => {
+          const delayedStorageStatus = tokenStorage.getStorageStatus();
+          console.log("🔍 Stored tokens after 500ms:", delayedStorageStatus);
+        }, 500);
     
         // Navigate based on role
         if (response.data.user.role === 'owner') navigate('/owner-welcome');
         else if (response.data.user.role === 'partner') navigate('/partner-welcome');
         else navigate('/');
         
-        onClose();
+        // Only call onClose if it's a function
+        if (typeof onClose === 'function') {
+          try {
+            onClose();
+          } catch (closeError) {
+            console.warn('onClose function error:', closeError);
+          }
+        }
     
       } catch (err) {
         console.error('Login error:', err.response?.data || err.message);

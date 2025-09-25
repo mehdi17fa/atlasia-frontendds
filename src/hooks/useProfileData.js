@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
-
-const API_BASE_URL = process.env.REACT_APP_API_URL ? `${process.env.REACT_APP_API_URL}/api` : 'http://localhost:4000/api';
+import { api } from '../api';
 
 export const useProfileData = (userId, shouldFetch = true) => {
   const [profileData, setProfileData] = useState(null);
@@ -15,18 +13,10 @@ export const useProfileData = (userId, shouldFetch = true) => {
     setError(null);
     
     try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
       console.log('🔍 Fetching current user profile');
-      console.log('🔍 API URL:', `${API_BASE_URL}/auth/me`);
-      console.log('🔍 Token exists:', !!token);
+      console.log('🔍 API URL:', '/api/auth/me');
 
-      const response = await axios.get(`${API_BASE_URL}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.get('/api/auth/me');
 
       console.log('🔍 Response received:', response.data);
 
@@ -40,15 +30,8 @@ export const useProfileData = (userId, shouldFetch = true) => {
     } catch (err) {
       console.error('Error fetching profile data:', err);
       
-      // Handle 401 specifically - token might be expired
-      if (err.response?.status === 401) {
-        console.log('🔐 Token expired or invalid, clearing auth data');
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('user');
-        setError('Session expired. Please log in again.');
-      } else {
-        setError(err.response?.data?.message || err.message || 'Failed to fetch profile data');
-      }
+      // The API interceptor will handle 401 errors and token refresh automatically
+      setError(err.response?.data?.message || err.message || 'Failed to fetch profile data');
     } finally {
       setLoading(false);
     }
@@ -59,6 +42,10 @@ export const useProfileData = (userId, shouldFetch = true) => {
   };
 
   useEffect(() => {
+    // Clear previous profile data when userId changes to prevent stale data
+    if (userId) {
+      setProfileData(null);
+    }
     fetchProfileData();
   }, [userId, shouldFetch]);
 

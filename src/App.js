@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import {
   BrowserRouter as Router,
   Routes,
@@ -6,8 +6,7 @@ import {
   useNavigate,
   useLocation,
 } from 'react-router-dom';
-
-import { useState } from 'react';
+import { setGlobalNavigate } from './api';
 
 // Import AuthContext
 import { AuthContext } from './context/AuthContext';
@@ -166,6 +165,17 @@ function ConditionalNavbar() {
   );
 }
 
+// Navigation setup component
+function NavigationSetup() {
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    setGlobalNavigate(navigate);
+  }, [navigate]);
+  
+  return null;
+}
+
 // Main App
 function App() {
   const [signupData, setSignupData] = useState({
@@ -177,6 +187,7 @@ function App() {
 
   return (
     <PropertyCreationProvider>
+      <NavigationSetup />
       <Routes>
         {/* Explore layout */}
         <Route path="/" element={<ExploreLayout />}>

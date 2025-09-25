@@ -8,11 +8,6 @@ export default function ListingCardGrid({ listings, onCardClick }) {
   const { favorites, isFavorited, toggleFavorite, isAuthenticated } = useFavorites();
   const [visibleCards, setVisibleCards] = useState([]);
 
-  // Debug logging
-  console.log("🔍 ListingCardGrid received listings:", listings);
-  if (listings && listings.length > 0) {
-    console.log("🔍 First listing data:", listings[0]);
-  }
 
   const handleToggleFavorite = async (e, id) => {
     e.stopPropagation();
@@ -86,37 +81,62 @@ export default function ListingCardGrid({ listings, onCardClick }) {
             </div>
             
             {/* Text content below the image box */}
-            <div className="mt-2 leading-tight">
+            <div className="mt-3 px-1 leading-tight">
               {/* Location */}
-              <p className="text-sm text-gray-600 mb-0.5 leading-tight">
-                {listing.localisation?.city || listing.location || "Location"}
+              <p className="text-sm text-gray-600 mb-1 leading-tight">
+                {listing.localisation?.city || 
+                 listing.localisation?.address ||
+                 listing.location || 
+                 listing.city ||
+                 listing.adresse?.ville ||
+                 "Location non spécifiée"}
               </p>
               
               {/* Title */}
-              <h2 className="font-semibold text-lg text-gray-900 mb-1 line-clamp-1 leading-tight">
-                {listing.title || "Propriété sans titre"}
+              <h2 className="font-semibold text-lg text-gray-900 mb-2 line-clamp-2 leading-tight">
+                {listing.title || 
+                 listing.nom || 
+                 listing.propertyName ||
+                 "Propriété sans titre"}
               </h2>
               
-                {/* Price */}
-                <div className="flex items-center space-x-1 leading-tight">
-                  <span className="text-sm font-bold text-green-600 leading-tight">
-                    {(() => {
-                      if (!listing.price) return "Prix sur demande";
-                      
-                      // Handle different price formats
-                      if (typeof listing.price === 'number') {
-                        return `${listing.price} MAD`;
-                      } else if (typeof listing.price === 'object') {
-                        // If price is an object, try to get a reasonable value
-                        const priceValue = listing.price.weekdays || listing.price.weekend || listing.price.price || listing.price.pricePerNight;
-                        return priceValue ? `${priceValue} MAD` : "Prix sur demande";
-                      } else {
-                        return `${listing.price} MAD`;
-                      }
-                    })()}
-                  </span>
-                  <span className="text-sm text-gray-500 leading-tight">pour 2 nuits</span>
-                </div>
+              {/* Property details */}
+              <div className="flex items-center text-xs text-gray-500 mb-2 space-x-3">
+                {listing.superficie && (
+                  <span>{listing.superficie} m²</span>
+                )}
+                {listing.nombreChambres && (
+                  <span>{listing.nombreChambres} chambres</span>
+                )}
+                {listing.capaciteAccueil && (
+                  <span>{listing.capaciteAccueil} personnes</span>
+                )}
+              </div>
+              
+              {/* Price */}
+              <div className="flex items-center space-x-1 leading-tight">
+                <span className="text-base font-bold text-green-600 leading-tight">
+                  {(() => {
+                    if (!listing.price) return "Prix sur demande";
+                    
+                    // Handle different price formats
+                    if (typeof listing.price === 'number') {
+                      return `${listing.price} MAD`;
+                    } else if (typeof listing.price === 'object') {
+                      // If price is an object, try to get a reasonable value
+                      const priceValue = listing.price.weekdays || 
+                                       listing.price.weekend || 
+                                       listing.price.price || 
+                                       listing.price.pricePerNight ||
+                                       listing.price.prixParNuit;
+                      return priceValue ? `${priceValue} MAD` : "Prix sur demande";
+                    } else {
+                      return `${listing.price} MAD`;
+                    }
+                  })()}
+                </span>
+                <span className="text-sm text-gray-500 leading-tight">/ nuit</span>
+              </div>
             </div>
           </div>
         );

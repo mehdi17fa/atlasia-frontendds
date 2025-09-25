@@ -1,38 +1,32 @@
 // src/pages/CohostingExplore/CohostingExplore.js
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import axios from "axios";
 import ListingCardGrid from "../../components/ListingCard/ListingCardGrid";
 import SectionTitle from "../../components/shared/SectionTitle";
 import { useNavigate } from "react-router-dom";
-
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:4000";
+import { AuthContext } from "../../context/AuthContext";
 
 export default function CohostingExplore() {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [debugInfo, setDebugInfo] = useState(null);
   const navigate = useNavigate();
+  const { token } = useContext(AuthContext);
 
   useEffect(() => {
     const fetchAvailableProperties = async () => {
       try {
-        const token = localStorage.getItem('accessToken');
+        console.log("🚀 Making API call to: /api/property/available-for-cohosting");
         
-        console.log("🔍 Token exists:", !!token);
-        console.log("🔍 Token preview:", token ? token.substring(0, 20) + "..." : "No token");
-        
-        if (!token) {
-          console.log("❌ No token found, redirecting to login");
-          navigate('/login');
+        const authToken = token || localStorage.getItem("accessToken");
+        if (!authToken) {
+          alert("Vous devez être connecté pour voir ces propriétés");
+          navigate("/login");
           return;
         }
-
-        console.log("🚀 Making API call to:", `${API_BASE}/api/property/available-for-cohosting`);
         
-        const res = await axios.get(`${API_BASE}/api/property/available-for-cohosting`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+        const res = await axios.get('http://localhost:4000/api/property/available-for-cohosting', {
+          headers: { Authorization: `Bearer ${authToken}` }
         });
         
         console.log("✅ API call successful:", res.data);
@@ -56,9 +50,6 @@ export default function CohostingExplore() {
         if (err.response?.status === 403) {
           alert("Vous devez avoir un rôle de partenaire pour voir ces propriétés");
           navigate(-1);
-        } else if (err.response?.status === 401) {
-          console.log("🔄 401 error, redirecting to login");
-          navigate('/login');
         }
       } finally {
         setLoading(false);
@@ -66,7 +57,7 @@ export default function CohostingExplore() {
     };
 
     fetchAvailableProperties();
-  }, [navigate]);
+  }, [navigate, token]);
 
   const handleCardClick = (id) => {
     navigate(`/cohosting-preview/${id}`);

@@ -369,8 +369,15 @@ export default function PartnerDashboard() {
     });
 
     if (response.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('accessToken');
+      // Use the proper logout function instead of manual clearing
+      if (window.authLogout) {
+        window.authLogout();
+      } else {
+        localStorage.removeItem('token');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('user');
+        localStorage.removeItem('refreshToken');
+      }
       window.location.href = '/login';
       return;
     }

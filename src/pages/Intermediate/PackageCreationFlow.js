@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
+import { api } from '../../api';
 import S3Image from '../../components/S3Image';
 import S3ImageUpload from '../../components/S3ImageUpload';
 
@@ -47,46 +48,18 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
         return;
       }
       
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:4000'}/api/partner/my-properties`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await api.get('/api/partner/my-properties');
       
-      console.log('📡 Response status:', response.status);
-      console.log('📡 Response headers:', response.headers);
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('✅ Properties data received:', data);
-        // Filter out any null/undefined properties and ensure they have _id
-        const validProperties = (data.properties || []).filter(property => 
-          property && property._id && typeof property._id === 'string'
-        );
-        console.log('✅ Valid properties after filtering:', validProperties);
-        setAvailableProperties(validProperties);
-      } else {
-        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-        console.error('❌ Error response:', response.status, errorData);
-        
-        // Handle token expiration specifically
-        if (response.status === 401) {
-          setError('Votre session a expiré. Veuillez vous reconnecter.');
-          // Clear expired tokens
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('user');
-          localStorage.removeItem('refreshToken');
-          // Redirect to login after a short delay
-          setTimeout(() => {
-            navigate('/login');
-          }, 2000);
-        } else {
-          setError(`Échec du chargement des propriétés (${response.status}): ${errorData.message || 'Erreur inconnue'}`);
-        }
-      }
+      console.log('✅ Properties data received:', response.data);
+      // Filter out any null/undefined properties and ensure they have _id
+      const validProperties = (response.data.properties || []).filter(property => 
+        property && property._id && typeof property._id === 'string'
+      );
+      console.log('✅ Valid properties after filtering:', validProperties);
+      setAvailableProperties(validProperties);
     } catch (err) {
       console.error('❌ Fetch error:', err);
+      // The API interceptor will handle 401 errors and token refresh automatically
       setError(`Erreur lors du chargement des propriétés: ${err.message}`);
     } finally {
       setLoadingProperties(false);
@@ -212,9 +185,14 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
         // Handle token expiration
         if (response.status === 401) {
           setError('Votre session a expiré. Veuillez vous reconnecter.');
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('user');
-          localStorage.removeItem('refreshToken');
+          // Use the proper logout function instead of manual clearing
+          if (window.authLogout) {
+            window.authLogout();
+          } else {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('user');
+            localStorage.removeItem('refreshToken');
+          }
           setTimeout(() => {
             navigate('/login');
           }, 2000);
@@ -318,9 +296,14 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
           // Handle token expiration
           if (publishResponse.status === 401) {
             setError('Votre session a expiré. Veuillez vous reconnecter.');
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('user');
-            localStorage.removeItem('refreshToken');
+            // Use the proper logout function instead of manual clearing
+            if (window.authLogout) {
+              window.authLogout();
+            } else {
+              localStorage.removeItem('accessToken');
+              localStorage.removeItem('user');
+              localStorage.removeItem('refreshToken');
+            }
             setTimeout(() => {
               navigate('/login');
             }, 2000);
@@ -335,9 +318,14 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
         // Handle token expiration
         if (createResponse.status === 401) {
           setError('Votre session a expiré. Veuillez vous reconnecter.');
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('user');
-          localStorage.removeItem('refreshToken');
+          // Use the proper logout function instead of manual clearing
+          if (window.authLogout) {
+            window.authLogout();
+          } else {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('user');
+            localStorage.removeItem('refreshToken');
+          }
           setTimeout(() => {
             navigate('/login');
           }, 2000);
@@ -636,21 +624,21 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
               
               <div className="max-w-md mx-auto">
                 <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-gray-700">Prix Total (MAD)</label>
-                  <div className="relative">
-              <input
-                type="number"
-                value={formData.totalPrice}
-                onChange={(e) => handleInputChange('totalPrice', e.target.value)}
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-                      className="w-full px-4 py-3 pl-8 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 text-gray-900 text-lg"
-              />
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">MAD</span>
+                  <label className="block text-sm font-semibold text-gray-700">Prix Total</label>
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="number"
+                      value={formData.totalPrice}
+                      onChange={(e) => handleInputChange('totalPrice', e.target.value)}
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                      className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 text-gray-900 text-lg"
+                    />
+                    <span className="text-gray-500 font-medium text-lg">MAD</span>
                   </div>
                 </div>
-            </div>
+              </div>
           </div>
         )}
 

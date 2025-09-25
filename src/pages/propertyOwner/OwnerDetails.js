@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import { api } from "../../api";
 import { StarIcon } from "@heroicons/react/24/solid";
 import { MapPinIcon, HomeIcon } from "@heroicons/react/24/outline";
 import InitialsAvatar from "../../components/shared/InitialsAvatar";
 import S3Image from "../../components/S3Image";
-
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:4000";
 
 export default function OwnerDetails() {
   const { id } = useParams();
@@ -21,27 +19,14 @@ export default function OwnerDetails() {
       try {
         console.log("🔍 Fetching owner with ID:", id);
 
-        // Get authentication token
-        const token = localStorage.getItem('accessToken');
-        if (!token) {
-          console.log("❌ No access token found");
-          setError("Veuillez vous connecter pour voir les détails de l'hôte");
-          setLoading(false);
-          return;
-        }
-
-        const headers = {
-          Authorization: `Bearer ${token}`
-        };
-
         // Fetch owner data
-        const ownerRes = await axios.get(`${API_BASE}/api/auth/user/${id}`, { headers });
+        const ownerRes = await api.get(`/api/auth/user/${id}`);
         console.log("👤 Owner data received:", ownerRes.data);
         setOwner(ownerRes.data.user);
 
         // Fetch owner's properties
         console.log("🏠 Fetching properties for owner...");
-        const propertiesRes = await axios.get(`${API_BASE}/api/property/owner/${id}`, { headers });
+        const propertiesRes = await api.get(`/api/property/owner/${id}`);
         console.log("🏠 Properties received:", propertiesRes.data);
         setProperties(propertiesRes.data.properties || []);
 
@@ -50,11 +35,8 @@ export default function OwnerDetails() {
         console.error("Error fetching owner or properties:", err);
         console.error("Error response:", err.response?.data);
 
-        if (err.response?.status === 401) {
-          setError("Session expirée. Veuillez vous reconnecter.");
-          // Optionally redirect to login
-          navigate('/login');
-        } else if (err.response?.status === 404) setError("Hôte introuvable");
+        // The API interceptor will handle 401 errors and token refresh automatically
+        if (err.response?.status === 404) setError("Hôte introuvable");
         else if (err.response?.status === 400) setError("ID d'hôte invalide");
         else setError("Erreur lors du chargement des informations de l'hôte");
       } finally {

@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
-import { AuthContext } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { FaArrowLeft, FaUser } from 'react-icons/fa';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL ? `${process.env.REACT_APP_API_URL}/api` : 'http://localhost:4000/api';
 
 const OwnerIncomePage = () => {
-  const { user } = useContext(AuthContext);
+  const { user, token, isLoading, isAuthenticated } = useAuth();
   const [incomeData, setIncomeData] = useState({ income: 0, bookingCount: 0, properties: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -17,17 +17,28 @@ const OwnerIncomePage = () => {
 
   // Fetch income data
   const fetchIncome = async (startDate = '', endDate = '') => {
+    // Wait for auth to initialize if still loading
+    if (isLoading) {
+      console.log('⏳ Auth still loading, waiting...');
+      return;
+    }
+
+    // Check authentication
+    if (!isAuthenticated || !token || !user?._id) {
+      console.log('❌ Authentication failed:', {
+        isAuthenticated,
+        hasToken: !!token,
+        hasUserId: !!user?._id,
+        user: user
+      });
+      toast.error('Please log in to view your income');
+      navigate('/login');
+      return;
+    }
+    
     try {
       setLoading(true);
       setError(null);
-      const token = localStorage.getItem('accessToken');
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      if (!token || !user?._id) {
-        console.log('❌ No accessToken or user ID found', { token, userId: user?._id });
-        toast.error('Please log in to view your income');
-        navigate('/login');
-        return;
-      }
 
       const params = new URLSearchParams();
       if (startDate) params.append('startDate', startDate);
@@ -67,8 +78,14 @@ const OwnerIncomePage = () => {
       if (err.response?.status === 401 || err.response?.status === 403) {
         console.log('🔐 Token invalid or expired, redirecting to login');
         toast.error('Session expired, please log in again');
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('user');
+        // Use the proper logout function instead of manual clearing
+        if (window.authLogout) {
+          window.authLogout();
+        } else {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('user');
+          localStorage.removeItem('refreshToken');
+        }
         navigate('/login');
       } else if (err.response?.status === 500) {
         console.log('⚠️ Server error:', err.response?.data);
@@ -82,9 +99,12 @@ const OwnerIncomePage = () => {
   };
 
   // Load initial data on mount
+  // Initial fetch on mount - wait for auth to be ready
   useEffect(() => {
-    fetchIncome();
-  }, []);
+    if (!isLoading) {
+      fetchIncome();
+    }
+  }, [isLoading]); // Trigger when isLoading changes
 
   // Handle date filter change
   const handleFilterChange = (e) => {
@@ -102,6 +122,18 @@ const OwnerIncomePage = () => {
     setDateRange({ startDate: '', endDate: '' });
     fetchIncome();
   };
+
+  // Show loading state while auth is initializing
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-700 mx-auto mb-4"></div>
+          <p className="text-gray-600">Initialisation de l'authentification...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-28">

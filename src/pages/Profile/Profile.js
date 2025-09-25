@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SectionTitle from '../../components/shared/SectionTitle';
 import DefaultAvatar from '../assets/default-pp.png';
-import { AuthContext } from '../../context/AuthContext'; // ← import context
+import { useAuth } from '../../hooks/useAuth';
 import S3Image from '../../components/S3Image';
 import SignUpScreen from '../SignUp/SignUpScreen';
 import SignupScreenConf from '../SignUp/SignUpConfScreen';
@@ -70,10 +70,13 @@ export default function Profile() {
   const [showIdentification, setShowIdentification] = useState(false);
   const navigate = useNavigate();
   
-  const { user, logout, setUser } = useContext(AuthContext); // ← get user and logout
+  const { user, token, isLoading, isAuthenticated, logout, updateUser } = useAuth();
   
-  // Dynamic profile data fetching - only if user exists and has valid token
-  const shouldFetchProfile = user && user._id && localStorage.getItem('accessToken');
+  // Use user from auth context directly (it's always correct and up-to-date)
+  const displayUser = user;
+  
+  // Disable profile data fetching for now to prevent stale data issues
+  const shouldFetchProfile = false; // Temporarily disabled
   const { 
     profileData, 
     loading: profileLoading, 
@@ -81,8 +84,8 @@ export default function Profile() {
     refreshProfileData 
   } = useProfileData(user?._id, shouldFetchProfile);
   
-  // Use dynamic data if available, fallback to context user
-  const displayUser = profileData || user;
+  // Always use the auth context user (it's fresh from login)
+  const finalDisplayUser = displayUser;
   const handleLogin = () => setShowLogin(true);
   const handleSignup = () => setShowSignup(true);
   const handleCloseLogin = () => setShowLogin(false);
@@ -122,21 +125,23 @@ export default function Profile() {
   };
   
   
-  // Update context user when dynamic data is fetched
+  // Clear any cached profile data when user changes (force refresh)
   React.useEffect(() => {
-    if (profileData && profileData !== user) {
-      setUser(profileData);
-    }
-  }, [profileData, user, setUser]);
+    console.log('👤 User changed in Profile component:', { 
+      userId: user?._id, 
+      userName: user?.fullName || user?.email 
+    });
+    
+    // Don't update context from profileData anymore - context is source of truth
+    // This prevents the stale "Mehdi Faraj" data from overriding correct user data
+  }, [user]);
 
-
-  // Redirect to login if user is not authenticated
+  // Redirect to login if user is not authenticated (wait for auth to load first)
   React.useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (!user || !token) {
+    if (!isLoading && !isAuthenticated) {
       navigate('/login');
     }
-  }, [user, navigate]);
+  }, [isLoading, isAuthenticated, navigate]);
   
   // Refresh profile data when component mounts (e.g., returning from edit profile)
   React.useEffect(() => {
@@ -154,7 +159,19 @@ export default function Profile() {
     { label: 'Séjour de travaille', path: '/work-stays' },
   ];
 
-  if (!user) {
+  // Show loading state while auth initializes
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-700 mx-auto mb-4"></div>
+          <p className="text-gray-600">Chargement du profil...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
     return (
       <div className="relative">
         <div className="text-center mt-20 text-gray-500">
@@ -251,12 +268,12 @@ export default function Profile() {
         )}
 
         <div className="w-32 h-32 mx-auto">
-          <ProfileAvatar user={displayUser} />
+          <ProfileAvatar user={finalDisplayUser} />
         </div>
 
-        <h1 className="font-semibold text-3xl mt-2">{displayUser?.fullName || displayUser?.email}</h1>
+        <h1 className="font-semibold text-3xl mt-2">{finalDisplayUser?.fullName || finalDisplayUser?.email}</h1>
         <div className="mt-4 text-green-700 font-medium">
-          {displayUser?.role === 'partner'
+          {finalDisplayUser?.role === 'partner'
             ? 'Devenir partenaire avec Atlasia'
             : 'Bienvenue sur Atlasia'}
           <br />
