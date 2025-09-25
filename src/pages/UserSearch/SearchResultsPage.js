@@ -89,7 +89,13 @@ export default function SearchResultsPage() {
       params.append("page", pagination.page);
 
       // Fetch data
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/search/advanced?${params.toString()}`);
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/search/advanced?${params.toString()}`, {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
       if (!response.ok) throw new Error(`Erreur serveur ${response.status}`);
 
       const data = await response.json();

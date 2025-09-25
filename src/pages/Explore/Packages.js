@@ -193,7 +193,13 @@ export default function Packages() {
       const url = `${process.env.REACT_APP_API_URL}/api/packages/published?${params.toString()}`;
       console.log('🔗 Fetching packages from:', url);
       
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
       console.log('📡 Response status:', response.status);
       
       if (response.ok) {

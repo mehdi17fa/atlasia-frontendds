@@ -119,7 +119,13 @@ export default function Activites() {
       const url = `${API_BASE_URL}/packages/published?${params.toString()}`;
       console.log('🔗 Fetching individual packages from:', url);
       
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
       console.log('📡 Response status:', response.status);
       
       if (response.ok) {

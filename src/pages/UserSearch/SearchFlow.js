@@ -55,7 +55,14 @@ const SearchModal = ({ isOpen, onClose, onSearch }) => {
       const baseUrl = process.env.REACT_APP_API_URL
   
       const response = await fetch(
-        `${baseUrl}/api/search/suggestions?query=${encodeURIComponent(query)}`
+        `${baseUrl}/api/search/suggestions?query=${encodeURIComponent(query)}`,
+        {
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        }
       );
   
       if (!response.ok) {

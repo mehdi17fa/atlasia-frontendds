@@ -1,4 +1,5 @@
 import axios from "axios";
+import './config/axios'; // Import global axios configuration
 import { isTokenExpired } from './utils/tokenUtils';
 import { tokenStorage } from './utils/tokenStorage';
 
@@ -6,6 +7,12 @@ const API_URL = process.env.REACT_APP_API_URL;
 
 export const api = axios.create({
   baseURL: API_URL,
+  withCredentials: true, // Important for CORS with credentials
+  timeout: 30000, // 30 second timeout
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+  }
 });
 
 // Global navigation function to be set by the app

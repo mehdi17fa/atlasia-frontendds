@@ -22,7 +22,13 @@ const DestinationSearchScreens = ({ onBack, onDestinationSelected }) => {
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/search/suggestions?query=${encodeURIComponent(query)}`);
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/search/suggestions?query=${encodeURIComponent(query)}`, {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
       const data = await response.json();
       setSuggestions(data.suggestions || []);
     } catch (error) {
