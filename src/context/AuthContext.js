@@ -1,14 +1,9 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { isTokenExpired, isTokenExpiringSoon } from '../utils/tokenUtils';
+import { tokenStorage } from '../utils/tokenStorage';
 
 export const AuthContext = createContext();
 
-// localStorage keys for consistency
-const STORAGE_KEYS = {
-  ACCESS_TOKEN: 'accessToken',
-  REFRESH_TOKEN: 'refreshToken', 
-  USER: 'user'
-};
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -16,54 +11,17 @@ export const AuthProvider = ({ children }) => {
   const [refreshToken, setRefreshToken] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Helper function to store tokens in localStorage
-  const storeTokens = (userData, accessToken, refreshTokenValue) => {
-    try {
-      if (userData) {
-        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
-      }
-      if (accessToken) {
-        localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
-      }
-      if (refreshTokenValue) {
-        localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshTokenValue);
-      }
-      console.log("✅ Tokens stored in localStorage");
-    } catch (error) {
-      console.error("❌ Error storing tokens:", error);
-    }
-  };
 
-  // Helper function to clear tokens from localStorage
-  const clearStoredTokens = () => {
-    try {
-      localStorage.removeItem(STORAGE_KEYS.USER);
-      localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-      localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
-      
-      // Also clear any old storage keys that might be lingering
-      localStorage.removeItem('user');
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
-      
-      console.log("🧹 All tokens and user data cleared from localStorage");
-    } catch (error) {
-      console.error("❌ Error clearing tokens:", error);
-    }
-  };
-
-  // Initialize auth state from localStorage on app startup
+  // Initialize auth state from tokenStorage on app startup
   useEffect(() => {
     const initializeAuth = async () => {
-      console.log("🔄 Initializing auth from localStorage...");
+      console.log("🔄 Initializing auth from tokenStorage...");
       setIsLoading(true);
       
       try {
-        const storedUser = localStorage.getItem(STORAGE_KEYS.USER);
-        const storedToken = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
-        const storedRefreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+        const { user: storedUser, accessToken: storedToken, refreshToken: storedRefreshToken } = tokenStorage.getTokens();
         
-        console.log("🔍 Found in localStorage:", {
+        console.log("🔍 Found in tokenStorage:", {
           hasUser: !!storedUser,
           hasToken: !!storedToken,
           hasRefreshToken: !!storedRefreshToken,
@@ -71,17 +29,15 @@ export const AuthProvider = ({ children }) => {
         });
         
         if (storedUser && storedToken) {
-          const parsedUser = JSON.parse(storedUser);
-          
           // Validate token before restoring
           if (!isTokenExpired(storedToken)) {
-            setUser(parsedUser);
+            setUser(storedUser);
             setToken(storedToken);
             setRefreshToken(storedRefreshToken);
             
-            console.log("✅ Auth state restored from localStorage:", {
-              userId: parsedUser._id,
-              userRole: parsedUser.role,
+            console.log("✅ Auth state restored from tokenStorage:", {
+              userId: storedUser._id,
+              userRole: storedUser.role,
               tokenValid: true
             });
             
@@ -90,20 +46,20 @@ export const AuthProvider = ({ children }) => {
             }
           } else {
             console.log("❌ Stored token is expired, clearing auth state");
-            clearStoredTokens();
+            tokenStorage.clearTokens();
             setUser(null);
             setToken(null);
             setRefreshToken(null);
           }
         } else {
-          console.log("❌ No valid auth data in localStorage");
+          console.log("❌ No valid auth data in tokenStorage");
           setUser(null);
           setToken(null);
           setRefreshToken(null);
         }
       } catch (error) {
         console.error("❌ Error initializing auth:", error);
-        clearStoredTokens();
+        tokenStorage.clearTokens();
         setUser(null);
         setToken(null);
         setRefreshToken(null);
@@ -124,47 +80,8 @@ export const AuthProvider = ({ children }) => {
     console.log("🔍 Token state changed:", { hasToken: !!token, tokenPreview: token ? token.substring(0, 20) + '...' : null });
   }, [token]);
 
-  // Debug: Monitor localStorage changes to detect when tokens are cleared
-  useEffect(() => {
-    const handleStorageChange = (e) => {
-      if (e.key === 'accessToken' || e.key === 'user' || e.key === 'refreshToken') {
-        console.log("🔍 localStorage changed:", {
-          key: e.key,
-          oldValue: e.oldValue ? 'EXISTS' : 'MISSING',
-          newValue: e.newValue ? 'EXISTS' : 'MISSING',
-          timestamp: new Date().toISOString()
-        });
-      }
-    };
 
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Also monitor direct localStorage changes (same tab)
-    const originalSetItem = localStorage.setItem;
-    const originalRemoveItem = localStorage.removeItem;
-    
-    localStorage.setItem = function(key, value) {
-      if (key === 'accessToken' || key === 'user' || key === 'refreshToken') {
-        console.log("🔍 localStorage.setItem:", { key, value: value ? 'EXISTS' : 'MISSING' });
-      }
-      return originalSetItem.apply(this, arguments);
-    };
-    
-    localStorage.removeItem = function(key) {
-      if (key === 'accessToken' || key === 'user' || key === 'refreshToken') {
-        console.log("🔍 localStorage.removeItem:", { key, timestamp: new Date().toISOString() });
-      }
-      return originalRemoveItem.apply(this, arguments);
-    };
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      localStorage.setItem = originalSetItem;
-      localStorage.removeItem = originalRemoveItem;
-    };
-  }, []);
-
-  // Login function - updates both state and localStorage
+  // Login function - updates both state and tokenStorage
   const login = (userData, jwtToken, refreshTokenValue = null) => {
     console.log("🔄 Login called:", {
       hasUser: !!userData,
@@ -184,10 +101,10 @@ export const AuthProvider = ({ children }) => {
       setToken(jwtToken);
       setRefreshToken(refreshTokenValue);
       
-      // Store in localStorage
-      storeTokens(userData, jwtToken, refreshTokenValue);
+      // Store in tokenStorage
+      tokenStorage.setTokens(userData, jwtToken, refreshTokenValue);
       
-      console.log("✅ Login successful - state and localStorage updated");
+      console.log("✅ Login successful - state and tokenStorage updated");
       
     } catch (error) {
       console.error("❌ Login failed:", error);
@@ -195,7 +112,7 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       setToken(null);
       setRefreshToken(null);
-      clearStoredTokens();
+      tokenStorage.clearTokens();
       throw error;
     }
   };
@@ -203,7 +120,7 @@ export const AuthProvider = ({ children }) => {
   // Expose login function globally for API interceptor
   window.authContextUpdate = login;
 
-  // Logout function - clears both state and localStorage
+  // Logout function - clears both state and tokenStorage
   const logout = () => {
     console.log("🚪 Logout called - clearing all auth data");
     
@@ -212,10 +129,10 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     setRefreshToken(null);
     
-    // Clear localStorage
-    clearStoredTokens();
+    // Clear tokenStorage
+    tokenStorage.clearTokens();
     
-    console.log("✅ Logout completed - state and localStorage cleared");
+    console.log("✅ Logout completed - state and tokenStorage cleared");
   };
 
   // Expose logout function globally for API interceptor

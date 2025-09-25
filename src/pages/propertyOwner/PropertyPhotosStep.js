@@ -77,12 +77,42 @@ export default function PropertyPhotosStep() {
 
     try {
       // Get only the File objects for upload
+      console.log("Photos array:", photos);
+      console.log("Photos length:", photos.length);
       const filesToUpload = photos.filter(file => file instanceof File);
+      console.log("Files to upload:", filesToUpload);
       
       if (filesToUpload.length === 0) {
-        // No new files to upload, just proceed
-        navigate("/property-title", { replace: true });
-        return;
+        // No new files to upload, but we still need to notify backend about existing photos
+        try {
+          const headers = {
+            Authorization: `Bearer ${authToken}`,
+          };
+
+          // Send existing photo URLs to backend
+          const response = await axios.post(
+            `${API_BASE}/api/property/${propertyData.propertyId}/photos`,
+            { photos: photos }, // Send existing photo URLs
+            { headers }
+          );
+
+          setPropertyData((prev) => ({
+            ...prev,
+            stepsCompleted: { ...(prev.stepsCompleted || {}), photos: true },
+          }));
+
+          navigate("/property-title", { replace: true });
+          return;
+        } catch (backendError) {
+          console.error("Backend notification failed:", backendError);
+          // If backend fails, still proceed to next step
+          setPropertyData((prev) => ({
+            ...prev,
+            stepsCompleted: { ...(prev.stepsCompleted || {}), photos: true },
+          }));
+          navigate("/property-title", { replace: true });
+          return;
+        }
       }
 
       // Try S3 direct upload first
@@ -115,6 +145,11 @@ export default function PropertyPhotosStep() {
         console.error("S3 direct upload failed, trying backend:", s3Error);
         
         // Fallback to backend upload
+        if (filesToUpload.length === 0) {
+          setApiError("Aucun fichier à télécharger.");
+          return;
+        }
+
         const formData = new FormData();
         filesToUpload.forEach((file) => {
           formData.append("photos", file);
@@ -216,7 +251,9 @@ export default function PropertyPhotosStep() {
             {photos.length < 4 && (
               <button
                 type="button"
-                className="col-span-2 border-2 border-dashed border-[#a084e8] rounded-lg w-94 h-32 flex flex-col items-center justify-center text-[#a084e8] hover:bg-[#f5f5f5] transition"
+                className={`border-2 border-dashed border-[#a084e8] rounded-lg h-32 p-2 flex flex-col items-center justify-center text-[#a084e8] hover:bg-[#f5f5f5] transition ${
+                  photos.length % 2 === 0 ? 'col-span-2 w-full' : 'w-92'
+                }`}
                 onClick={() => fileInputRef.current.click()}
               >
                 <span className="text-4xl mb-2">+</span>
