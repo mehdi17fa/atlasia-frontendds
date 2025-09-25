@@ -25,7 +25,7 @@ export default function CohostingExplore() {
           return;
         }
         
-        const res = await axios.get('http://localhost:4000/api/property/available-for-cohosting', {
+        const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/property/available-for-cohosting`, {
           headers: { Authorization: `Bearer ${authToken}` }
         });
         

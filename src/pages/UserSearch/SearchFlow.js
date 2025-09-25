@@ -52,7 +52,7 @@ const SearchModal = ({ isOpen, onClose, onSearch }) => {
     }
   
     try {
-      const baseUrl = "http://localhost:4000"
+      const baseUrl = process.env.REACT_APP_API_URL
   
       const response = await fetch(
         `${baseUrl}/api/search/suggestions?query=${encodeURIComponent(query)}`

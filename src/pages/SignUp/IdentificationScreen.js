@@ -14,7 +14,7 @@ export default function IdentificationModal({ onClose }) {
       }
 
       // Correct backend URL
-      const res = await axios.post("http://localhost:4000/api/auth/set-role", { 
+      const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/set-role`, { 
         email, 
         role: profileType.toLowerCase() 
       });

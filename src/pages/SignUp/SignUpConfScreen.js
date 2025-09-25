@@ -24,7 +24,7 @@ export default function SignupScreenConf() {
 
   const handleVerify = async () => {
     try {
-      const response = await axios.post('http://localhost:4000/api/auth/verify', {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/verify`, {
         email,
         code: code.join(''),
       });
@@ -45,7 +45,7 @@ export default function SignupScreenConf() {
     setIsTimerActive(true);
     setError(false);
     try {
-      await axios.post('http://localhost:4000/api/auth/resend-verification', { email });
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/resend-verification`, { email });
       alert('Verification code resent! Check your email.');
     } catch (err) {
       console.error('Resend code error:', err.response?.data || err.message);

@@ -75,7 +75,7 @@ export default function EditProfileScreen() {
       if (selectedFile) formData.append('profilePic', selectedFile);
 
       const response = await axios.post(
-        'http://localhost:4000/api/auth/complete-profile',
+        `${process.env.REACT_APP_API_URL}/api/auth/complete-profile`,
         formData,
         { headers: { 'Content-Type': 'multipart/form-data' } }
       );

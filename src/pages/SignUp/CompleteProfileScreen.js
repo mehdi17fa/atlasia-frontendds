@@ -81,12 +81,12 @@ const handleFinish = async () => {
     formData.append('profileType', profileType);
     if (profileImage) formData.append('profilePic', profileImage);
 
-    await axios.post('http://localhost:4000/api/auth/complete-profile', formData, {
+    await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/complete-profile`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
 
     // Auto-login
-    const loginResponse = await axios.post('http://localhost:4000/api/auth/login', {
+    const loginResponse = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/login`, {
       email: signupEmail,
       password: signupPassword,
     });

@@ -20,7 +20,7 @@ import { FaArrowLeft, FaUser } from 'react-icons/fa';
 import { AuthContext } from '../../context/AuthContext';
 
 // API configuration
-const API_BASE_URL = 'http://localhost:4000/api';
+const API_BASE_URL = `${process.env.REACT_APP_API_URL}/api`;
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center py-8">
