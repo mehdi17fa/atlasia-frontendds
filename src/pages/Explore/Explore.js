@@ -38,6 +38,8 @@ export default function Explore() {
         console.log(logMessage);
         console.log('User role:', user?.role);
         console.log('Is authenticated:', isAuthenticated);
+        console.log('🌐 API Base URL:', process.env.REACT_APP_API_URL);
+        console.log('🔗 Full request URL:', `${process.env.REACT_APP_API_URL}${endpoint}`);
         
         const res = await api.get(endpoint);
         console.log('Full API response:', res);
