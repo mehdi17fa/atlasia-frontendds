@@ -28,7 +28,7 @@ const stepsAfter = stepOrder.slice(currentStepIndex + 1);
 export default function PropertyPriceStep() {
   const navigate = useNavigate();
   const { propertyData, setPropertyData } = usePropertyCreation();
-  const { user } = useContext(AuthContext);
+  const { user, token } = useContext(AuthContext);
 
   const [editType, setEditType] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -66,6 +66,8 @@ export default function PropertyPriceStep() {
     if (priceWeek <= 0 || priceWeekend <= 0) return;
 
     const authToken =
+      token ||
+      localStorage.getItem("atlasia_access_token") ||
       localStorage.getItem("accessToken") ||
       localStorage.getItem("token") ||
       user?.accessToken ||

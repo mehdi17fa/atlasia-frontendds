@@ -22,7 +22,7 @@ const API_BASE = process.env.REACT_APP_API_URL;
 export default function PropertyDescriptionStep() {
   const navigate = useNavigate();
   const { propertyData, setPropertyData } = usePropertyCreation();
-  const { user } = useContext(AuthContext);
+  const { user, token } = useContext(AuthContext);
 
   const currentStepKey = "description";
   const currentStepIndex = stepOrder.findIndex((step) => step.key === currentStepKey);
@@ -39,6 +39,8 @@ export default function PropertyDescriptionStep() {
     if (!description) return;
 
     const authToken =
+      token ||
+      localStorage.getItem("atlasia_access_token") ||
       localStorage.getItem("accessToken") ||
       localStorage.getItem("token") ||
       user?.accessToken ||

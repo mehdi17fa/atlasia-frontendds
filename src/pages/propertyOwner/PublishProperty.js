@@ -2,12 +2,14 @@ import React, { useState, useContext, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { AuthContext } from "../../context/AuthContext";
+import { usePropertyCreation } from "../../context/PropertyCreationContext";
 
 const API_BASE = process.env.REACT_APP_API_URL;
 
 export default function PublishProperty() {
   const { id } = useParams();
-  const { user } = useContext(AuthContext);
+  const { user, token } = useContext(AuthContext);
+  const { clearPropertyData } = usePropertyCreation();
   const navigate = useNavigate();
 
   const [startDate, setStartDate] = useState("");
@@ -18,6 +20,8 @@ export default function PublishProperty() {
   const [success, setSuccess] = useState("");
 
   const authToken =
+    token ||
+    localStorage.getItem("atlasia_access_token") ||
     localStorage.getItem("accessToken") ||
     localStorage.getItem("token") ||
     user?.accessToken ||
@@ -35,6 +39,14 @@ export default function PublishProperty() {
     setSuccess("");
 
     if (!authToken) {
+      console.log("🚨 No auth token found for publish:", {
+        hasUser: !!user,
+        hasToken: !!token,
+        localStorage: {
+          atlasia_access_token: !!localStorage.getItem("atlasia_access_token"),
+          accessToken: !!localStorage.getItem("accessToken")
+        }
+      });
       setError("Veuillez vous connecter pour publier.");
       setLoading(false);
       return;
@@ -75,6 +87,10 @@ export default function PublishProperty() {
       console.log("Update instantBooking response:", updateResponse.data);
 
       setSuccess("Propriété publiée avec succès !");
+      
+      // Clear the property creation context after successful publication
+      clearPropertyData();
+      
       setTimeout(() => navigate("/my-properties"), 1500);
     } catch (err) {
       console.error("Publish error:", err);
@@ -90,6 +106,14 @@ export default function PublishProperty() {
     setSuccess("");
 
     if (!authToken) {
+      console.log("🚨 No auth token found for save draft:", {
+        hasUser: !!user,
+        hasToken: !!token,
+        localStorage: {
+          atlasia_access_token: !!localStorage.getItem("atlasia_access_token"),
+          accessToken: !!localStorage.getItem("accessToken")
+        }
+      });
       setError("Veuillez vous connecter pour enregistrer en brouillon.");
       setLoading(false);
       return;

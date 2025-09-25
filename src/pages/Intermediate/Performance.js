@@ -42,7 +42,25 @@ const Performance = () => {
       console.log("Performance API response:", response.data);
       
       if (response.data.success) {
-        setPerformanceData(response.data.data || response.data.performance);
+        const data = response.data.data || response.data.performance;
+        setPerformanceData({
+          managedProperties: data.managedProperties || 0,
+          monthlyReservations: data.monthlyReservations || 0,
+          totalRevenue: data.totalRevenue || 0,
+          occupancyRate: data.occupancyRate || 0,
+          rating: data.rating || 0,
+          reviews: data.reviews || []
+        });
+      } else {
+        // If API returns success: false, use empty state
+        setPerformanceData({
+          managedProperties: 0,
+          monthlyReservations: 0,
+          totalRevenue: 0,
+          occupancyRate: 0,
+          rating: 0,
+          reviews: []
+        });
       }
     } catch (error) {
       console.error('Error fetching performance data:', error);
@@ -53,39 +71,15 @@ const Performance = () => {
         message: error.message
       });
       
-      // Use mock data if API fails
+      // If API fails completely, show empty state with a message
       setPerformanceData({
-        managedProperties: 7,
-        monthlyReservations: 14,
-        totalRevenue: 12000,
-        occupancyRate: 75,
-        rating: 5.0,
-        reviews: [
-          {
-            id: 1,
-            customerName: "Fatima Z.",
-            rating: 5,
-            comment: "Très bon service, je recommande fortement !"
-          },
-          {
-            id: 2,
-            customerName: "Mohamed A.",
-            rating: 4,
-            comment: "Bonne communication et bon suivi."
-          },
-          {
-            id: 3,
-            customerName: "Salma R.",
-            rating: 5,
-            comment: "Service rapide et efficace. Merci !"
-          },
-          {
-            id: 4,
-            customerName: "Akram Ezzaim",
-            rating: 5,
-            comment: "Chi haja lkher lahoma barik hhhhh"
-          }
-        ]
+        managedProperties: 0,
+        monthlyReservations: 0,
+        totalRevenue: 0,
+        occupancyRate: 0,
+        rating: 0,
+        reviews: [],
+        error: "Impossible de charger les données de performance. Vérifiez votre connexion."
       });
     } finally {
       setLoading(false);
@@ -166,6 +160,19 @@ const Performance = () => {
             {user?.fullName || 'M. Ezzaim'}
           </p>
         </div>
+
+        {/* Error Message */}
+        {performanceData.error && (
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex items-center">
+              <div className="text-red-600 mr-3">⚠️</div>
+              <div>
+                <h4 className="text-red-800 font-medium">Erreur de connexion</h4>
+                <p className="text-red-700 text-sm">{performanceData.error}</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Performance Cards - Responsive Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
@@ -255,19 +262,31 @@ const Performance = () => {
         {/* Customer Reviews - Full Width */}
         <div className="mt-8">
           <h2 className="text-xl md:text-2xl font-semibold text-gray-800 mb-6">Avis Clients</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            {(performanceData.reviews || []).map((review) => (
-              <div key={review.id} className="bg-white border border-gray-200 rounded-lg p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="font-medium text-gray-800">{review.customerName}</p>
-                  <div className="flex items-center gap-1">
-                    {renderStars(review.rating)}
+          {(performanceData.reviews || []).length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              {(performanceData.reviews || []).map((review) => (
+                <div key={review.id} className="bg-white border border-gray-200 rounded-lg p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="font-medium text-gray-800">{review.customerName}</p>
+                    <div className="flex items-center gap-1">
+                      {renderStars(review.rating)}
+                    </div>
                   </div>
+                  <p className="text-sm md:text-base text-gray-600 leading-relaxed">{review.comment}</p>
                 </div>
-                <p className="text-sm md:text-base text-gray-600 leading-relaxed">{review.comment}</p>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
+              <div className="text-gray-400 mb-4">
+                <FaStar className="w-12 h-12 mx-auto opacity-30" />
               </div>
-            ))}
-          </div>
+              <h3 className="text-lg font-medium text-gray-600 mb-2">Aucun avis client</h3>
+              <p className="text-gray-500">
+                Les avis apparaîtront ici une fois que vous aurez des réservations confirmées sur vos propriétés gérées.
+              </p>
+            </div>
+          )}
         </div>
 
       </div>

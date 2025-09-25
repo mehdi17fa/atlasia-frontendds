@@ -1,8 +1,9 @@
-import React, { useState, useRef, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useRef, useContext, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { usePropertyCreation } from "../../context/PropertyCreationContext";
 import { AuthContext } from "../../context/AuthContext";
+import { getValidToken, checkTokenStatus } from "../../utils/authUtils";
 import NavigationButton from "../../components/shared/NavigationButtons";
 import { FaArrowLeft, FaUser } from 'react-icons/fa';
 
@@ -32,21 +33,35 @@ const stepOrder = [
 
 export default function AddProperty() {
   const navigate = useNavigate();
+  const location = useLocation();
   const buttonRef = useRef(null);
 
-  const { propertyData, setPropertyData } = usePropertyCreation();
+  const { propertyData, setPropertyData, clearPropertyData } = usePropertyCreation();
   const { city = "", address = "", postalCode = "" } = propertyData.localisation || {};
 
-  const { user } = useContext(AuthContext) || {};
-  const authToken =
-    localStorage.getItem("accessToken") ||
-    user?.accessToken ||
-    user?.token;
+  const authContext = useContext(AuthContext) || {};
+  const { user, token } = authContext;
+  
+  // Enhanced token handling
+  const authToken = getValidToken(authContext);
 
   const [showError, setShowError] = useState(false);
   const [animateError, setAnimateError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [apiError, setApiError] = useState("");
+
+  // Effect to check if we should clear old property data
+  useEffect(() => {
+    // If user comes from owner dashboard or my-properties, clear old data
+    const searchParams = new URLSearchParams(location.search);
+    const shouldClear = searchParams.get('new') === 'true' || 
+                       location.state?.clearData === true;
+    
+    if (shouldClear && (propertyData.propertyId || propertyData.localisation)) {
+      console.log("🧹 Auto-clearing property data for fresh start");
+      clearPropertyData();
+    }
+  }, [location, propertyData.propertyId, propertyData.localisation, clearPropertyData]);
 
   const handleChange = (field, value) => {
     setPropertyData((prev) => ({
@@ -68,6 +83,10 @@ export default function AddProperty() {
     }
 
     if (!authToken) {
+      // Debug token status
+      const tokenStatus = checkTokenStatus(authContext);
+      console.log("🚨 No valid token found:", tokenStatus);
+      
       setApiError("Veuillez vous connecter pour continuer.");
       setShowError(true);
       return;
@@ -185,7 +204,28 @@ export default function AddProperty() {
           </div>
 
           <h2 className="text-green-800 text-lg font-bold text-center mb-1">Etape 1:</h2>
-          <h3 className="text-black text-xl font-bold text-center mb-6">Localisation</h3>
+          <h3 className="text-black text-xl font-bold text-center mb-4">Localisation</h3>
+          
+          {/* Check if there's existing data and offer to start fresh */}
+          {(propertyData.localisation || propertyData.propertyType || propertyData.propertyId) && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+              <div className="flex items-center justify-between">
+                <p className="text-blue-800 text-sm">
+                  📝 Données de propriété précédente détectées
+                </p>
+                <button
+                  onClick={() => {
+                    clearPropertyData();
+                    // Refresh the current values
+                    window.location.reload();
+                  }}
+                  className="text-blue-600 hover:text-blue-800 text-sm font-medium underline"
+                >
+                  Recommencer
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Ville */}
           <div className="mb-4">

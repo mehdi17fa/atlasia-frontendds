@@ -54,7 +54,7 @@ const stepOrder = [
 export default function PropertyEquipmentsStep() {
   const navigate = useNavigate();
   const { propertyData, setPropertyData } = usePropertyCreation();
-  const { user } = useContext(AuthContext) || {};
+  const { user, token } = useContext(AuthContext) || {};
 
   const [submitting, setSubmitting] = useState(false);
   const [apiError, setApiError] = useState("");
@@ -75,6 +75,8 @@ export default function PropertyEquipmentsStep() {
 
   const handleNext = async () => {
     const authToken =
+      token ||
+      localStorage.getItem("atlasia_access_token") ||
       localStorage.getItem("accessToken") ||
       user?.accessToken ||
       user?.token;

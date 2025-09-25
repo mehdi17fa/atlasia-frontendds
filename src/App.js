@@ -8,8 +8,9 @@ import {
 } from 'react-router-dom';
 import { setGlobalNavigate } from './api';
 
-// Import AuthContext
+// Import AuthContext and ProtectedRoute
 import { AuthContext } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
 
 import SignUpScreen from './pages/SignUp/SignUpScreen';
 import IdentificationScreen from './pages/SignUp/IdentificationScreen';
@@ -91,6 +92,9 @@ import CohostPropertyLayout from './pages/Layout/CohostPropertyLayout';
 import VillaMakarska from './pages/Propriétés/VillaMakarska';
 import EditProfileScreen from './pages/Profile/EditProfile';
 import DocumentUpload from './utilities/DocumentUpload';
+
+// Admin Dashboard
+import AdminDashboard from './pages/AdminDashboard';
 
 // Explore affiché en fond avec modal devant
 function ModalLayout({ children }) {
@@ -200,83 +204,86 @@ function App() {
         <Route path="/search" element={<PropertySearchFlow />} />
         <Route path="/search/results" element={<SearchResultsPage />} />
         
-        {/* General / Auth */}
-        <Route path="/login" element={<LoginScreen />} />
-        <Route path="/signup" element={<SignUpScreen />} />
-        <Route path="/signup-confirmation" element={<SignupScreenConf />} />
-        <Route path="/identification" element={<IdentificationScreen />} />
+        {/* Admin Dashboard - Public access */}
+        <Route path="/admin-dashboard" element={<AdminDashboard />} />
+        
+        {/* General / Auth - Only accessible when NOT authenticated */}
+        <Route path="/login" element={<ProtectedRoute requireAuth={false}><LoginScreen /></ProtectedRoute>} />
+        <Route path="/signup" element={<ProtectedRoute requireAuth={false}><SignUpScreen /></ProtectedRoute>} />
+        <Route path="/signup-confirmation" element={<ProtectedRoute requireAuth={false}><SignupScreenConf /></ProtectedRoute>} />
+        <Route path="/identification" element={<ProtectedRoute requireAuth={false}><IdentificationScreen /></ProtectedRoute>} />
         <Route
           path="/complete-profile"
-          element={<ProfileSignupScreen signupData={signupData} setSignupData={setSignupData} />}
+          element={<ProtectedRoute requireAuth={false}><ProfileSignupScreen signupData={signupData} setSignupData={setSignupData} /></ProtectedRoute>}
         />
-        <Route path="/password-recovery" element={<PasswordRecoveryScreen />} />
-        <Route path="/password-recovery-confirmation" element={<PasswordRecoveryConfirmation />} />
-        <Route path="/reset-password/:token" element={<ResetPasswordScreen />} />
-        <Route path="/welcomescreen" element={<WelcomeScreen />} />
+        <Route path="/password-recovery" element={<ProtectedRoute requireAuth={false}><PasswordRecoveryScreen /></ProtectedRoute>} />
+        <Route path="/password-recovery-confirmation" element={<ProtectedRoute requireAuth={false}><PasswordRecoveryConfirmation /></ProtectedRoute>} />
+        <Route path="/reset-password/:token" element={<ProtectedRoute requireAuth={false}><ResetPasswordScreen /></ProtectedRoute>} />
+        <Route path="/welcomescreen" element={<ProtectedRoute requireAuth={false}><WelcomeScreen /></ProtectedRoute>} />
 
-        {/* User sections */}
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/edit-profile" element={<EditProfileScreen />} />
-        <Route path="/favorites" element={<Favorites />} />
-        <Route path="/test-upload" element={<TestDocumentUpload />} />
-        <Route path="/partner-welcome" element={<HomeIntermédiaire />} />
-        <Route path="/VillaMakarska" element={<VillaMakarska />} />
+        {/* User sections - Require authentication */}
+        <Route path="/profile" element={<ProtectedRoute allowedRoles={['owner', 'partner', 'tourist', 'user']}><Profile /></ProtectedRoute>} />
+        <Route path="/edit-profile" element={<ProtectedRoute allowedRoles={['owner', 'partner', 'tourist', 'user']}><EditProfileScreen /></ProtectedRoute>} />
+        <Route path="/favorites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
+        <Route path="/test-upload" element={<ProtectedRoute><TestDocumentUpload /></ProtectedRoute>} />
+        <Route path="/partner-welcome" element={<ProtectedRoute allowedRoles={['partner']}><HomeIntermédiaire /></ProtectedRoute>} />
+        <Route path="/VillaMakarska" element={<ProtectedRoute><VillaMakarska /></ProtectedRoute>} />
         <Route path="/property/:id" element={<PropertyPreview />} />
-        <Route path="/owner/:id" element={<OwnerDetails />} />
-        <Route path="/owner/:ownerId" element={<CoHostPropertyPreview />} />
+        <Route path="/owner/:id" element={<ProtectedRoute><OwnerDetails /></ProtectedRoute>} />
+        <Route path="/owner/:ownerId" element={<ProtectedRoute><CoHostPropertyPreview /></ProtectedRoute>} />
 
-        {/* Co-hosting routes - ADD THIS SECTION */}
-        <Route path="/cohosting-explore" element={<CohostingExplore />} />
-        <Route path="/cohosting-preview/:propertyId" element={<CoHostPropertyPreview />} />
-        <Route path="/partner/cohosting-management" element={<PartnerCohostingManagement />} />
+        {/* Co-hosting routes - Require authentication */}
+        <Route path="/cohosting-explore" element={<ProtectedRoute><CohostingExplore /></ProtectedRoute>} />
+        <Route path="/cohosting-preview/:propertyId" element={<ProtectedRoute><CoHostPropertyPreview /></ProtectedRoute>} />
+        <Route path="/partner/cohosting-management" element={<ProtectedRoute allowedRoles={['partner']}><PartnerCohostingManagement /></ProtectedRoute>} />
         
 
-        {/* Messages */}
-        <Route path="/inbox" element={<Inbox />} />
-        <Route path="/notifications" element={<NotificationCenter />} />
-        <Route path="/chat/:sender" element={<ChatPage />} />
+        {/* Messages - Require authentication */}
+        <Route path="/inbox" element={<ProtectedRoute><Inbox /></ProtectedRoute>} />
+        <Route path="/notifications" element={<ProtectedRoute><NotificationCenter /></ProtectedRoute>} />
+        <Route path="/chat/:sender" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
 
-        {/* Modals */}
-        <Route path="/search-date" element={<DateSelectionScreensWrapper />} />
-        <Route path="/search-guests" element={<GuestsSelectionScreenWrapper />} />
+        {/* Modals - Require authentication */}
+        <Route path="/search-date" element={<ProtectedRoute><DateSelectionScreensWrapper /></ProtectedRoute>} />
+        <Route path="/search-guests" element={<ProtectedRoute><GuestsSelectionScreenWrapper /></ProtectedRoute>} />
 
-        {/* Property owner flow */}
-        <Route path="/owner-welcome" element={<WelcomeOwner />} />
-        <Route path="/add-property" element={<AddProperty />} />
-        <Route path="/property-type" element={<PropertyTypeStep />} />
-        <Route path="/property-info" element={<PropertyInfoStep />} />
-        <Route path="/property-equipments" element={<PropertyEquipmentsStep />} />
-        <Route path="/property-photos" element={<PropertyPhotosStep />} />
-        <Route path="/property-title" element={<PropertyTitleStep />} />
-        <Route path="/property-description" element={<PropertyDescriptionStep />} />
-        <Route path="/property-price" element={<PropertyPriceStep />} />
-        <Route path="/property-documents" element={<PropertyDocumentsStep />} />
-        <Route path="/property-summary" element={<PropertySummary />} />
-        <Route path="/publish-property/:id" element={<PublishProperty />} />
+        {/* Property owner flow - Require owner role */}
+        <Route path="/owner-welcome" element={<ProtectedRoute allowedRoles={['owner']}><WelcomeOwner /></ProtectedRoute>} />
+        <Route path="/add-property" element={<ProtectedRoute allowedRoles={['owner']}><AddProperty /></ProtectedRoute>} />
+        <Route path="/property-type" element={<ProtectedRoute allowedRoles={['owner']}><PropertyTypeStep /></ProtectedRoute>} />
+        <Route path="/property-info" element={<ProtectedRoute allowedRoles={['owner']}><PropertyInfoStep /></ProtectedRoute>} />
+        <Route path="/property-equipments" element={<ProtectedRoute allowedRoles={['owner']}><PropertyEquipmentsStep /></ProtectedRoute>} />
+        <Route path="/property-photos" element={<ProtectedRoute allowedRoles={['owner']}><PropertyPhotosStep /></ProtectedRoute>} />
+        <Route path="/property-title" element={<ProtectedRoute allowedRoles={['owner']}><PropertyTitleStep /></ProtectedRoute>} />
+        <Route path="/property-description" element={<ProtectedRoute allowedRoles={['owner']}><PropertyDescriptionStep /></ProtectedRoute>} />
+        <Route path="/property-price" element={<ProtectedRoute allowedRoles={['owner']}><PropertyPriceStep /></ProtectedRoute>} />
+        <Route path="/property-documents" element={<ProtectedRoute allowedRoles={['owner']}><PropertyDocumentsStep /></ProtectedRoute>} />
+        <Route path="/property-summary" element={<ProtectedRoute allowedRoles={['owner']}><PropertySummary /></ProtectedRoute>} />
+        <Route path="/publish-property/:id" element={<ProtectedRoute allowedRoles={['owner']}><PublishProperty /></ProtectedRoute>} />
 
-        <Route path="/my-properties" element={<MyProperties />} />
-        <Route path="/owner/income" element={<OwnerIncomePage />} />
-        <Route path="/owner/reservations/:propertyId" element={<ReservationPage />} />
-        <Route path="/test-reservations" element={<div className="p-6"><h1>Test Route Works!</h1></div>} />
+        <Route path="/my-properties" element={<ProtectedRoute allowedRoles={['owner']}><MyProperties /></ProtectedRoute>} />
+        <Route path="/owner/income" element={<ProtectedRoute allowedRoles={['owner']}><OwnerIncomePage /></ProtectedRoute>} />
+        <Route path="/owner/reservations/:propertyId" element={<ProtectedRoute allowedRoles={['owner']}><ReservationPage /></ProtectedRoute>} />
+        <Route path="/test-reservations" element={<ProtectedRoute><div className="p-6"><h1>Test Route Works!</h1></div></ProtectedRoute>} />
 
-        {/* Booking */}
-        <Route path="/booking/request/:propertyId" element={<BookingRequest />} />
-        <Route path="/booking/confirm/:propertyId" element={<BookingConfirm />} />
-        <Route path="/booking/:bookingId" element={<BookingDetails />} />
-        <Route path="/package-booking/:bookingId" element={<PackageBookingDetails />} />
-        <Route path="/my-bookings" element={<MyBookings />} />
+        {/* Booking - Require authentication */}
+        <Route path="/booking/request/:propertyId" element={<ProtectedRoute><BookingRequest /></ProtectedRoute>} />
+        <Route path="/booking/confirm/:propertyId" element={<ProtectedRoute><BookingConfirm /></ProtectedRoute>} />
+        <Route path="/booking/:bookingId" element={<ProtectedRoute><BookingDetails /></ProtectedRoute>} />
+        <Route path="/package-booking/:bookingId" element={<ProtectedRoute><PackageBookingDetails /></ProtectedRoute>} />
+        <Route path="/my-bookings" element={<ProtectedRoute><MyBookings /></ProtectedRoute>} />
 
-        {/* Intermediate */}
-        <Route path="/create-package" element={<PackageCreationFlow />} />
-        <Route path="/select-property" element={<SelectPropertyStep />} />
-        <Route path="/packages/:packageId/book" element={<PackageBooking />} />
-        <Route path='/performance' element={<Performance />} />
-        <Route path="/data" element={<DocumentUpload />} />
-        <Route path="/acceuill" element={<HomeIntermédiaire />} />
+        {/* Intermediate - Require partner role */}
+        <Route path="/create-package" element={<ProtectedRoute allowedRoles={['partner']}><PackageCreationFlow /></ProtectedRoute>} />
+        <Route path="/select-property" element={<ProtectedRoute allowedRoles={['partner']}><SelectPropertyStep /></ProtectedRoute>} />
+        <Route path="/packages/:packageId/book" element={<ProtectedRoute><PackageBooking /></ProtectedRoute>} />
+        <Route path='/performance' element={<ProtectedRoute allowedRoles={['partner']}><Performance /></ProtectedRoute>} />
+        <Route path="/data" element={<ProtectedRoute><DocumentUpload /></ProtectedRoute>} />
+        <Route path="/acceuill" element={<ProtectedRoute allowedRoles={['partner']}><HomeIntermédiaire /></ProtectedRoute>} />
         
-        {/* Package Management */}
-        <Route path="/package-management" element={<PackageManagement />} />
-        <Route path="/edit-package/:packageId" element={<EditPackage />} />
+        {/* Package Management - Require partner role */}
+        <Route path="/package-management" element={<ProtectedRoute allowedRoles={['partner']}><PackageManagement /></ProtectedRoute>} />
+        <Route path="/edit-package/:packageId" element={<ProtectedRoute allowedRoles={['partner']}><EditPackage /></ProtectedRoute>} />
 
       </Routes>
 

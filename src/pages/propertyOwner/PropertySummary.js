@@ -9,7 +9,7 @@ const API_BASE = process.env.REACT_APP_API_URL;
 
 export default function PropertySummary() {
   const { propertyData } = usePropertyCreation();
-  const { user } = useContext(AuthContext);
+  const { user, token } = useContext(AuthContext);
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -18,6 +18,8 @@ export default function PropertySummary() {
   useEffect(() => {
     const fetchProperty = async () => {
       const authToken =
+        token ||
+        localStorage.getItem("atlasia_access_token") ||
         localStorage.getItem("accessToken") ||
         localStorage.getItem("token") ||
         user?.accessToken ||

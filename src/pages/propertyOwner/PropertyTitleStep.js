@@ -26,7 +26,7 @@ const stepsAfter = stepOrder.slice(currentStepIndex + 1);
 export default function PropertyTitleStep() {
   const navigate = useNavigate();
   const { propertyData, setPropertyData } = usePropertyCreation();
-  const { user } = useContext(AuthContext);
+  const { user, token } = useContext(AuthContext);
 
   const [title, setTitle] = useState(propertyData.title || "");
   const [submitting, setSubmitting] = useState(false);
@@ -38,6 +38,8 @@ export default function PropertyTitleStep() {
     if (!title) return;
 
     const authToken =
+      token ||
+      localStorage.getItem("atlasia_access_token") ||
       localStorage.getItem("accessToken") ||
       localStorage.getItem("token") ||
       user?.accessToken ||
