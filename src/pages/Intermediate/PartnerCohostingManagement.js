@@ -6,7 +6,7 @@ import { AuthContext } from "../../context/AuthContext";
 import toast, { Toaster } from "react-hot-toast";
 import S3Image from "../../components/S3Image";
 
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:4000";
+const API_BASE = process.env.REACT_APP_API_URL;
 
 function CoHostingPropertyCard({ property, onManage }) {
   return (

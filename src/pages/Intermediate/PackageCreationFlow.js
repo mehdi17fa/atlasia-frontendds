@@ -157,7 +157,7 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
 
       console.log('💾 Saving draft with payload:', payload);
       
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000';
+      const apiUrl = process.env.REACT_APP_API_URL;
       const response = await fetch(`${apiUrl}/api/packages`, {
         method: 'POST',
         headers: {
@@ -248,7 +248,7 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
 
       console.log('🚀 Creating package for publish with payload:', payload);
       
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000';
+      const apiUrl = process.env.REACT_APP_API_URL;
       const createResponse = await fetch(`${apiUrl}/api/packages`, {
         method: 'POST',
         headers: {

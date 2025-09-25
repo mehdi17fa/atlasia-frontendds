@@ -15,7 +15,7 @@ import { ReactComponent as ChaletIconGreen } from "../../assets/icons/Properties
 import { ReactComponent as StudioIconBlack } from "../../assets/icons/Properties/studioBlack.svg";
 import { ReactComponent as StudioIconGreen } from "../../assets/icons/Properties/studioGreen.svg";
 
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:4000";
+const API_BASE = process.env.REACT_APP_API_URL;
 
 const propertyTypes = [
   { label: "Appartement", iconActive: AppartementIconGreen, iconInactive: AppartementIconBlack },

@@ -4,7 +4,7 @@ import { FaArrowLeft, FaStar, FaHome, FaCalendarAlt, FaDollarSign, FaChartLine, 
 import { AuthContext } from '../../context/AuthContext';
 import axios from 'axios';
 
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:4000';
+const API_BASE = process.env.REACT_APP_API_URL;
 
 const Performance = () => {
   const navigate = useNavigate();

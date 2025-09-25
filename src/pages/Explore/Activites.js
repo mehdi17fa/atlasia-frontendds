@@ -7,7 +7,7 @@ import { FaHeart } from 'react-icons/fa';
 import { useFavorites } from '../../hooks/useFavorites';
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL ? `${process.env.REACT_APP_API_URL}/api` : 'http://localhost:4000/api';
+const API_BASE_URL = `${process.env.REACT_APP_API_URL}/api`;
 
 const ActivityCard = ({ activity, onBook }) => {
   const navigate = useNavigate();

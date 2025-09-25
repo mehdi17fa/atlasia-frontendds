@@ -7,7 +7,7 @@ import { FaHeart, FaMapMarkerAlt, FaCalendarAlt, FaUsers, FaArrowLeft } from 're
 import S3Image from '../../components/S3Image';
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL ? `${process.env.REACT_APP_API_URL}/api` : 'http://localhost:4000/api';
+const API_BASE_URL = `${process.env.REACT_APP_API_URL}/api`;
 
 export default function Favorites() {
   const { user, token } = useContext(AuthContext);

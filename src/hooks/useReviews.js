@@ -9,7 +9,7 @@ const useReviews = () => {
   const [reviewableBookings, setReviewableBookings] = useState([]);
   const { user, token } = useContext(AuthContext);
 
-  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
 
   // Get reviews for a property
   const getPropertyReviews = async (propertyId, page = 1, limit = 10, sort = 'newest') => {

@@ -25,7 +25,7 @@ import { ReactComponent as PoolGreen } from "../../assets/icons/PropertyEquipmen
 import { ReactComponent as PlaygroundBlack } from "../../assets/icons/PropertyEquipment/playgroundBlack.svg";
 import { ReactComponent as PlaygroundGreen } from "../../assets/icons/PropertyEquipment/playgroundGreen.svg";
 
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:4000";
+const API_BASE = process.env.REACT_APP_API_URL;
 
 const equipmentsList = [
   { key: "wifi", label: "Wifi", iconBlack: WifiBlack, iconGreen: WifiGreen },

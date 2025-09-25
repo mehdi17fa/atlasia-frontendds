@@ -6,7 +6,7 @@ import { AuthContext } from "../../context/AuthContext";
 import NavigationButton from "../../components/shared/NavigationButtons";
 import { FaArrowLeft, FaUser } from 'react-icons/fa';
 
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:4000";
+const API_BASE = process.env.REACT_APP_API_URL;
 
 const cities = [
   "Ifrane",

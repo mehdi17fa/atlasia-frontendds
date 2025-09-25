@@ -16,7 +16,7 @@ export default function PasswordRecoveryScreen() {
     }
 
     try {
-      const API_BASE_URL = process.env.REACT_APP_API_URL ? `${process.env.REACT_APP_API_URL}/api` : 'http://localhost:4000/api';
+      const API_BASE_URL = `${process.env.REACT_APP_API_URL}/api`;
       const res = await axios.post(`${API_BASE_URL}/auth/recover-password`, { email });
       setSuccess(res.data.message);
       setError('');

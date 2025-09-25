@@ -254,7 +254,7 @@ export const cleanS3Url = (url) => {
  * @returns {string} Full S3 URL or backend proxy URL
  */
 export const getS3Url = (key) => {
-  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:4000";
+  const API_URL = process.env.REACT_APP_API_URL;
   
   // If it's a local file (starts with / or relative path), return as-is
   if (key.startsWith('/') || key.startsWith('./') || key.startsWith('../')) {

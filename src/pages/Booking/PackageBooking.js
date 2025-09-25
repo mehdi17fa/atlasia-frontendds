@@ -5,7 +5,7 @@ import { AuthContext } from '../../context/AuthContext';
 import S3Image from '../../components/S3Image';
 import { CalendarDaysIcon, MapPinIcon, CurrencyDollarIcon, UserGroupIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL ? `${process.env.REACT_APP_API_URL}/api` : "http://localhost:4000/api";
+const API_BASE_URL = `${process.env.REACT_APP_API_URL}/api`;
 
 const LoadingSpinner = () => (
   <div className="flex justify-center py-8">

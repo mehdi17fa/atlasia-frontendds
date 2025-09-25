@@ -26,7 +26,7 @@ import {
   CurrencyDollarIcon // Added for income button
 } from '@heroicons/react/24/outline';
 
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:4000";
+const API_BASE = process.env.REACT_APP_API_URL;
 
 
 function CoHostRequestCard({ request, onAccept, onReject, loading, isHighlighted = false }) {

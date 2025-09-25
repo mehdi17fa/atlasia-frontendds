@@ -190,7 +190,7 @@ export default function Packages() {
       }
       params.append('limit', '100'); // Get more packages
       
-      const url = `${process.env.REACT_APP_API_URL ? `${process.env.REACT_APP_API_URL}/api` : 'http://localhost:4000/api'}/packages/published?${params.toString()}`;
+      const url = `${process.env.REACT_APP_API_URL}/api/packages/published?${params.toString()}`;
       console.log('🔗 Fetching packages from:', url);
       
       const response = await fetch(url);

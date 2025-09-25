@@ -5,7 +5,7 @@ import { FaPlus, FaEdit, FaTrash, FaEye, FaCalendarAlt, FaDollarSign, FaMapMarke
 import S3Image from '../../components/S3Image';
 import ConfirmationModal from '../../components/shared/ConfirmationModal';
 
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:4000';
+const API_BASE = process.env.REACT_APP_API_URL;
 
 export default function PackageManagement() {
   const navigate = useNavigate();

@@ -26,7 +26,7 @@ const BookingDetails = () => {
 
   // Create API instance with proper headers
   const apiCall = async (endpoint, options = {}) => {
-    const baseURL = process.env.REACT_APP_API_URL || "http://localhost:4000";
+    const baseURL = process.env.REACT_APP_API_URL;
     const url = `${baseURL}${endpoint}`;
     
     const defaultHeaders = {
@@ -206,7 +206,7 @@ const BookingDetails = () => {
 
     setReviewLoading(true);
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:4000"}/api/reviews/`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/reviews/`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -252,7 +252,7 @@ const BookingDetails = () => {
     if (!booking || !user) return;
     
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:4000"}/api/reviews/property/${booking.property._id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/reviews/property/${booking.property._id}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

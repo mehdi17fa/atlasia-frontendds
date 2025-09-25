@@ -20,7 +20,7 @@ import { ReactComponent as ParkingIcon } from '../../assets/icons/PropertyEquipm
 import { ReactComponent as PoolIcon } from '../../assets/icons/PropertyEquipment/poolBlack.svg';
 import { ReactComponent as PlaygroundIcon } from '../../assets/icons/PropertyEquipment/playgroundBlack.svg';
 
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:4000";
+const API_BASE = process.env.REACT_APP_API_URL;
 
 export default function CoHostPropertyPreview() {
   const { propertyId } = useParams();

@@ -11,7 +11,7 @@ import { ReactComponent as RoomsIcon } from "../../assets/icons/Properties/rooms
 import { ReactComponent as BedsIcon } from "../../assets/icons/Properties/beds.svg";
 import { ReactComponent as BathsIcon } from "../../assets/icons/Properties/baths.svg";
 
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:4000";
+const API_BASE = process.env.REACT_APP_API_URL;
 
 const infoTypes = [
   { label: "Invités", icon: GuestsIcon, key: "guests", min: 1 },

@@ -16,7 +16,7 @@ const PackageBookingDetails = () => {
 
   // Create API instance with proper headers
   const apiCall = async (endpoint, options = {}) => {
-    const baseURL = process.env.REACT_APP_API_URL || "http://localhost:4000";
+    const baseURL = process.env.REACT_APP_API_URL;
     const url = `${baseURL}${endpoint}`;
     
     const defaultHeaders = {

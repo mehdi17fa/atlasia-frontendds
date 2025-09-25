@@ -17,7 +17,7 @@ import { ReactComponent as PoolIcon } from '../../assets/icons/PropertyEquipment
 import { ReactComponent as PlaygroundIcon } from '../../assets/icons/PropertyEquipment/playgroundBlack.svg';
 import { AuthContext } from "../../context/AuthContext";
 
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:4000";
+const API_BASE = process.env.REACT_APP_API_URL;
 
 export default function PropertyPreview() {
   const { id } = useParams();

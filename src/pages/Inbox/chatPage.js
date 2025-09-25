@@ -5,7 +5,7 @@ import axios from "axios";
 import { io } from "socket.io-client";
 import { AuthContext } from "../../context/AuthContext";
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:4000";
+const API_BASE_URL = process.env.REACT_APP_API_URL;
 
 let socket;
 
