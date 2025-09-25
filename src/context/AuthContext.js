@@ -3,11 +3,11 @@ import { isTokenExpired, isTokenExpiringSoon } from '../utils/tokenUtils';
 
 export const AuthContext = createContext();
 
-// localStorage keys for consistency
+// localStorage keys for consistency - match tokenStorage keys
 const STORAGE_KEYS = {
-  ACCESS_TOKEN: 'accessToken',
-  REFRESH_TOKEN: 'refreshToken', 
-  USER: 'user'
+  ACCESS_TOKEN: 'atlasia_access_token',
+  REFRESH_TOKEN: 'atlasia_refresh_token', 
+  USER: 'atlasia_user'
 };
 
 export const AuthProvider = ({ children }) => {
@@ -45,6 +45,12 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('user');
       localStorage.removeItem('token');
       localStorage.removeItem('refreshToken');
+      localStorage.removeItem('accessToken');
+      
+      // Clear from sessionStorage as backup
+      sessionStorage.removeItem(STORAGE_KEYS.USER);
+      sessionStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+      sessionStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
       
       console.log("🧹 All tokens and user data cleared from localStorage");
     } catch (error) {
@@ -96,10 +102,43 @@ export const AuthProvider = ({ children }) => {
             setRefreshToken(null);
           }
         } else {
-          console.log("❌ No valid auth data in localStorage");
-          setUser(null);
-          setToken(null);
-          setRefreshToken(null);
+          // Try sessionStorage as fallback
+          console.log("🔍 Trying sessionStorage as fallback...");
+          try {
+            const sessionUser = sessionStorage.getItem(STORAGE_KEYS.USER);
+            const sessionToken = sessionStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+            const sessionRefreshToken = sessionStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+            
+            if (sessionUser && sessionToken) {
+              const parsedSessionUser = JSON.parse(sessionUser);
+              
+              if (!isTokenExpired(sessionToken)) {
+                setUser(parsedSessionUser);
+                setToken(sessionToken);
+                setRefreshToken(sessionRefreshToken);
+                
+                // Restore to localStorage
+                storeTokens(parsedSessionUser, sessionToken, sessionRefreshToken);
+                
+                console.log("✅ Auth state restored from sessionStorage and synced to localStorage");
+              } else {
+                console.log("❌ Session token is also expired");
+                setUser(null);
+                setToken(null);
+                setRefreshToken(null);
+              }
+            } else {
+              console.log("❌ No valid auth data found in any storage");
+              setUser(null);
+              setToken(null);
+              setRefreshToken(null);
+            }
+          } catch (error) {
+            console.log("❌ Error checking sessionStorage:", error);
+            setUser(null);
+            setToken(null);
+            setRefreshToken(null);
+          }
         }
       } catch (error) {
         console.error("❌ Error initializing auth:", error);
@@ -119,9 +158,11 @@ export const AuthProvider = ({ children }) => {
   // Token validation will be handled by the API interceptor when needed
   // No need to run validation on mount since the API interceptor handles it
 
-  // Debug: Monitor token state changes
+  // Debug: Monitor token state changes and update global reference
   useEffect(() => {
     console.log("🔍 Token state changed:", { hasToken: !!token, tokenPreview: token ? token.substring(0, 20) + '...' : null });
+    // Update global token reference for API interceptor
+    window.authContextToken = token;
   }, [token]);
 
   // Debug: Monitor localStorage changes to detect when tokens are cleared
@@ -187,6 +228,17 @@ export const AuthProvider = ({ children }) => {
       // Store in localStorage
       storeTokens(userData, jwtToken, refreshTokenValue);
       
+      // Also store in sessionStorage as backup
+      try {
+        sessionStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
+        sessionStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, jwtToken);
+        if (refreshTokenValue) {
+          sessionStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshTokenValue);
+        }
+      } catch (error) {
+        console.error("❌ Error storing tokens in sessionStorage:", error);
+      }
+      
       console.log("✅ Login successful - state and localStorage updated");
       
     } catch (error) {
@@ -202,8 +254,11 @@ export const AuthProvider = ({ children }) => {
 
   // Expose login function globally for API interceptor
   window.authContextUpdate = login;
+  
+  // Also expose current token for API interceptor fallback
+  window.authContextToken = token;
 
-  // Logout function - clears both state and localStorage
+  // Logout function - clears both state and all storage
   const logout = () => {
     console.log("🚪 Logout called - clearing all auth data");
     
@@ -212,10 +267,10 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     setRefreshToken(null);
     
-    // Clear localStorage
+    // Clear localStorage and sessionStorage
     clearStoredTokens();
     
-    console.log("✅ Logout completed - state and localStorage cleared");
+    console.log("✅ Logout completed - state and all storage cleared");
   };
 
   // Expose logout function globally for API interceptor

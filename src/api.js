@@ -25,12 +25,31 @@ export const setGlobalNavigate = (navigate) => {
 // Add token automatically if available
 api.interceptors.request.use((config) => {
   try {
-    const { accessToken } = tokenStorage.getTokens();
-    console.log("🔍 API Request interceptor:", { 
-      hasToken: !!accessToken, 
+    // Debug storage status
+    const storageStatus = tokenStorage.getStorageStatus();
+    const tokens = tokenStorage.getTokens();
+    const { accessToken } = tokens;
+    
+    console.log("🔍 API Request interceptor DEBUG:", { 
       url: config.url,
-      tokenPreview: accessToken ? accessToken.substring(0, 20) + '...' : null
+      method: config.method,
+      hasToken: !!accessToken, 
+      tokenPreview: accessToken ? accessToken.substring(0, 20) + '...' : null,
+      storageStatus: storageStatus,
+      allTokens: {
+        hasUser: !!tokens.user,
+        hasAccessToken: !!tokens.accessToken,
+        hasRefreshToken: !!tokens.refreshToken
+      }
     });
+    
+    // Also check localStorage directly for comparison
+    const directCheck = {
+      atlasia_access_token: !!localStorage.getItem('atlasia_access_token'),
+      accessToken: !!localStorage.getItem('accessToken'), 
+      user: !!localStorage.getItem('atlasia_user')
+    };
+    console.log("🔍 Direct localStorage check:", directCheck);
     
     if (accessToken) {
       if (!isTokenExpired(accessToken)) {
@@ -42,7 +61,13 @@ api.interceptors.request.use((config) => {
         config.headers.Authorization = `Bearer ${accessToken}`;
       }
     } else {
-      console.log("❌ No token available");
+      console.log("❌ No token available - checking AuthContext fallback");
+      
+      // Try getting token from AuthContext via window global
+      if (window.authContextToken) {
+        console.log("🔄 Using token from AuthContext global");
+        config.headers.Authorization = `Bearer ${window.authContextToken}`;
+      }
     }
   } catch (error) {
     console.error("❌ Error in request interceptor:", error);

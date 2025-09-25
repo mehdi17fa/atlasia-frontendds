@@ -25,15 +25,16 @@ export default function Explore() {
         return;
       }
 
+      let endpoint = '/api/property';
+      let logMessage = 'Making API call to: /api/property (public)';
+      
+      // For intermediate/partner users, fetch properties available for cohosting
+      if (isAuthenticated && user?.role === 'partner') {
+        endpoint = '/api/property/available-for-cohosting';
+        logMessage = 'Making API call to: /api/property/available-for-cohosting (partner)';
+      }
+
       try {
-        let endpoint = '/api/property';
-        let logMessage = 'Making API call to: /api/property (public)';
-        
-        // For intermediate/partner users, fetch properties available for cohosting
-        if (isAuthenticated && user?.role === 'partner') {
-          endpoint = '/api/property/available-for-cohosting';
-          logMessage = 'Making API call to: /api/property/available-for-cohosting (partner)';
-        }
         
         console.log(logMessage);
         console.log('User role:', user?.role);
@@ -41,7 +42,37 @@ export default function Explore() {
         console.log('🌐 API Base URL:', process.env.REACT_APP_API_URL);
         console.log('🔗 Full request URL:', `${process.env.REACT_APP_API_URL}${endpoint}`);
         
-        const res = await api.get(endpoint);
+        // Try with axios first, fallback to fetch if CORS issues persist
+        let res;
+        try {
+          res = await api.get(endpoint);
+        } catch (corsError) {
+          if (corsError.code === 'ERR_NETWORK' || corsError.message.includes('CORS')) {
+            console.log('⚠️ Axios CORS issue detected, trying direct fetch...');
+            
+            const token = localStorage.getItem('accessToken');
+            const fetchOptions = {
+              method: 'GET',
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                ...(token && { 'Authorization': `Bearer ${token}` })
+              }
+            };
+            
+            const response = await fetch(`${process.env.REACT_APP_API_URL}${endpoint}`, fetchOptions);
+            
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            res = { data, status: response.status };
+          } else {
+            throw corsError;
+          }
+        }
         console.log('Full API response:', res);
         console.log('Response data:', res.data);
         console.log('Response status:', res.status);
@@ -58,10 +89,20 @@ export default function Explore() {
         
         setProperties(properties);
       } catch (err) {
-        console.error("Error fetching properties:", err);
-        console.error("Error response:", err.response);
-        console.error("Error message:", err.message);
-        setError(err.response?.data?.message || err.message || 'Failed to fetch properties');
+        console.error("❌ Error fetching properties:", err);
+        console.error("📝 Error response:", err.response);
+        console.error("💬 Error message:", err.message);
+        console.error("🌐 Error code:", err.code);
+        
+        // Check for CORS-related errors
+        if (err.code === 'ERR_NETWORK' || err.message.includes('CORS') || err.message.includes('Network Error')) {
+          console.error('🚑 CORS Error detected!');
+          console.error('🔗 Request was trying to reach:', `${process.env.REACT_APP_API_URL}${endpoint}`);
+          console.error('🌐 Backend URL configured as:', process.env.REACT_APP_API_URL);
+          setError('CORS Error: Unable to connect to the backend. Please check if the backend is running and CORS is properly configured.');
+        } else {
+          setError(err.response?.data?.message || err.message || 'Failed to fetch properties');
+        }
       } finally {
         setLoading(false);
       }

@@ -150,3 +150,4 @@ export default AuthExample;
  * 7. USE useEffect with [isLoading] dependency to trigger actions when auth is ready
  * 8. HANDLE 401 errors by calling logout() and redirecting
  */
+

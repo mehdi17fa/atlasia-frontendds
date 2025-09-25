@@ -10,8 +10,8 @@ export const useFavorites = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Get token from context or localStorage as fallback
-  const authToken = token || localStorage.getItem('accessToken');
+  // Get token from context or localStorage as fallback (using consistent key)
+  const authToken = token || localStorage.getItem('atlasia_access_token') || localStorage.getItem('accessToken');
   
   // Check if user is logged in and is a tourist
   const isAuthenticated = !!user && !!authToken && user.role === 'tourist';

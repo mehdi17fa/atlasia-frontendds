@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import { AuthContext } from '../../context/AuthContext';
+import { tokenStorage } from '../../utils/tokenStorage';
 
 export default function SignupScreenConf() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { login } = useContext(AuthContext);
   const email = location.state?.email || localStorage.getItem('signupEmail') || '';
 
   const [code, setCode] = useState(['', '', '', '', '', '']);
@@ -29,9 +32,26 @@ export default function SignupScreenConf() {
         code: code.join(''),
       });
 
-      localStorage.setItem("token", response.data.accessToken);
+      console.log("✅ Verification successful:", {
+        hasUser: !!response.data.user,
+        hasAccessToken: !!response.data.accessToken,
+        hasRefreshToken: !!response.data.refreshToken
+      });
 
-      
+      // Store tokens properly using both AuthContext and tokenStorage
+      if (response.data.user && response.data.accessToken) {
+        // Update AuthContext state
+        login(response.data.user, response.data.accessToken, response.data.refreshToken);
+        
+        // Also store in tokenStorage for backup
+        tokenStorage.setTokens(response.data.user, response.data.accessToken, response.data.refreshToken);
+        
+        console.log("🔄 Tokens saved during verification step");
+      } else {
+        // Fallback: just store the access token temporarily
+        localStorage.setItem("token", response.data.accessToken);
+      }
+
       navigate('/identification', { state: { email } });
     } catch (err) {
       console.error('Verification error:', err.response?.data || err.message);

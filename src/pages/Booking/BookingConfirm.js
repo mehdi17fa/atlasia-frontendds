@@ -15,8 +15,9 @@ export default function BookingConfirm() {
   const [error, setError] = useState(null);
 
   const handleConfirm = async () => {
-    // Try to get token from state first, then from localStorage as fallback
+    // Try to get token from state first, then from localStorage as fallback (using consistent keys)
     const token = authToken || 
+                 localStorage.getItem("atlasia_access_token") ||
                  localStorage.getItem("accessToken");
     
     console.log("Auth Debug (Confirm):", {

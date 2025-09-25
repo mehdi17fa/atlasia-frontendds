@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import DefaultAvatar from '../assets/default-pp.png';
 import { AuthContext } from '../../context/AuthContext';
+import { tokenStorage } from '../../utils/tokenStorage';
 
 const ProfileSignupScreen = () => {
   const { login } = useContext(AuthContext);
@@ -91,7 +92,21 @@ const handleFinish = async () => {
       password: signupPassword,
     });
 
-    login(loginResponse.data.user, loginResponse.data.accessToken);
+    console.log("✅ Profile completion login successful:", {
+      hasUser: !!loginResponse.data.user,
+      hasAccessToken: !!loginResponse.data.accessToken,
+      hasRefreshToken: !!loginResponse.data.refreshToken,
+      userId: loginResponse.data.user?._id,
+      userRole: loginResponse.data.user?.role
+    });
+
+    // Save tokens using AuthContext and tokenStorage
+    login(loginResponse.data.user, loginResponse.data.accessToken, loginResponse.data.refreshToken);
+    
+    // Also store in tokenStorage for backup
+    tokenStorage.setTokens(loginResponse.data.user, loginResponse.data.accessToken, loginResponse.data.refreshToken);
+    
+    console.log("🔄 Tokens saved after profile completion");
 
     // Navigate safely with replace: true to prevent back navigation
     if (profileType === 'owner') navigate('/owner-welcome', { replace: true });
