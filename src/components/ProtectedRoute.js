@@ -39,8 +39,8 @@ const ProtectedRoute = ({ children, requireAuth = true, allowedRoles = null }) =
       } else if (user.role === 'partner') {
         return <Navigate to="/partner-welcome" replace />;
       } else {
-        // For tourists and other roles, redirect to profile instead of homepage
-        return <Navigate to="/profile" replace />;
+        // For tourists and other roles, redirect to home page
+        return <Navigate to="/" replace />;
       }
     }
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { ReactComponent as ArrowLeftIcon } from '../../assets/icons/arrow-left.svg';
 import { FaHeart } from "react-icons/fa";
 import S3Image from "../../components/S3Image";
@@ -32,6 +32,7 @@ export default function PropertyLayout({
 }) {
   const navigate = useNavigate();
   const { id: propertyId } = useParams();
+  const currentLocation = useLocation();
 
   const fallbackToken = localStorage.getItem('accessToken');
   const isLoggedIn = !!user && !!(token || fallbackToken);
@@ -220,6 +221,47 @@ export default function PropertyLayout({
           </div>
         </div>
         <div className="w-32"></div> {/* Spacer for balance */}
+      </div>
+
+      {/* Mobile Header */}
+      <div className="md:hidden sticky top-0 z-50 bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            {/* Left: Back Button */}
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center justify-center w-10 h-10 text-green-700 hover:text-green-800 hover:bg-green-50 rounded-full transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+
+            {/* Center: Atlasia Branding */}
+            <div className="text-center">
+              <button
+                onClick={() => {
+                  // Navigate based on user role
+                  if (user?.role === 'tourist' || !user) {
+                    navigate('/');
+                  } else if (user?.role === 'owner') {
+                    navigate('/owner-welcome');
+                  } else if (user?.role === 'partner') {
+                    navigate('/partner-welcome');
+                  } else {
+                    navigate('/');
+                  }
+                }}
+                className="font-bold text-green-700 text-xl hover:text-green-800 transition-colors"
+              >
+                ATLASIA
+              </button>
+            </div>
+
+            {/* Right: Empty space for balance */}
+            <div className="w-10"></div>
+          </div>
+        </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-100 py-6 pb-28 space-y-8">
@@ -577,6 +619,7 @@ export default function PropertyLayout({
       {showLogin && (
         <LoginScreen 
           onClose={handleCloseLogin}
+          currentLocation={currentLocation}
         />
       )}
 

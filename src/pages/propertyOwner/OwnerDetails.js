@@ -1,14 +1,16 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { api } from "../../api";
 import { StarIcon } from "@heroicons/react/24/solid";
 import { MapPinIcon, HomeIcon } from "@heroicons/react/24/outline";
 import InitialsAvatar from "../../components/shared/InitialsAvatar";
 import S3Image from "../../components/S3Image";
+import { AuthContext } from "../../context/AuthContext";
 
 export default function OwnerDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
   const [owner, setOwner] = useState(null);
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -93,39 +95,48 @@ export default function OwnerDetails() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-28">
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* Navigation Header */}
-        <div className="flex items-center justify-between mb-8">
-          <button
-            className="flex items-center space-x-2 text-green-600 hover:text-green-700 transition-colors"
-            onClick={() => window.history.back()}
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            <span className="font-medium">Retour</span>
-          </button>
-          <div className="flex items-center space-x-2">
+      {/* Mobile Header */}
+      <div className="md:hidden sticky top-0 z-50 bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            {/* Left: Back Button */}
             <button
-              className="p-2 text-green-600 hover:text-green-700 transition-colors"
-              onClick={() => window.history.back()}
-              title="Page précédente"
+              onClick={() => navigate(-1)}
+              className="flex items-center justify-center w-10 h-10 text-green-700 hover:text-green-800 hover:bg-green-50 rounded-full transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <button
-              className="p-2 text-green-600 hover:text-green-700 transition-colors"
-              onClick={() => window.history.forward()}
-              title="Page suivante"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
+
+            {/* Center: Atlasia Branding */}
+            <div className="text-center">
+              <button
+                onClick={() => {
+                  // Navigate based on user role
+                  if (user?.role === 'tourist' || !user) {
+                    navigate('/');
+                  } else if (user?.role === 'owner') {
+                    navigate('/owner-welcome');
+                  } else if (user?.role === 'partner') {
+                    navigate('/partner-welcome');
+                  } else {
+                    navigate('/');
+                  }
+                }}
+                className="font-bold text-green-700 text-xl hover:text-green-800 transition-colors"
+              >
+                ATLASIA
+              </button>
+            </div>
+
+            {/* Right: Empty space for balance */}
+            <div className="w-10"></div>
           </div>
         </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
           <div className="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-6">

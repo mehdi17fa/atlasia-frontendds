@@ -5,7 +5,7 @@ import { AuthContext } from '../../context/AuthContext';
 import { tokenStorage } from '../../utils/tokenStorage';
 import PasswordInput from '../../components/shared/PasswordInput';
 
-export default function LoginScreen({onClose}) {
+export default function LoginScreen({onClose, currentLocation}) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -68,15 +68,24 @@ export default function LoginScreen({onClose}) {
         // Navigate based on role and return URL
         const returnUrl = new URLSearchParams(window.location.search).get('returnUrl');
         const fromLocation = location.state?.from?.pathname;
-        const targetUrl = returnUrl || fromLocation;
+        const currentPageLocation = currentLocation?.pathname;
+        const targetUrl = returnUrl || fromLocation || currentPageLocation;
+        
+        console.log('🔍 Navigation debug:', {
+          returnUrl,
+          fromLocation,
+          currentPageLocation,
+          targetUrl,
+          userRole: response.data.user.role
+        });
         
         if (response.data.user.role === 'owner') {
           navigate(targetUrl || '/owner-welcome');
         } else if (response.data.user.role === 'partner') {
           navigate(targetUrl || '/partner-welcome');
         } else {
-          // For tourists and other roles, go to target URL or profile
-          navigate(targetUrl || '/profile');
+          // For tourists and other roles, go to target URL or home page
+          navigate(targetUrl || '/');
         }
         
         // Only call onClose if it's a function

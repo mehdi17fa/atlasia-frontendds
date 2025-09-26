@@ -206,7 +206,7 @@ export default function BookingRequest() {
               placeholder="Écrivez un message à l'hôte concernant votre demande de réservation..."
               className="w-full border p-2 rounded mb-4 h-32"
             />
-            <div className="flex gap-2">
+            <div className="flex gap-2 mt-4">
               <button
                 onClick={() => setStep(1)}
                 className="flex-1 py-3 rounded-full text-white font-semibold bg-gray-700 hover:bg-gray-800 transition"
@@ -231,7 +231,7 @@ export default function BookingRequest() {
             <p><strong>Check-out:</strong> {checkOut || "N/A"}</p>
             <p><strong>Invités:</strong> {guests || "N/A"}</p>
             <p><strong>Message à l'hôte:</strong> {guestMessage || "Aucun message"}</p>
-            <div className="flex gap-2">
+            <div className="flex gap-2 mt-6">
               <button
                 onClick={() => setStep(2)}
                 className="flex-1 py-3 rounded-full text-white font-semibold bg-gray-700 hover:bg-gray-800 transition"
@@ -245,7 +245,7 @@ export default function BookingRequest() {
                   loading ? "bg-gray-400" : "bg-green-800 hover:bg-green-900"
                 } transition`}
               >
-                {loading ? "Envoi..." : "Demander la réservation"}
+                {loading ? "Envoi..." : "Confirmer"}
               </button>
             </div>
           </div>
