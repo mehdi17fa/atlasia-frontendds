@@ -117,8 +117,8 @@ export default function Profile() {
     // Clear user data and tokens
     logout();
     
-    // Navigate to home page and force reload to ensure clean state
-    window.location.href = '/';
+    // Use window.location.replace for immediate redirect without React Router interference
+    window.location.replace('/');
   };
   
   

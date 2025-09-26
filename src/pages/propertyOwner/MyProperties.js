@@ -64,7 +64,21 @@ export default function MyProperties() {
         const publishedProps = properties.filter((p) => p && p.status === "published");
         
         console.log("📝 Draft properties:", draftProps.length);
+        console.log("📝 Draft properties details:", draftProps);
         console.log("✅ Published properties:", publishedProps.length);
+        console.log("✅ Published properties details:", publishedProps);
+        
+        // Debug each property status
+        properties.forEach((p, index) => {
+          console.log(`Property ${index}:`, {
+            _id: p._id,
+            title: p.title,
+            status: p.status,
+            localisation: p.localisation,
+            price: p.price,
+            info: p.info
+          });
+        });
         
         setDraftProperties(draftProps);
         setPublishedProperties(publishedProps);

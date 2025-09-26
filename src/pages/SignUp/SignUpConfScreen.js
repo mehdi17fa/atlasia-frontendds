@@ -33,25 +33,12 @@ export default function SignupScreenConf() {
       });
 
       console.log("✅ Verification successful:", {
-        hasUser: !!response.data.user,
-        hasAccessToken: !!response.data.accessToken,
-        hasRefreshToken: !!response.data.refreshToken
+        message: response.data.message,
+        user: response.data.user
       });
 
-      // Store tokens properly using both AuthContext and tokenStorage
-      if (response.data.user && response.data.accessToken) {
-        // Update AuthContext state
-        login(response.data.user, response.data.accessToken, response.data.refreshToken);
-        
-        // Also store in tokenStorage for backup
-        tokenStorage.setTokens(response.data.user, response.data.accessToken, response.data.refreshToken);
-        
-        console.log("🔄 Tokens saved during verification step");
-      } else {
-        // Fallback: just store the access token temporarily
-        localStorage.setItem("token", response.data.accessToken);
-      }
-
+      // ✅ Don't auto-login after verification - user needs to complete profile first
+      // Just navigate to identification step
       navigate('/identification', { state: { email } });
     } catch (err) {
       console.error('Verification error:', err.response?.data || err.message);

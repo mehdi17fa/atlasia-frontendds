@@ -1,9 +1,6 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
-import { api } from '../../api';
-import S3ImageUpload from '../../components/S3ImageUpload';
-import S3Image from '../../components/S3Image';
 import { FaArrowLeft } from 'react-icons/fa';
 
 // Icons for property types
@@ -39,8 +36,6 @@ import { ReactComponent as ParkingBlack } from "../../assets/icons/PropertyEquip
 import { ReactComponent as ParkingGreen } from "../../assets/icons/PropertyEquipment/parkingGreen.svg";
 import { ReactComponent as PoolBlack } from "../../assets/icons/PropertyEquipment/poolBlack.svg";
 import { ReactComponent as PoolGreen } from "../../assets/icons/PropertyEquipment/poolGreen.svg";
-import { ReactComponent as PlaygroundBlack } from "../../assets/icons/PropertyEquipment/playgroundBlack.svg";
-import { ReactComponent as PlaygroundGreen } from "../../assets/icons/PropertyEquipment/playgroundGreen.svg";
 
 const API_BASE = process.env.REACT_APP_API_URL;
 
@@ -71,15 +66,21 @@ const equipmentsList = [
   { label: "Cuisine", iconActive: KitchenGreen, iconInactive: KitchenBlack },
   { label: "Parking", iconActive: ParkingGreen, iconInactive: ParkingBlack },
   { label: "Piscine", iconActive: PoolGreen, iconInactive: PoolBlack },
-  { label: "Aire de jeux", iconActive: PlaygroundGreen, iconInactive: PlaygroundBlack },
 ];
 
 export default function PropertyCreationSinglePage() {
   const navigate = useNavigate();
-  const { user, token } = useContext(AuthContext);
+  const { token } = useContext(AuthContext);
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [availabilitySettings, setAvailabilitySettings] = useState({
+    startDate: '',
+    endDate: '',
+    instantBooking: false,
+    reservationType: 'manual' // 'manual' or 'instant'
+  });
   
   // Form data state
   const [formData, setFormData] = useState({
@@ -365,7 +366,47 @@ export default function PropertyCreationSinglePage() {
     setError('');
     
     try {
-      const payload = { ...formData, isDraft: true };
+      // Map equipment labels to backend enum values
+      const equipmentMapping = {
+        'Wifi': 'wifi',
+        'TV': 'tv', 
+        'Lave-linge': 'washer',
+        'Climatisation': 'ac',
+        'Chauffage': 'heater',
+        'Cuisine': 'kitchen',
+        'Parking': 'parking',
+        'Piscine': 'pool',
+      };
+
+      const mappedEquipments = formData.equipments.map(eq => equipmentMapping[eq] || eq);
+
+      // Transform price structure to match backend schema
+      const priceValue = parseFloat(formData.price) || 0;
+      
+      // Transform documents structure to match backend schema (array of strings)
+      const documentsArray = [];
+      if (formData.documents) {
+        Object.entries(formData.documents).forEach(([docType, files]) => {
+          if (files && files.length > 0) {
+            files.forEach(file => {
+              if (file && file.name) {
+                documentsArray.push(file.name);
+              }
+            });
+          }
+        });
+      }
+      
+      const payload = { 
+        ...formData,
+        equipments: mappedEquipments,
+        price: {
+          weekdays: priceValue,
+          weekend: priceValue
+        },
+        documents: documentsArray, // Convert to array of strings
+        isDraft: true 
+      };
       console.log('💾 Saving property draft with payload:', payload);
       
       const response = await fetch(`${API_BASE}/api/property`, {
@@ -420,16 +461,89 @@ export default function PropertyCreationSinglePage() {
       return;
     }
 
+    // Show availability settings modal instead of directly publishing
+    setShowPublishModal(true);
+  };
+
+  const handleAvailabilityChange = (field, value) => {
+    setAvailabilitySettings(prev => {
+      const newSettings = {
+        ...prev,
+        [field]: value
+      };
+      
+      // Automatically set instantBooking based on reservation type
+      if (field === 'reservationType') {
+        newSettings.instantBooking = value === 'instant';
+      }
+      
+      return newSettings;
+    });
+  };
+
+  const handleConfirmPublish = async () => {
     setIsLoading(true);
     setError('');
 
     try {
+      // Map equipment labels to backend enum values
+      const equipmentMapping = {
+        'Wifi': 'wifi',
+        'TV': 'tv', 
+        'Lave-linge': 'washer',
+        'Climatisation': 'ac',
+        'Chauffage': 'heater',
+        'Cuisine': 'kitchen',
+        'Parking': 'parking',
+        'Piscine': 'pool',
+      };
+
+      const mappedEquipments = formData.equipments.map(eq => equipmentMapping[eq] || eq);
+
+      // Transform price structure to match backend schema
+      const priceValue = parseFloat(formData.price) || 0;
+      
+      // Transform documents structure to match backend schema (array of strings)
+      const documentsArray = [];
+      if (formData.documents) {
+        Object.entries(formData.documents).forEach(([docType, files]) => {
+          if (files && files.length > 0) {
+            files.forEach(file => {
+              if (file && file.name) {
+                documentsArray.push(file.name);
+              }
+            });
+          }
+        });
+      }
+      
       const payload = { 
-        ...formData, 
+        ...formData,
+        equipments: mappedEquipments,
+        price: {
+          weekdays: priceValue,
+          weekend: priceValue
+        },
+        documents: documentsArray, // Convert to array of strings
+        availability: {
+          start: availabilitySettings.startDate ? new Date(availabilitySettings.startDate) : null,
+          end: availabilitySettings.endDate ? new Date(availabilitySettings.endDate) : null
+        },
+        instantBooking: availabilitySettings.instantBooking,
         isDraft: false, // Ensure publish flag is explicit
         status: 'published' // Explicit status setting
       };
       console.log('🚀 Creating property for publish with payload:', payload);
+      console.log('🔍 Payload details:');
+      console.log('- Title:', payload.title);
+      console.log('- Description:', payload.description);
+      console.log('- Price:', payload.price);
+      console.log('- Status:', payload.status);
+      console.log('- Localisation:', payload.localisation);
+      console.log('- PropertyType:', payload.propertyType);
+      console.log('- Info:', payload.info);
+      console.log('- Photos:', payload.photos);
+      console.log('- Equipments:', payload.equipments);
       
       const response = await fetch(`${API_BASE}/api/property`, {
         method: 'POST',
@@ -444,6 +558,7 @@ export default function PropertyCreationSinglePage() {
         const data = await response.json();
         console.log('✅ Property created successfully:', data);
         alert('Propriété créée et publiée avec succès!');
+        setShowPublishModal(false);
         navigate('/owner-welcome');
       } else {
         const errorData = await response.json().catch(() => ({ message: 'Failed to create property' }));
@@ -1138,6 +1253,117 @@ export default function PropertyCreationSinglePage() {
           </div>
         </div>
       </div>
+
+      {/* Availability Settings Modal */}
+      {showPublishModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 pb-20">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[80vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Paramètres de disponibilité</h2>
+                <button
+                  onClick={() => setShowPublishModal(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Availability Dates */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Période de disponibilité</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Date de début (optionnel)
+                      </label>
+                      <input
+                        type="date"
+                        value={availabilitySettings.startDate}
+                        onChange={(e) => handleAvailabilityChange('startDate', e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                        min={new Date().toISOString().split('T')[0]}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Laissez vide pour rendre disponible immédiatement</p>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Date de fin (optionnel)
+                      </label>
+                      <input
+                        type="date"
+                        value={availabilitySettings.endDate}
+                        onChange={(e) => handleAvailabilityChange('endDate', e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                        min={availabilitySettings.startDate || new Date().toISOString().split('T')[0]}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Laissez vide pour rendre disponible indéfiniment</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Reservation Type */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Type de réservation</h3>
+                  <div className="space-y-3">
+                    <label className="flex items-center p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-green-300 transition-colors">
+                      <input
+                        type="radio"
+                        name="reservationType"
+                        value="manual"
+                        checked={availabilitySettings.reservationType === 'manual'}
+                        onChange={(e) => handleAvailabilityChange('reservationType', e.target.value)}
+                        className="w-4 h-4 text-green-600 border-gray-300 focus:ring-green-500"
+                      />
+                      <div className="ml-3">
+                        <div className="font-medium text-gray-900">Réservation manuelle</div>
+                        <div className="text-sm text-gray-500">Vous approuvez chaque demande de réservation</div>
+                      </div>
+                    </label>
+
+                    <label className="flex items-center p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-green-300 transition-colors">
+                      <input
+                        type="radio"
+                        name="reservationType"
+                        value="instant"
+                        checked={availabilitySettings.reservationType === 'instant'}
+                        onChange={(e) => handleAvailabilityChange('reservationType', e.target.value)}
+                        className="w-4 h-4 text-green-600 border-gray-300 focus:ring-green-500"
+                      />
+                      <div className="ml-3">
+                        <div className="font-medium text-gray-900">Réservation instantanée</div>
+                        <div className="text-sm text-gray-500">Les invités peuvent réserver directement</div>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex space-x-3 mt-8">
+                <button
+                  onClick={() => setShowPublishModal(false)}
+                  className="flex-1 px-4 py-3 font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all duration-200"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleConfirmPublish}
+                  disabled={isLoading}
+                  className="flex-1 px-6 py-3 font-semibold text-white bg-gradient-to-r from-green-500 to-green-600 rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50"
+                >
+                  {isLoading ? 'Publication...' : 'Publier la propriété'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -72,7 +72,6 @@ const handleFinish = async () => {
   try {
     const formData = new FormData();
     const signupEmail = localStorage.getItem('signupEmail') || '';
-    const signupPassword = localStorage.getItem('signupPassword') || '';
 
     formData.append('email', signupEmail);
     formData.append('fullName', fullName);
@@ -82,29 +81,24 @@ const handleFinish = async () => {
     formData.append('profileType', profileType);
     if (profileImage) formData.append('profilePic', profileImage);
 
-    await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/complete-profile`, formData, {
+    // ✅ Complete profile and get tokens in one request
+    const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/complete-profile`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
 
-    // Auto-login
-    const loginResponse = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/login`, {
-      email: signupEmail,
-      password: signupPassword,
-    });
-
-    console.log("✅ Profile completion login successful:", {
-      hasUser: !!loginResponse.data.user,
-      hasAccessToken: !!loginResponse.data.accessToken,
-      hasRefreshToken: !!loginResponse.data.refreshToken,
-      userId: loginResponse.data.user?._id,
-      userRole: loginResponse.data.user?.role
+    console.log("✅ Profile completion successful:", {
+      hasUser: !!response.data.user,
+      hasAccessToken: !!response.data.accessToken,
+      hasRefreshToken: !!response.data.refreshToken,
+      userId: response.data.user?._id,
+      userRole: response.data.user?.role
     });
 
     // Save tokens using AuthContext and tokenStorage
-    login(loginResponse.data.user, loginResponse.data.accessToken, loginResponse.data.refreshToken);
+    login(response.data.user, response.data.accessToken, response.data.refreshToken);
     
     // Also store in tokenStorage for backup
-    tokenStorage.setTokens(loginResponse.data.user, loginResponse.data.accessToken, loginResponse.data.refreshToken);
+    tokenStorage.setTokens(response.data.user, response.data.accessToken, response.data.refreshToken);
     
     console.log("🔄 Tokens saved after profile completion");
 
