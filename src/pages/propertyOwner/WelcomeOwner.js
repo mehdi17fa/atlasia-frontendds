@@ -484,6 +484,7 @@ export default function WelcomeOwner() {
               <ListingCardGrid
                 listings={propertiesToShow}
                 onCardClick={handleCardClick}
+                showEditButton={true}
                 actionButtonText="Gérer"
               />
               

@@ -41,6 +41,7 @@ import PropertySearchFlow from './pages/UserSearch/SearchFlow';
 // Property Owner
 import WelcomeOwner from './pages/propertyOwner/WelcomeOwner';
 import PropertyCreationSinglePage from './pages/propertyOwner/PropertyCreationSinglePage';
+import EditProperty from './pages/propertyOwner/EditProperty';
 import MyProperties from './pages/propertyOwner/MyProperties';
 import ReservationPage from './pages/propertyOwner/ReservationPage';
 import PropertyPreview from './pages/Propriétés/PropertyPreview';
@@ -240,6 +241,7 @@ function App() {
         {/* Property owner flow - Require owner role */}
         <Route path="/owner-welcome" element={<ProtectedRoute allowedRoles={['owner']}><WelcomeOwner /></ProtectedRoute>} />
         <Route path="/create-property" element={<ProtectedRoute allowedRoles={['owner']}><PropertyCreationSinglePage /></ProtectedRoute>} />
+        <Route path="/edit-property/:id" element={<ProtectedRoute allowedRoles={['owner']}><EditProperty /></ProtectedRoute>} />
 
         <Route path="/my-properties" element={<ProtectedRoute allowedRoles={['owner']}><MyProperties /></ProtectedRoute>} />
         <Route path="/owner/income" element={<ProtectedRoute allowedRoles={['owner']}><OwnerIncomePage /></ProtectedRoute>} />

@@ -258,7 +258,7 @@ export default function MyProperties() {
       {/* Draft Properties */}
       <SectionTitle title="Brouillons" />
       {draftProperties.length > 0 ? (
-        <ListingCardGrid listings={draftProperties} />
+        <ListingCardGrid listings={draftProperties} showEditButton={true} />
       ) : (
         <div className="text-center py-8 bg-gray-50 rounded-lg mb-8">
           <div className="text-gray-400 text-4xl mb-2">📝</div>
@@ -270,7 +270,7 @@ export default function MyProperties() {
       {/* Published Properties */}
       <SectionTitle title="Propriétés Publiées" />
       {publishedProperties.length > 0 ? (
-        <ListingCardGrid listings={publishedProperties} />
+        <ListingCardGrid listings={publishedProperties} showEditButton={true} />
       ) : (
         <div className="text-center py-8 bg-gray-50 rounded-lg">
           <div className="text-gray-400 text-4xl mb-2">🏠</div>

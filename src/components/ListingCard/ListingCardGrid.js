@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { FaHeart } from "react-icons/fa";
+import { FaHeart, FaEdit } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 import S3Image from "../S3Image";
 import ImageCarousel from "../ImageCarousel";
 import { useFavorites } from "../../hooks/useFavorites";
 
-export default function ListingCardGrid({ listings, onCardClick }) {
+export default function ListingCardGrid({ listings, onCardClick, showEditButton = false }) {
   const { favorites, isFavorited, toggleFavorite, isAuthenticated } = useFavorites();
   const [visibleCards, setVisibleCards] = useState([]);
+  const navigate = useNavigate();
 
 
   const handleToggleFavorite = async (e, id) => {
@@ -18,6 +20,11 @@ export default function ListingCardGrid({ listings, onCardClick }) {
     }
     
     await toggleFavorite(id, 'property');
+  };
+
+  const handleEditProperty = (e, propertyId) => {
+    e.stopPropagation();
+    navigate(`/edit-property/${propertyId}`);
   };
 
   // Animate cards one by one on mount
@@ -59,6 +66,17 @@ export default function ListingCardGrid({ listings, onCardClick }) {
                   }`}
                 />
               </button>
+
+              {/* Edit button (top left) - only show if showEditButton is true */}
+              {showEditButton && (
+                <button
+                  onClick={(e) => handleEditProperty(e, listing._id)}
+                  className="absolute top-2 left-2 bg-white bg-opacity-90 backdrop-blur-sm rounded-full p-1.5 shadow-md transform transition hover:scale-110 active:scale-95 z-10"
+                  title="Modifier la propriété"
+                >
+                  <FaEdit className="w-4 h-4 text-blue-600 hover:text-blue-700 transition-colors duration-300" />
+                </button>
+              )}
 
               {/* Image content */}
               <div onClick={() => onCardClick && onCardClick(listing._id)}>
