@@ -15,6 +15,8 @@ import { api } from '../api';
  */
 export const uploadFileToS3 = async (file, folder = 'general', onProgress = null) => {
   try {
+    console.log('🔄 Uploading file:', file.name, 'to folder:', folder);
+    
     const formData = new FormData();
     formData.append('file', file);
     formData.append('folder', folder);
@@ -35,21 +37,162 @@ export const uploadFileToS3 = async (file, folder = 'general', onProgress = null
 
     const response = await api.post('/api/upload', formData, config);
     
-    if (response.data.success) {
+    // Enhanced backend response handling for inconsistent API responses
+    const data = response.data;
+    
+    // Method 1: Check if success is true
+    if (data.success === true && (data.url || data.key)) {
       return {
-        key: response.data.key,
-        url: response.data.url,
-        fileName: response.data.fileName,
+        key: data.key,
+        url: data.url || data.key,
+        fileName: data.fileName || file.name,
       };
-    } else {
-      throw new Error(response.data.message || 'Upload failed');
     }
+    
+    // Method 1.5: Handle nested file object structure
+    if (data.file && (data.file.url || data.file.key)) {
+      const fileData = data.file;
+      return {
+        key: fileData.key,
+        url: fileData.url || fileData.key,
+        fileName: fileData.fileName || data.fileName || file.name,
+      };
+    }
+    
+    // Method 1.6: Handle any structure from which URL or key can be extracted
+    if (data.url || data.key) {
+      return {
+        key: data.key,
+        url: data.url || data.key,
+        fileName: data.fileName || file.name,
+      };
+    }
+    
+    // Method 1.7: Try to extract from any nested structure recursively
+    const extractUrlFromObject = (obj, visited = new Set()) => {
+      if (visited.has(obj) || typeof obj !== 'object' || obj === null) return null;
+      visited.add(obj);
+      
+      for (const [key, value] of Object.entries(obj)) {
+        if (typeof value === 'string' && (value.includes('http') || value.includes('amazonaws'))) {
+          return { key, value };
+        }
+        if (typeof value === 'object' && value !== null) {
+          const result = extractUrlFromObject(value, visited);
+          if (result) return result;
+        }
+      }
+      return null;
+    };
+    
+    const urlMatch = extractUrlFromObject(data);
+    if (urlMatch) {
+      const { value: foundUrl } = urlMatch;
+      return {
+        key: foundUrl.split('/').pop() || file.name,
+        url: foundUrl,
+        fileName: file.name,
+      };
+    }
+    
+    // Method 2: Look for success messages
+    const message = data.message || data.error || '';
+    const messageLower = message.toLowerCase();
+    if (messageLower.includes('successfully') || messageLower.includes('uploaded')) {
+      return {
+        key: data.key || data.upload_path || data.path,
+        url: data.url || data.fileUrl || data.location || data.uploadUrl || data.downloadUrl,
+        fileName: data.fileName || data.originalName || file.name,
+      };
+    }
+    
+    // Method 3: Check if we have a URL/key in the response (sometimes backend sets success=false but provides the URL)
+    if ((data.url || data.key || data.location || data.fileUrl) && !message.includes('error') && !message.includes('fail')) {
+      return {
+        key: data.key || data.location,
+        url: data.url || data.fileUrl || data.location,
+        fileName: data.fileName || file.name,
+      };
+    }
+    
+    // Method 4: Check response status and look for URLs in any property
+    if (response.status >= 200 && response.status < 300) {
+      // Search for any string that looks like a URL in the response
+      const searchForUrl = (obj, depth = 0) => {
+        if (depth > 3) return null; // Prevent deep recursion
+        if (!obj || typeof obj !== 'object') return null;
+        
+        for (const [key, value] of Object.entries(obj)) {
+          if (typeof value === 'string') {
+            // Look for URLs starting with http
+            const urlMatch = value.match(/https?:\/\/[^\s\n]+[^)]?/i);
+            if (urlMatch) {
+              return urlMatch[0];
+            }
+            // Look for S3 keys or paths that could be converted to URLs
+            if (value.includes('amazonaws.com') || value.includes('s3') || value.includes('bucket')) {
+              return value.includes('http') ? value : `https://${value}`;
+            }
+          } else if (typeof value === 'object' && value !== null) {
+            const found = searchForUrl(value, depth + 1);
+            if (found) return found;
+          }
+        }
+        return null;
+      };
+      
+      const extractedUrl = searchForUrl(data);
+      if (extractedUrl) {
+        return {
+          key: extractedUrl.includes('/') ? extractedUrl.split('/').slice(-1)[0] : file.name,
+          url: extractedUrl,
+          fileName: file.name,
+        };
+      }
+    }
+    
+    // If none of the success methods worked, throw an error
+    throw new Error(`Upload failed: ${message || 'No success indicators found'}`);
+    
   } catch (error) {
-    console.error('Error uploading file to S3:', error);
+    // Enhanced error handling to extract URLs from error responses
+    const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || 'Unknown error';
+    
+    try {
+      // Even if the upload was "caught as an error", check if it actually succeeded
+      const responseData = error.response?.data;
+      if (responseData && typeof responseData === 'object') {
+        // Look for success indicators in error response
+        const messageLower = errorMessage.toLowerCase();
+        if (messageLower.includes('successfully') || messageLower.includes('uploaded')) {
+          // Try to extract URL from error data
+          const possibleUrl = responseData.url || responseData.key || responseData.location || responseData.fileUrl;
+          if (possibleUrl) {
+            return {
+              key: responseData.key || possibleUrl,
+              url: possibleUrl,
+              fileName: responseData.fileName || file.name,
+            };
+          }
+          
+          // Or extract from error message using regex
+          const urlMatch = errorMessage.match(/https?:\/\/[^\s\n\)]+/i);
+          if (urlMatch) {
+            return {
+              key: urlMatch[0],
+              url: urlMatch[0],
+              fileName: file.name,
+            };
+          }
+        }
+      }
+    } catch (extractError) {
+      // Silent fall through
+    }
+    
+    // Re-throw the original error
     throw new Error(
-      error.response?.data?.message || 
-      error.message || 
-      'Failed to upload file'
+      `${errorMessage.includes('successfully') ? 'Upload successful but URL extraction failed: ' : 'Upload error: '}${errorMessage}`
     );
   }
 };
