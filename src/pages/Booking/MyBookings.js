@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import ImageCarousel from "../../components/ImageCarousel";
+import ImageViewer from "../../components/ImageViewer";
 import S3Image from "../../components/S3Image";
 import { FaArrowLeft, FaStar, FaTimes, FaCamera, FaCheck } from "react-icons/fa";
 
@@ -19,6 +20,11 @@ const TouristBookings = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [statusFilter, setStatusFilter] = useState("");
   const [activeTab, setActiveTab] = useState("properties"); // "properties" or "packages"
+  
+  // Image viewer functionality
+  const [imageViewerOpen, setImageViewerOpen] = useState(false);
+  const [imageViewerIndex, setImageViewerIndex] = useState(0);
+  const [imageViewerImages, setImageViewerImages] = useState([]);
   
   // Review functionality
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -250,6 +256,17 @@ const TouristBookings = () => {
       ...prev,
       photos: prev.photos.filter((_, i) => i !== index)
     }));
+  };
+
+  // Image viewer handlers
+  const handleImageClick = (images, index) => {
+    setImageViewerImages(images);
+    setImageViewerIndex(index);
+    setImageViewerOpen(true);
+  };
+
+  const handleCloseImageViewer = () => {
+    setImageViewerOpen(false);
   };
 
   const submitReview = async () => {
@@ -619,9 +636,10 @@ const TouristBookings = () => {
                 {booking.property?.photos && booking.property.photos.length > 0 ? (
                   <ImageCarousel
                     images={booking.property.photos}
-                    className="h-48"
+                    className="h-48 cursor-pointer"
                     showDots={booking.property.photos.length > 1}
                     showArrows={booking.property.photos.length > 1}
+                    onImageClick={(index) => handleImageClick(booking.property.photos, index)}
                   />
                 ) : (
                   <S3Image
@@ -883,6 +901,14 @@ const TouristBookings = () => {
           </div>
         </div>
       )}
+
+      {/* Image Viewer Modal */}
+      <ImageViewer
+        images={imageViewerImages}
+        initialIndex={imageViewerIndex}
+        isOpen={imageViewerOpen}
+        onClose={handleCloseImageViewer}
+      />
       </div>
     </div>
   );

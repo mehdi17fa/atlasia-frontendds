@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import S3Image from "../../components/S3Image";
 import ImageCarousel from "../../components/ImageCarousel";
+import ImageViewer from "../../components/ImageViewer";
 
 export default function SearchResults({ isOpen, onClose, searchParams, onPropertySelect }) {
   const navigate = useNavigate();
@@ -13,6 +14,9 @@ export default function SearchResults({ isOpen, onClose, searchParams, onPropert
     bathrooms: "",
     equipments: [], 
   });
+  const [imageViewerOpen, setImageViewerOpen] = useState(false);
+  const [imageViewerIndex, setImageViewerIndex] = useState(0);
+  const [imageViewerImages, setImageViewerImages] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, pages: 1 });
   const [availableFilters, setAvailableFilters] = useState({ equipments: [] });
 
@@ -71,6 +75,17 @@ export default function SearchResults({ isOpen, onClose, searchParams, onPropert
   useEffect(() => {
     fetchProperties();
   }, [fetchProperties]);
+
+  // Image viewer handlers
+  const handleImageClick = (images, index) => {
+    setImageViewerImages(images);
+    setImageViewerIndex(index);
+    setImageViewerOpen(true);
+  };
+
+  const handleCloseImageViewer = () => {
+    setImageViewerOpen(false);
+  };
 
   const handleFilterChange = (name, value) => {
     setFilters(prev => ({ ...prev, [name]: value }));
@@ -202,9 +217,10 @@ export default function SearchResults({ isOpen, onClose, searchParams, onPropert
                     {property.photos && property.photos.length > 0 ? (
                       <ImageCarousel
                         images={property.photos}
-                        className="h-48"
+                        className="h-48 cursor-pointer"
                         showDots={property.photos.length > 1}
                         showArrows={property.photos.length > 1}
+                        onImageClick={(index) => handleImageClick(property.photos, index)}
                       />
                     ) : (
                       <S3Image
@@ -253,6 +269,14 @@ export default function SearchResults({ isOpen, onClose, searchParams, onPropert
           </div>
         </div>
       </div>
+
+      {/* Image Viewer Modal */}
+      <ImageViewer
+        images={imageViewerImages}
+        initialIndex={imageViewerIndex}
+        isOpen={imageViewerOpen}
+        onClose={handleCloseImageViewer}
+      />
     </div>
   );
 }

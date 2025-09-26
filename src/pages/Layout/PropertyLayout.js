@@ -4,6 +4,7 @@ import { ReactComponent as ArrowLeftIcon } from '../../assets/icons/arrow-left.s
 import { FaHeart } from "react-icons/fa";
 import S3Image from "../../components/S3Image";
 import ImageCarousel from "../../components/ImageCarousel";
+import ImageViewer from "../../components/ImageViewer";
 import SinglePropertyMap from "../../components/SinglePropertyMap";
 import InitialsAvatar from "../../components/shared/InitialsAvatar";
 import RatingDisplay from "../../components/shared/RatingDisplay";
@@ -48,6 +49,8 @@ export default function PropertyLayout({
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
+  const [imageViewerOpen, setImageViewerOpen] = useState(false);
+  const [imageViewerIndex, setImageViewerIndex] = useState(0);
   
   const { isFavorited, toggleFavorite, isAuthenticated } = useFavorites();
   const { getPropertyReviews, submitReview, reviewableBookings } = useReviews();
@@ -136,6 +139,15 @@ export default function PropertyLayout({
   const handleSwitchToLogin = () => {
     setShowSignup(false);
     setShowLogin(true);
+  };
+
+  const handleImageClick = (index) => {
+    setImageViewerIndex(index);
+    setImageViewerOpen(true);
+  };
+
+  const handleCloseImageViewer = () => {
+    setImageViewerOpen(false);
   };
 
   const handleBooking = () => {
@@ -288,16 +300,20 @@ export default function PropertyLayout({
           <div className="md:hidden mx-4">
             <ImageCarousel
               images={photos}
-              className="h-80 rounded-2xl shadow-lg"
+              className="h-80 rounded-2xl shadow-lg cursor-pointer"
               showDots={photos.length > 1}
               showArrows={photos.length > 1}
+              onImageClick={handleImageClick}
             />
           </div>
           
           {/* Desktop: Grid Layout */}
           <div className="hidden md:grid grid-cols-3 rounded-2xl overflow-hidden shadow-lg" style={{ gap: '20px' }}>
             {/* Large main image - takes 2 columns */}
-            <div className="col-span-2 relative">
+            <div 
+              className="col-span-2 relative cursor-pointer hover:opacity-90 transition-opacity"
+              onClick={() => handleImageClick(0)}
+            >
               <S3Image 
                 src={photos[0]} 
                 alt={title} 
@@ -310,7 +326,10 @@ export default function PropertyLayout({
             <div className="col-span-1 flex flex-col h-96" style={{ gap: '20px' }}>
               {/* First small image */}
               {photos[1] && (
-                <div className="relative flex-1">
+                <div 
+                  className="relative flex-1 cursor-pointer hover:opacity-90 transition-opacity"
+                  onClick={() => handleImageClick(1)}
+                >
                   <S3Image 
                     src={photos[1]} 
                     alt={`${title} - Image 2`} 
@@ -322,7 +341,10 @@ export default function PropertyLayout({
               
               {/* Second small image with show more button if there are more than 3 photos */}
               {photos.length > 2 && (
-                <div className="relative flex-1">
+                <div 
+                  className="relative flex-1 cursor-pointer hover:opacity-90 transition-opacity"
+                  onClick={() => handleImageClick(2)}
+                >
                   <S3Image 
                     src={photos[2]} 
                     alt={`${title} - Image 3`} 
@@ -331,7 +353,13 @@ export default function PropertyLayout({
                   />
                   {photos.length > 3 && (
                     <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                      <button className="text-white text-sm font-medium bg-black bg-opacity-60 px-3 py-1 rounded-full hover:bg-opacity-80 transition-all">
+                      <button 
+                        className="text-white text-sm font-medium bg-black bg-opacity-60 px-3 py-1 rounded-full hover:bg-opacity-80 transition-all"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleImageClick(0);
+                        }}
+                      >
                         Show all photos
                       </button>
                     </div>
@@ -629,6 +657,14 @@ export default function PropertyLayout({
           onClose={handleCloseSignup}
         />
       )}
+
+      {/* Image Viewer Modal */}
+      <ImageViewer
+        images={photos}
+        initialIndex={imageViewerIndex}
+        isOpen={imageViewerOpen}
+        onClose={handleCloseImageViewer}
+      />
       </div>
     </div>
   );
