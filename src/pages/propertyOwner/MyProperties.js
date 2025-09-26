@@ -23,7 +23,7 @@ export default function MyProperties() {
 
   const fetchMyProperties = async () => {
     setLoading(true);
-    setError(null);
+    setError(null); 
     
     try {
       // Get token from localStorage as fallback
