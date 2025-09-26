@@ -140,7 +140,17 @@ export default function CoHostPropertyLayout({
     <div className="max-w-7xl mx-auto p-6 pb-28">
       {/* Header */}
       <div className="flex items-center space-x-4 mb-4">
-        <button onClick={() => window.history.back()} className="p-2 bg-gray-200 rounded-full">
+        <button 
+          onClick={() => {
+            // Navigate back to partner dashboard or explore page instead of potentially undefined history
+            if (window.history.length > 1) {
+              window.history.back();
+            } else {
+              window.location.href = '/partner-welcome';
+            }
+          }} 
+          className="p-2 bg-gray-200 rounded-full"
+        >
           <ArrowLeftIcon className="w-5 h-5 text-gray-700" />
         </button>
         <h1 className="text-3xl font-bold">{showReservations ? "Gérer mes réservations" : title}</h1>

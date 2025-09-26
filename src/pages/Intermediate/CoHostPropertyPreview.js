@@ -1,7 +1,7 @@
 // src/pages/CoHostPropertyPreview.jsx
 import React, { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import { api } from "../../api";
 import CoHostPropertyLayout from "../Layout/CohostPropertyLayout";
 import { AuthContext } from "../../context/AuthContext";
 import toast, { Toaster } from "react-hot-toast";
@@ -20,8 +20,6 @@ import { ReactComponent as ParkingIcon } from '../../assets/icons/PropertyEquipm
 import { ReactComponent as PoolIcon } from '../../assets/icons/PropertyEquipment/poolBlack.svg';
 import { ReactComponent as PlaygroundIcon } from '../../assets/icons/PropertyEquipment/playgroundBlack.svg';
 
-const API_BASE = process.env.REACT_APP_API_URL;
-
 export default function CoHostPropertyPreview() {
   const { propertyId } = useParams();
   const navigate = useNavigate();
@@ -34,27 +32,31 @@ export default function CoHostPropertyPreview() {
   useEffect(() => {
     const fetchProperty = async () => {
       try {
-        const token = localStorage.getItem("accessToken");
-        if (!token) {
+        if (!user) {
           navigate("/login");
           return;
         }
 
-        const res = await axios.get(`${API_BASE}/api/property/${propertyId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-
+        const res = await api.get(`/api/property/${propertyId}`);
         setProperty(res.data.property);
       } catch (err) {
         console.error("❌ Error fetching cohost property:", err);
-        if (err.response?.status === 401) navigate("/login");
+        if (err.response?.status === 401) {
+          toast.error("Session expirée, veuillez vous reconnecter");
+          navigate("/login");
+        } else if (err.response?.status === 403) {
+          toast.error("Accès non autorisé");
+          navigate("/partner-welcome");
+        } else {
+          toast.error("Erreur lors du chargement de la propriété");
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchProperty();
-  }, [propertyId, navigate]);
+  }, [propertyId, navigate, user]);
 
   if (loading) return <p className="text-center mt-20">Chargement...</p>;
   if (!property) return <p className="text-center mt-20">Propriété introuvable.</p>;
@@ -99,27 +101,49 @@ export default function CoHostPropertyPreview() {
       return;
     }
 
+    if (user.role !== 'partner') {
+      toast.error("Seuls les partenaires peuvent demander un co-hébergement");
+      return;
+    }
+
     if (requestSent) {
       toast("Demande déjà envoyée", { icon: "ℹ️" });
       return;
     }
 
     try {
-      const token = localStorage.getItem("accessToken");
-      const res = await axios.post(
-        `${API_BASE}/api/partner/request/${propertyId}`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      console.log("🚀 Sending co-host request for property:", propertyId);
+      
+      const res = await api.post(`/api/partner/request/${propertyId}`, {});
+
+      console.log("✅ Co-host request response:", res.data);
 
       if (res.data.success) {
         setRequestSent(true);
         toast.success("Demande envoyée avec succès ! L'e-mail a été envoyé au propriétaire.");
+      } else {
+        throw new Error(res.data.message || "Réponse inattendue du serveur");
       }
     } catch (err) {
       console.error("❌ Error sending cohost request:", err);
-      const msg = err.response?.data?.message || "Erreur lors de l'envoi de la demande";
-      toast.error(msg);
+      
+      // Handle different error cases
+      if (err.response?.status === 401) {
+        toast.error("Session expirée, veuillez vous reconnecter");
+        navigate("/login");
+      } else if (err.response?.status === 403) {
+        toast.error("Accès non autorisé - Vous devez être partenaire");
+        navigate("/partner-welcome");
+      } else if (err.response?.status === 400) {
+        const msg = err.response.data.message || "Demande invalide";
+        toast.error(msg);
+      } else if (err.response?.status === 404) {
+        toast.error("Propriété introuvable");
+        navigate("/explore");
+      } else {
+        const msg = err.response?.data?.message || "Erreur lors de l'envoi de la demande";
+        toast.error(msg);
+      }
     }
   };
 
