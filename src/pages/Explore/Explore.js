@@ -175,22 +175,6 @@ export default function Explore() {
 
   return (
     <div className="px-4 md:px-20 pt-1 pb-28">
-      {/* Temporary logout button for debugging */}
-      {isAuthenticated && (
-        <div className="fixed top-4 right-4 z-50">
-          <button
-            onClick={() => {
-              console.log('🚪 Emergency logout triggered');
-              logout();
-              window.location.reload();
-            }}
-            className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
-            title="Emergency logout - clears all auth data"
-          >
-            🚪 Emergency Logout
-          </button>
-        </div>
-      )}
       
       <SectionTitle title={getTitle()} />
       
