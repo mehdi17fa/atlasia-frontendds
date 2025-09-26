@@ -93,10 +93,15 @@ const S3Image = ({
   // Don't render anything if no source is provided
   if (!currentSrc && !fallbackSrc) {
     return (
-      <div className={`bg-gray-100 flex items-center justify-center ${className} ${errorClassName}`}>
-        <svg className="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
+      <div className={`bg-gradient-to-br from-gray-100 to-gray-200 flex flex-col items-center justify-center ${className} ${errorClassName}`}>
+        <div className="text-center">
+          <svg className="h-8 w-8 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.5 9.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 15l-3.5-3.5a2 2 0 00-2.828 0l-5.672 5.672" />
+          </svg>
+          <p className="text-xs text-gray-500 font-medium">Photo bientôt disponible</p>
+        </div>
       </div>
     );
   }
@@ -115,12 +120,14 @@ const S3Image = ({
 
       {/* Error state */}
       {error && (
-        <div className={`bg-gray-100 flex items-center justify-center ${className} ${errorClassName}`}>
-          <div className="text-center text-gray-500">
-            <svg className="h-6 w-6 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
+        <div className={`bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col items-center justify-center ${className} ${errorClassName}`}>
+          <div className="text-center">
+            <svg className="h-8 w-8 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.5 9.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 15l-3.5-3.5a2 2 0 00-2.828 0l-5.672 5.672" />
             </svg>
-            <p className="text-xs">Failed to load</p>
+            <p className="text-xs text-gray-500 font-medium">Image non disponible</p>
           </div>
         </div>
       )}
