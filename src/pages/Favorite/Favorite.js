@@ -7,7 +7,10 @@ import { FaHeart, FaMapMarkerAlt, FaCalendarAlt, FaUsers, FaArrowLeft } from 're
 import S3Image from '../../components/S3Image';
 import axios from 'axios';
 
-const API_BASE_URL = `${process.env.REACT_APP_API_URL}/api`;
+const API_BASE_URL = process.env.REACT_APP_API_URL ? `${process.env.REACT_APP_API_URL}/api` : `http://localhost:4000/api`;
+
+// API Configuration
+console.log('🔗 API_BASE_URL:', API_BASE_URL);
 
 export default function Favorites() {
   const { user, token } = useContext(AuthContext);
@@ -37,6 +40,27 @@ export default function Favorites() {
       console.log('✅ Favorites response:', response.data);
       console.log('📊 Favorites count:', response.data.favorites?.length || 0);
       const favoritesData = response.data.favorites || [];
+      
+      // Debug: Log sample favorite data
+      if (favoritesData.length > 0) {
+        console.log('🔍 Sample favorite:', favoritesData[0]);
+        console.log('🔍 Sample item:', favoritesData[0]?.item);
+        console.log('🔍 Sample item price:', favoritesData[0]?.item?.price);
+        console.log('🔍 Sample item title:', favoritesData[0]?.item?.title);
+        
+        // Log all favorites data structure
+        favoritesData.forEach((fav, index) => {
+          console.log(`📝 Favorite ${index}:`, {
+            id: fav._id,
+            itemType: fav.itemType,
+            itemId: fav.item?._id,
+            itemTitle: fav.item?.title || fav.item?.name,
+            itemPrice: fav.item?.price || fav.item?.totalPrice,
+            fullItem: fav.item
+          });
+        });
+      }
+      
       setFavorites(favoritesData);
       
       // Fetch real-time prices for each favorite
@@ -57,8 +81,12 @@ export default function Favorites() {
           // Fetch property price using public endpoint
           const response = await axios.get(`${API_BASE_URL}/property/public/${favorite.item._id}`);
           console.log('🔍 Property response:', response.data);
-          const price = typeof response.data.price === 'number' ? response.data.price : 
-                       typeof response.data.price === 'object' ? response.data.price?.value || response.data.price?.amount || 0 : 0;
+          
+          // The response structure is { property: { price: ... } }
+          const propertyData = response.data.property || response.data;
+          const price = typeof propertyData.price === 'number' ? propertyData.price : 
+                       typeof propertyData.price === 'object' ? propertyData.price?.value || propertyData.price?.amount || 0 : 0;
+          
           return {
             id: favorite.item._id,
             type: 'property',
@@ -69,9 +97,12 @@ export default function Favorites() {
           // Fetch package price using public endpoint
           const response = await axios.get(`${API_BASE_URL}/packages/${favorite.item._id}`);
           console.log('🔍 Package response:', response.data);
-          const totalPrice = response.data.package?.totalPrice || response.data.totalPrice;
+          
+          const packageData = response.data.package || response.data;
+          const totalPrice = packageData?.totalPrice;
           const price = typeof totalPrice === 'number' ? totalPrice : 
                        typeof totalPrice === 'object' ? totalPrice?.value || totalPrice?.amount || 0 : 0;
+          
           return {
             id: favorite.item._id,
             type: 'package',
@@ -81,6 +112,7 @@ export default function Favorites() {
         }
       } catch (err) {
         console.error(`❌ Error fetching price for ${favorite.itemType} ${favorite.item._id}:`, err);
+        console.error('❌ Error details:', err.response?.status, err.response?.data);
         return {
           id: favorite.item._id,
           type: favorite.itemType,
@@ -132,10 +164,34 @@ export default function Favorites() {
 
   const PropertyCard = ({ item, favoriteId }) => {
     const realTimePrice = priceData[item._id];
-    const rawPrice = realTimePrice?.price || item.price;
-    const displayPrice = typeof rawPrice === 'number' ? rawPrice : 
-                       typeof rawPrice === 'object' ? rawPrice?.value || rawPrice?.amount || 0 : 0;
-    const isRealTime = !!realTimePrice?.price;
+    
+    // Try to get price from multiple sources
+    let rawPrice = realTimePrice?.price;
+    if (rawPrice === null || rawPrice === undefined) {
+      // Fallback to original item price
+      rawPrice = item.price;
+    }
+    
+    // Handle different price formats
+    let displayPrice = 0;
+    if (typeof rawPrice === 'number') {
+      displayPrice = rawPrice;
+    } else if (typeof rawPrice === 'object' && rawPrice !== null) {
+      displayPrice = rawPrice?.value || rawPrice?.amount || 0;
+    }
+    
+    const isRealTime = realTimePrice && (realTimePrice.price !== null && realTimePrice.price !== undefined);
+    
+    console.log('🏠 PropertyCard render:', {
+      itemId: item._id,
+      itemTitle: item.title,
+      originalPrice: item.price,
+      rawPrice: rawPrice,
+      realTimePrice: realTimePrice?.price,
+      displayPrice,
+      isRealTime,
+      fullItem: item
+    });
     
     return (
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
@@ -160,11 +216,13 @@ export default function Favorites() {
           </p>
           <div className="flex items-center justify-between">
             <p className="font-bold text-green-600">
-              {displayPrice && displayPrice > 0 ? `${displayPrice} MAD / nuit` : 'Price not available'}
+              {displayPrice >= 0 && (rawPrice !== null && rawPrice !== undefined) ? 
+                (displayPrice === 0 ? 'Prix à négocier' : `${displayPrice} MAD / nuit`) 
+                : 'Prix non disponible'}
             </p>
             {isRealTime && displayPrice && displayPrice > 0 && (
               <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                Live Price
+                Prix Live
               </span>
             )}
           </div>
@@ -175,10 +233,32 @@ export default function Favorites() {
 
   const PackageCard = ({ item, favoriteId }) => {
     const realTimePrice = priceData[item._id];
-    const rawPrice = realTimePrice?.price || item.totalPrice;
-    const displayPrice = typeof rawPrice === 'number' ? rawPrice : 
-                       typeof rawPrice === 'object' ? rawPrice?.value || rawPrice?.amount || 0 : 0;
-    const isRealTime = !!realTimePrice?.price;
+    
+    // Try to get price from multiple sources
+    let rawPrice = realTimePrice?.price;
+    if (rawPrice === null || rawPrice === undefined) {
+      // Fallback to original item totalPrice
+      rawPrice = item.totalPrice;
+    }
+    
+    // Handle different price formats
+    let displayPrice = 0;
+    if (typeof rawPrice === 'number') {
+      displayPrice = rawPrice;
+    } else if (typeof rawPrice === 'object' && rawPrice !== null) {
+      displayPrice = rawPrice?.value || rawPrice?.amount || 0;
+    }
+    
+    const isRealTime = realTimePrice && (realTimePrice.price !== null && realTimePrice.price !== undefined);
+    
+    console.log('📦 PackageCard render:', {
+      itemId: item._id,
+      itemName: item.name,
+      originalPrice: item.totalPrice,
+      realTimePrice: realTimePrice?.price,
+      displayPrice,
+      isRealTime
+    });
     
     return (
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
@@ -205,12 +285,14 @@ export default function Favorites() {
           
           <div className="flex justify-between items-center">
             <span className="font-bold text-green-600">
-              {displayPrice && displayPrice > 0 ? `${displayPrice} MAD` : 'Price not available'}
+              {displayPrice >= 0 && (rawPrice !== null && rawPrice !== undefined) ? 
+                (displayPrice === 0 ? 'Prix à négocier' : `${displayPrice} MAD`) 
+                : 'Prix non disponible'}
             </span>
             <div className="flex items-center space-x-2">
               {isRealTime && displayPrice && displayPrice > 0 && (
                 <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                  Live Price
+                  Prix Live
                 </span>
               )}
               <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
@@ -399,53 +481,55 @@ export default function Favorites() {
           <p className="text-gray-600">Vos propriétés et packages favoris</p>
         </div>
       
-      {/* Header with refresh button */}
-      <div className="flex justify-between items-center mt-6 mb-6">
-        {/* Tabs */}
-        <div className="flex space-x-4">
-        <button
-          onClick={() => setActiveTab('all')}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            activeTab === 'all'
-              ? 'bg-green-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
-        >
-          Tout ({favorites.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('property')}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            activeTab === 'property'
-              ? 'bg-green-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
-        >
-          Logements ({favorites.filter(f => f.itemType === 'property').length})
-        </button>
-        <button
-          onClick={() => setActiveTab('package')}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            activeTab === 'package'
-              ? 'bg-green-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
-        >
-          Packages ({favorites.filter(f => f.itemType === 'package').length})
-        </button>
+      {/* Header with filter buttons */}
+      <div className="flex flex-col space-y-4 mt-6 mb-6">
+        {/* Tabs in one row */}
+        <div className="flex justify-center space-x-2 overflow-x-auto">
+          <button
+            onClick={() => setActiveTab('all')}
+            className={`px-3 py-2 rounded-lg font-medium transition-colors text-sm whitespace-nowrap ${
+              activeTab === 'all'
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            Tout ({favorites.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('property')}
+            className={`px-3 py-2 rounded-lg font-medium transition-colors text-sm whitespace-nowrap ${
+              activeTab === 'property'
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            Logements ({favorites.filter(f => f.itemType === 'property').length})
+          </button>
+          <button
+            onClick={() => setActiveTab('package')}
+            className={`px-3 py-2 rounded-lg font-medium transition-colors text-sm whitespace-nowrap ${
+              activeTab === 'package'
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            Packages ({favorites.filter(f => f.itemType === 'package').length})
+          </button>
         </div>
         
         {/* Refresh Prices Button */}
-        <button
-          onClick={() => fetchRealTimePrices(favorites)}
-          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
-          disabled={loading}
-        >
-          <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          <span>{loading ? 'Refreshing...' : 'Refresh Prices'}</span>
-        </button>
+        <div className="flex justify-center">
+          <button
+            onClick={() => fetchRealTimePrices(favorites)}
+            className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+            disabled={loading}
+          >
+            <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>{loading ? 'Actualisation...' : 'Actualiser Prix'}</span>
+          </button>
+        </div>
       </div>
 
       {/* Favorites List */}
