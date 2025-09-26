@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { AuthContext } from '../../context/AuthContext';
 import { tokenStorage } from '../../utils/tokenStorage';
@@ -10,6 +10,7 @@ export default function LoginScreen({onClose}) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useContext(AuthContext); // get login function
 
   const validateEmail = (email) =>
@@ -64,10 +65,19 @@ export default function LoginScreen({onClose}) {
           console.log("🔍 Stored tokens after 500ms:", delayedStorageStatus);
         }, 500);
     
-        // Navigate based on role
-        if (response.data.user.role === 'owner') navigate('/owner-welcome');
-        else if (response.data.user.role === 'partner') navigate('/partner-welcome');
-        else navigate('/');
+        // Navigate based on role and return URL
+        const returnUrl = new URLSearchParams(window.location.search).get('returnUrl');
+        const fromLocation = location.state?.from?.pathname;
+        const targetUrl = returnUrl || fromLocation;
+        
+        if (response.data.user.role === 'owner') {
+          navigate(targetUrl || '/owner-welcome');
+        } else if (response.data.user.role === 'partner') {
+          navigate(targetUrl || '/partner-welcome');
+        } else {
+          // For tourists and other roles, go to target URL or profile
+          navigate(targetUrl || '/profile');
+        }
         
         // Only call onClose if it's a function
         if (typeof onClose === 'function') {

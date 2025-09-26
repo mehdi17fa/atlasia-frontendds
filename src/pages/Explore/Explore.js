@@ -1,5 +1,5 @@
 // src/pages/Explore/Explore.js
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { api } from "../../api";
 import ListingCardGrid from "../../components/ListingCard/ListingCardGrid";
 import SectionTitle from "../../components/shared/SectionTitle";
@@ -7,6 +7,7 @@ import SearchBar from "../../components/explore/SearchBar";
 import InteractiveMap from "../../components/InteractiveMap";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
+import { AuthContext } from "../../context/AuthContext";
 
 export default function Explore() {
   const [properties, setProperties] = useState([]);
@@ -16,6 +17,7 @@ export default function Explore() {
   const [selectedProperty, setSelectedProperty] = useState(null);
   const navigate = useNavigate();
   const { user, isLoading: authLoading, isAuthenticated } = useAuth();
+  const { logout } = useContext(AuthContext);
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -173,6 +175,23 @@ export default function Explore() {
 
   return (
     <div className="px-4 md:px-20 pt-1 pb-28">
+      {/* Temporary logout button for debugging */}
+      {isAuthenticated && (
+        <div className="fixed top-4 right-4 z-50">
+          <button
+            onClick={() => {
+              console.log('🚪 Emergency logout triggered');
+              logout();
+              window.location.reload();
+            }}
+            className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
+            title="Emergency logout - clears all auth data"
+          >
+            🚪 Emergency Logout
+          </button>
+        </div>
+      )}
+      
       <SectionTitle title={getTitle()} />
       
       {/* Show role-specific info for partners */}

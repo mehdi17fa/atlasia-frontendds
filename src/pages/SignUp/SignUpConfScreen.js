@@ -9,6 +9,13 @@ export default function SignupScreenConf() {
   const location = useLocation();
   const { login } = useContext(AuthContext);
   const email = location.state?.email || localStorage.getItem('signupEmail') || '';
+  
+  // Debug logging for email retrieval
+  console.log('Email sources:', {
+    locationState: location.state?.email,
+    localStorage: localStorage.getItem('signupEmail'),
+    finalEmail: email
+  });
 
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState(false);
@@ -27,6 +34,19 @@ export default function SignupScreenConf() {
 
   const handleVerify = async () => {
     try {
+      // Debug logging
+      console.log('Verification attempt:', { email, code: code.join(''), allDigits: code });
+      
+      if (!email) {
+        alert('Email not found. Please try signing up again.');
+        return;
+      }
+      
+      if (code.join('').length !== 6) {
+        alert('Please enter all 6 digits.');
+        return;
+      }
+
       const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/verify`, {
         email,
         code: code.join(''),
@@ -62,8 +82,31 @@ export default function SignupScreenConf() {
 
   const handleChange = (text, index) => {
     const updated = [...code];
+    
+    // Check if the pasted text is 6 digits (full code)
+    if (text.length === 6 && /^\d{6}$/.test(text)) {
+      // Split the pasted code into individual digits
+      const digits = text.split('');
+      setCode(digits);
+      // Auto-verify when pasting complete code
+      setTimeout(() => handleVerify(), 300);
+      return;
+    }
+    
+    // Handle single character input
     updated[index] = text.slice(-1);
     setCode(updated);
+    
+    // Check if all digits are filled and this is the last input
+    if (text && index === 5) {
+      const allFilled = updated.every(digit => digit !== '');
+      if (allFilled) {
+        // Auto-verify when last digit is entered - use longer timeout to ensure state is updated
+        setTimeout(() => handleVerify(), 300);
+        return;
+      }
+    }
+    
     if (text && index < 5) {
       const nextInput = document.getElementById(`code-input-${index + 1}`);
       if (nextInput) nextInput.focus();
@@ -74,6 +117,44 @@ export default function SignupScreenConf() {
     if (e.key === 'Backspace' && !code[index] && index > 0) {
       const prevInput = document.getElementById(`code-input-${index - 1}`);
       if (prevInput) prevInput.focus();
+    }
+  };
+
+  const handlePaste = (e, index) => {
+    e.preventDefault();
+    const pastedText = e.clipboardData.getData('text');
+    
+    // Check if pasted text is 6 digits
+    if (pastedText.length === 6 && /^\d{6}$/.test(pastedText)) {
+      const digits = pastedText.split('');
+      setCode(digits);
+      // Auto-verify when pasting complete code
+      setTimeout(() => handleVerify(), 300);
+    } else {
+      // Handle partial paste or invalid content
+      const cleanText = pastedText.replace(/\D/g, ''); // Remove non-digits
+      if (cleanText.length > 0) {
+        const updated = [...code];
+        const startIndex = index;
+        for (let i = 0; i < cleanText.length && startIndex + i < 6; i++) {
+          updated[startIndex + i] = cleanText[i];
+        }
+        setCode(updated);
+        
+        // Check if all digits are filled after partial paste
+        const allFilled = updated.every(digit => digit !== '');
+        if (allFilled) {
+          // Auto-verify when all digits are filled
+          setTimeout(() => handleVerify(), 300);
+          return;
+        }
+        
+        // Focus on the next empty input or the last filled input
+        const nextEmptyIndex = updated.findIndex((digit, idx) => idx > startIndex && digit === '');
+        const targetIndex = nextEmptyIndex !== -1 ? nextEmptyIndex : Math.min(startIndex + cleanText.length - 1, 5);
+        const targetInput = document.getElementById(`code-input-${targetIndex}`);
+        if (targetInput) targetInput.focus();
+      }
     }
   };
 
@@ -106,7 +187,7 @@ export default function SignupScreenConf() {
               A code was sent to your email address. Please enter it below to verify your account.
             </p>
 
-            <div className="flex justify-center gap-3 mb-6">
+            <div className="flex justify-between items-center px-4 mb-6">
               {code.map((digit, index) => (
                 <input
                   key={index}
@@ -114,11 +195,12 @@ export default function SignupScreenConf() {
                   value={digit}
                   onChange={(e) => handleChange(e.target.value, index)}
                   onKeyDown={(e) => handleKeyDown(e, index)}
+                  onPaste={(e) => handlePaste(e, index)}
                   type="text"
                   inputMode="numeric"
                   pattern="[0-9]*"
                   maxLength={1}
-                  className="w-12 h-12 border-2 border-green-800 rounded text-center text-lg text-black focus:outline-none focus:border-green-600 transition-colors"
+                  className="w-12 h-12 border-2 border-green-800 rounded text-center text-lg text-black focus:outline-none focus:border-green-600 transition-colors mx-1"
                 />
               ))}
             </div>

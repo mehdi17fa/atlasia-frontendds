@@ -39,7 +39,8 @@ const ProtectedRoute = ({ children, requireAuth = true, allowedRoles = null }) =
       } else if (user.role === 'partner') {
         return <Navigate to="/partner-welcome" replace />;
       } else {
-        return <Navigate to="/" replace />;
+        // For tourists and other roles, redirect to profile instead of homepage
+        return <Navigate to="/profile" replace />;
       }
     }
 
@@ -54,7 +55,8 @@ const ProtectedRoute = ({ children, requireAuth = true, allowedRoles = null }) =
     } else if (user.role === 'partner') {
       return <Navigate to="/partner-welcome" replace />;
     } else {
-      return <Navigate to="/" replace />;
+      // For tourists and other roles, redirect to profile instead of homepage
+      return <Navigate to="/profile" replace />;
     }
   }
 

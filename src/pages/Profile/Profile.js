@@ -70,7 +70,7 @@ export default function Profile() {
   const [showIdentification, setShowIdentification] = useState(false);
   const navigate = useNavigate();
   
-  const { user, logout, setUser } = useContext(AuthContext); // ← get user and logout
+  const { user, logout, setUser, isLoading } = useContext(AuthContext); // ← get user and logout
   
   // Dynamic profile data fetching - only if user exists and has valid token
   const shouldFetchProfile = user && user._id && localStorage.getItem('atlasia_access_token');
@@ -133,8 +133,11 @@ export default function Profile() {
   // Redirect to login if user is not authenticated
   React.useEffect(() => {
     const token = localStorage.getItem('atlasia_access_token');
+    console.log('🔍 Profile auth check:', { hasUser: !!user, hasToken: !!token, userRole: user?.role });
+    
     if (!user || !token) {
-      navigate('/login');
+      console.log('🔍 Redirecting to login - no user or token');
+      navigate('/login?returnUrl=/profile');
     }
   }, [user, navigate]);
   
@@ -154,7 +157,31 @@ export default function Profile() {
     { label: 'Séjour de travaille', path: '/work-stays' },
   ];
 
+  // Debug: Log current state
+  console.log('🔍 Profile render state:', { 
+    hasUser: !!user, 
+    userRole: user?.role, 
+    userId: user?._id,
+    profileLoading,
+    profileError,
+    displayUser: displayUser?._id
+  });
+
+  // Show loading state while auth is being determined
+  if (isLoading || (profileLoading && !user)) {
+    console.log('🔍 Profile: Loading auth state', { isLoading, profileLoading, hasUser: !!user });
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!user) {
+    console.log('🔍 Profile: No user, showing login prompt');
     return (
       <div className="relative">
         <div className="text-center mt-20 text-gray-500">
