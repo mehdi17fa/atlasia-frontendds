@@ -105,7 +105,7 @@ export default function LoginScreen({onClose}) {
       <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto relative">
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-2xl hover:opacity-70 absolute top-4 right-4 text-secondary-600 transition-opacity"
           >
             ✕
