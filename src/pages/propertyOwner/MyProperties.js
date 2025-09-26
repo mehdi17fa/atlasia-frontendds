@@ -268,7 +268,7 @@ export default function MyProperties() {
       {/* Add Property Button */}
       <div className="fixed bottom-20 right-4 z-40">
         <button
-          onClick={() => navigate('/add-property')}
+          onClick={() => navigate('/create-property')}
           className="bg-green-600 text-white p-4 rounded-full shadow-lg hover:bg-green-700 transition-colors"
           title="Ajouter une propriété"
         >

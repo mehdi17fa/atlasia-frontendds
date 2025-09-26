@@ -73,7 +73,7 @@ export default function Profile() {
   const { user, logout, setUser } = useContext(AuthContext); // ← get user and logout
   
   // Dynamic profile data fetching - only if user exists and has valid token
-  const shouldFetchProfile = user && user._id && localStorage.getItem('accessToken');
+  const shouldFetchProfile = user && user._id && localStorage.getItem('atlasia_access_token');
   const { 
     profileData, 
     loading: profileLoading, 
@@ -132,7 +132,7 @@ export default function Profile() {
 
   // Redirect to login if user is not authenticated
   React.useEffect(() => {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem('atlasia_access_token');
     if (!user || !token) {
       navigate('/login');
     }

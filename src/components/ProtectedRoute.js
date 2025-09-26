@@ -10,6 +10,7 @@ import { AuthContext } from '../context/AuthContext';
 const ProtectedRoute = ({ children, requireAuth = true, allowedRoles = null }) => {
   const { user, isLoading } = useContext(AuthContext);
   const location = useLocation();
+  
 
   // Show loading while auth state is being determined
   if (isLoading) {
@@ -46,7 +47,7 @@ const ProtectedRoute = ({ children, requireAuth = true, allowedRoles = null }) =
   }
 
   // If route should be accessible only when NOT authenticated (like login/signup)
-  if (user) {
+  if (requireAuth === false && user) {
     // Redirect authenticated users to their appropriate dashboard
     if (user.role === 'owner') {
       return <Navigate to="/owner-welcome" replace />;

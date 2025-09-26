@@ -99,12 +99,13 @@ export default function PropertyCreationSinglePage() {
     photos: [],
     title: '',
     description: '',
-    price: ''
+    price: '',
+    documents: {}
   });
 
   // Step navigation logic (following package creation pattern)
   const handleNext = () => {
-    if (currentStep < 7) {
+    if (currentStep < 9) {
       console.log('Previous step validation result:', validateStep(currentStep));
       if (!validateStep(currentStep)) {
         setError(getValidationErrorMessage(currentStep));
@@ -158,135 +159,157 @@ export default function PropertyCreationSinglePage() {
 
   // Enhanced upload handler with comprehensive error handling
   const handleFileUpload = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+    const files = Array.from(event.target.files);
+    if (files.length === 0) return;
     
     // Check if we have reached limit
-    if (formData.photos.length >= 4) {
-      setError('Maximum 4 photos autorisées.');
+    const currentPhotoCount = formData.photos.length;
+    const maxPhotos = 4;
+    
+    if (currentPhotoCount + files.length > maxPhotos) {
+      setError(`Maximum ${maxPhotos} photos autorisées. (${currentPhotoCount}/${maxPhotos} + ${files.length} fichiers sélectionnés)`);
+      event.target.value = '';
       return;
     }
     
-    console.log('📤 Processing file:', file.name, file.type, file.size);
+    console.log('📤 Processing files:', files.map(f => f.name));
     setError('');
     
     try {
       // Upload to S3 using enhanced service 
       const { uploadFileToS3 } = await import('../../utilities/s3Service');
-      console.log('🔄 Starting S3 upload...');
+      console.log('🔄 Starting S3 uploads...');
       
-      const result = await uploadFileToS3(file, 'photos');
-      
-      console.log('✅ Upload result received:', result);
-      console.log('🔍 Result type:', typeof result);
-      console.log('🔍 Result keys:', result ? Object.keys(result) : 'No keys');
-      
-      // Extract photo URL with multiple fallback methods
-      let photoUrl = null;
-      
-      if (result && typeof result === 'object') {
-        // Try standard format first
-        photoUrl = result.url || result.key || result.location;
-        console.log('📸 Standard format URL:', photoUrl);
+      const uploadPromises = files.map(async (file) => {
+        console.log('📤 Processing file:', file.name, file.type, file.size);
         
-        // Try alternative names
-        if (!photoUrl) {
-          photoUrl = result.fileUrl || result.downloadUrl || result.uploadUrl;
-          console.log('📸 Alternative format URL:', photoUrl);
-        }
-        
-        // Try any string in the object that looks like a URL
-        if (!photoUrl) {
-          const entries = Object.values(result);
-          for (const value of entries) {
-            if (typeof value === 'string' && value.length > 10 && value.includes('http')) {
-              photoUrl = value;
-              console.log('📸 Found URL in result object:', photoUrl);
-              break;
+        try {
+          const result = await uploadFileToS3(file, 'photos');
+          
+          console.log('✅ Upload result received for', file.name, ':', result);
+          
+          // Extract photo URL with multiple fallback methods
+          let photoUrl = null;
+          
+          if (result && typeof result === 'object') {
+            // Try standard format first
+            photoUrl = result.url || result.key || result.location;
+            console.log('📸 Standard format URL for', file.name, ':', photoUrl);
+            
+            // Try alternative names
+            if (!photoUrl) {
+              photoUrl = result.fileUrl || result.downloadUrl || result.uploadUrl;
+              console.log('📸 Alternative format URL for', file.name, ':', photoUrl);
+            }
+            
+            // Try any string in the object that looks like a URL
+            if (!photoUrl) {
+              const entries = Object.values(result);
+              for (const value of entries) {
+                if (typeof value === 'string' && value.length > 10 && value.includes('http')) {
+                  photoUrl = value;
+                  console.log('📸 Found URL in result object for', file.name, ':', photoUrl);
+                  break;
+                }
+              }
+            }
+          } else if (typeof result === 'string') {
+            photoUrl = result;
+            console.log('📸 Result is direct string URL for', file.name, ':', photoUrl);
+          }
+          
+          if (photoUrl && photoUrl.length > 10 && (photoUrl.includes('http') || photoUrl.includes('amazonaws'))) {
+            console.log('✅ Valid photo URL confirmed for', file.name, ':', photoUrl);
+            return photoUrl;
+          } else {
+            console.error('❌ Invalid photo URL extracted for', file.name, ':', result);
+            throw new Error(`URL invalide reçue du serveur pour ${file.name}: ${JSON.stringify(result, null, 2)}`);
+          }
+        } catch (fileError) {
+          console.error('❌ Upload error for file', file.name, ':', fileError);
+          
+          const errorMessage = fileError?.message || fileError?.toString() || 'Erreur inconnue';
+          
+          // Try to extract URL even from errors (backend inconsistency handling)
+          if (errorMessage.toLowerCase().includes('successfully') || errorMessage.toLowerCase().includes('uploaded')) {
+            console.log('⚠️ Backend marked successful upload as error for', file.name);
+            
+            // Try to extract URL from error response
+            let urlFromError = null;
+            
+            if (fileError.response?.data?.url || fileError.response?.data?.key) {
+              urlFromError = fileError.response.data.url || fileError.response.data.key;
+            } else {
+              // Search error message for URLs
+              const urlMatch = errorMessage.match(/https?:\/\/[^\s\n\)]+/i);
+              if (urlMatch) {
+                urlFromError = urlMatch[0];
+              }
+            }
+            
+            if (urlFromError) {
+              console.log('✅ Extracted URL from error response for', file.name, ':', urlFromError);
+              return urlFromError;
             }
           }
+          
+          throw fileError;
         }
-      } else if (typeof result === 'string') {
-        photoUrl = result;
-        console.log('📸 Result is direct string URL:', photoUrl);
-      }
+      });
       
-      // Validate URL exists and is usable
-      if (photoUrl && photoUrl.length > 10 && (photoUrl.includes('http') || photoUrl.includes('amazonaws'))) {
-        console.log('✅ Valid photo URL confirmed:', photoUrl);
-        
-        // Add to photos array
-        setFormData(prev => ({
-          ...prev,
-          photos: [...prev.photos, photoUrl]
-        }));
-        
-        console.log('✅ Photo added to form successfully!');
-        setError('');
-        
-        // Clear the input
-        event.target.value = '';
-        return;
-        
-      } else {
-        console.error('❌ Invalid photo URL extracted:', result);
-        setError(`URL invalide reçue du serveur: ${JSON.stringify(result, null, 2)}`);
-      }
+      // Wait for all uploads to complete
+      const photoUrls = await Promise.all(uploadPromises);
+      console.log('📸 All uploads completed:', photoUrls);
+      
+      // Add all URLs to photos array
+      setFormData(prev => ({
+        ...prev,
+        photos: [...prev.photos, ...photoUrls]
+      }));
+      
+      console.log('✅ All photos added to form successfully!', photoUrls.length, 'uploaded');
+      setError('');
       
     } catch (error) {
       console.error('❌ Upload error caught:', error);
-      console.log('🔍 Error type:', typeof error);
-      console.log('🔍 Error keys:', error ? Object.keys(error) : 'No keys');
-      
       const errorMessage = error?.message || error?.toString() || 'Erreur inconnue';
-      console.log('📝 Error message:', errorMessage);
-      
-      // Try to extract URL even from errors (backend inconsistency handling)
-      if (errorMessage.toLowerCase().includes('successfully') || errorMessage.toLowerCase().includes('uploaded')) {
-        console.log('⚠️ Backend marked successful upload as error');
-        
-        // Try to extract URL from error response
-        let urlFromError = null;
-        
-        if (error.response?.data?.url || error.response?.data?.key) {
-          urlFromError = error.response.data.url || error.response.data.key;
-        } else {
-          // Search error message for URLs
-          const urlMatch = errorMessage.match(/https?:\/\/[^\s\n\)]+/i);
-          if (urlMatch) {
-            urlFromError = urlMatch[0];
-          }
-        }
-        
-        if (urlFromError) {
-          console.log('✅ Extracted URL from error response:', urlFromError);
-          setFormData(prev => ({
-            ...prev,
-            photos: [...prev.photos, urlFromError]
-          }));
-          setError('');
-          event.target.value = '';
-          return;
-        }
-      }
-      
-      // Display user-friendly error
-      const displayError = errorMessage.includes('successfully') 
-        ? `Erreur technique lors de l'upload - l'image peut avoir été téléchargée. Vérifiez les photos.`
-        : `Erreur lors du téléchargement de ${file.name}: ${errorMessage}`;
-      setError(displayError);
+      setError(`Erreur lors du téléchargement: ${errorMessage}. Certaines photos peuvent avoir été uploadées.`);
     }
     
-    // Clear the input at the end
-    if (event.target) {
-      event.target.value = '';
-    }
+    // Clear the input
+    event.target.value = '';
   };
 
   const handleRemovePhoto = (index) => {
     setFormData(prev => ({
       ...prev,
       photos: prev.photos.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleDocumentUpload = (event, documentType) => {
+    const files = Array.from(event.target.files);
+    if (files.length === 0) return;
+
+    setFormData(prev => ({
+      ...prev,
+      documents: {
+        ...prev.documents,
+        [documentType]: files
+      }
+    }));
+    
+    // Clear the input
+    event.target.value = '';
+  };
+
+  const handleRemoveDocument = (documentType, index) => {
+    setFormData(prev => ({
+      ...prev,
+      documents: {
+        ...prev.documents,
+        [documentType]: prev.documents[documentType]?.filter((_, i) => i !== index) || []
+      }
     }));
   };
 
@@ -307,6 +330,8 @@ export default function PropertyCreationSinglePage() {
         return formData.title.trim() !== '' && formData.description.trim() !== '';
       case 7:
         return formData.price && parseFloat(formData.price) > 0;
+      case 8:
+        return Object.values(formData.documents).some(docs => docs && docs.length > 0); // Check if any documents exist
       default:
         return true;
     }
@@ -328,6 +353,8 @@ export default function PropertyCreationSinglePage() {
         return 'Veuillez saisir un titre et une description pour votre propriété';
       case 7:
         return 'Veuillez saisir un prix valide par nuit';
+      case 8:
+        return 'Veuillez télécharger au moins un document légal';
       default:
         return 'Étape invalide';
     }
@@ -386,6 +413,7 @@ export default function PropertyCreationSinglePage() {
     if (!validateStep(5)) validationErrors.push('Au moins une photo requise');
     if (!validateStep(6)) validationErrors.push('Titre et description requis');
     if (!validateStep(7)) validationErrors.push('Prix requis');
+    if (!validateStep(8)) validationErrors.push('Documents légaux requis');
 
     if (validationErrors.length > 0) {
       setError(`Veuillez compléter les étapes requises: ${validationErrors.join(', ')}`);
@@ -396,7 +424,11 @@ export default function PropertyCreationSinglePage() {
     setError('');
 
     try {
-      const payload = { ...formData, isDraft: false };
+      const payload = { 
+        ...formData, 
+        isDraft: false, // Ensure publish flag is explicit
+        status: 'published' // Explicit status setting
+      };
       console.log('🚀 Creating property for publish with payload:', payload);
       
       const response = await fetch(`${API_BASE}/api/property`, {
@@ -441,7 +473,9 @@ export default function PropertyCreationSinglePage() {
     'Équipements',
     'Photos',
     'Titre & Description',
-    'Prix'
+    'Prix',
+    'Documents',
+    'Confirmation'
   ];
 
   return (
@@ -470,7 +504,7 @@ export default function PropertyCreationSinglePage() {
                   </span>
                   <span className="text-xs mt-1 text-gray-600 font-medium text-center leading-tight sm:hidden">
                     {(() => {
-                      const frenchSteps = ['Localisation', 'Type', 'Infos', 'Équipements', 'Photos', 'Titre & Desc', 'Prix'];
+                      const frenchSteps = ['Localisation', 'Type', 'Infos', 'Équipements', 'Photos', 'Titre & Desc', 'Prix', 'Documents', 'Confirm'];
                       return frenchSteps[index] || step.split(' ')[0];
                     })()}
                   </span>
@@ -762,9 +796,9 @@ export default function PropertyCreationSinglePage() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
                       </div>
-                      <h4 className="text-lg font-medium text-gray-900 mb-2">Upload Photo</h4>
-                      <p className="text-sm text-gray-500 mb-4">Click to upload or drag and drop</p>
-                      <p className="text-xs text-gray-400">JPG, JPEG, PNG up to 5MB</p>
+                      <h4 className="text-lg font-medium text-gray-900 mb-2">Upload Photos</h4>
+                      <p className="text-sm text-gray-500 mb-4">Click to upload multiple photos or drag and drop</p>
+                      <p className="text-xs text-gray-400">JPG, JPEG, PNG up to 5MB each (max 4 photos)</p>
                     </div>
 
                     {/* Hidden file input */}
@@ -772,6 +806,7 @@ export default function PropertyCreationSinglePage() {
                       id="photo-upload-input"
                       type="file"
                       accept="image/jpeg,image/jpg,image/png"
+                      multiple
                       onChange={handleFileUpload}
                       className="hidden"
                     />
@@ -837,6 +872,189 @@ export default function PropertyCreationSinglePage() {
               </div>
             </div>
           )}
+
+          {/* Step 8: Documents */}
+          {currentStep === 8 && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Documents Légaux</h2>
+                <p className="text-gray-600">Téléchargez vos documents légaux pour vérification</p>
+              </div>
+              
+              <div className="space-y-4">
+                {[
+                  { id: 'property_deed', name: 'Acte de propriété', description: 'Acte notarié ou titre de propriété attestant votre droit de propriété sur le bien' },
+                  { id: 'identity', name: 'Pièce d\'identité', description: 'Carte nationale d\'identité, passeport ou permis de conduire en cours de validité' },
+                  { id: 'tax_certificate', name: 'Certificat fiscal foncier', description: 'Certificat de non opposition ou de paiement de la taxe foncière daté de moins de 3 mois' },
+                  { id: 'municipal_certificate', name: 'Attestation administrative', description: 'Attestation de la municipalité ou de l\'administration locale prouvant que le bien est autorisé à la location' }
+                ].map((docType) => (
+                  <div key={docType.id} className="border-2 border-dashed border-gray-300 rounded-xl p-6 hover:border-green-500 transition-colors">
+                    <div className="text-center">
+                      <div className="text-lg font-semibold text-gray-900 mb-2">{docType.name}</div>
+                      <div className="text-sm text-gray-600 mb-4">{docType.description}</div>
+                      
+                      <div className="relative">
+                        <input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                          multiple
+                          onChange={(e) => handleDocumentUpload(e, docType.id)}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        />
+                        <button 
+                          type="button"
+                          className="w-full px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors"
+                        >
+                          {formData.documents[docType.id]?.length > 0 
+                            ? `${formData.documents[docType.id].length} fichier(s) sélectionné(s)`
+                            : 'Télécharger des fichiers'
+                          }
+                        </button>
+                      </div>
+                      
+                      {formData.documents[docType.id]?.length > 0 && (
+                        <div className="mt-3 space-y-2">
+                          {formData.documents[docType.id].map((file, index) => (
+                            <div key={index} className="flex items-center justify-between bg-green-50 px-3 py-2 rounded-lg">
+                              <span className="text-sm text-green-700 truncate">{file.name}</span>
+                              <button
+                                onClick={() => handleRemoveDocument(docType.id, index)}
+                                className="ml-2 text-red-500 hover:text-red-700"
+                              >
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                </svg>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Step 9: Confirmation */}
+          {currentStep === 9 && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Confirmation</h2>
+                <p className="text-gray-600">Vérifiez les informations de votre propriété avant publication</p>
+              </div>
+
+              {/* Confirmation Details */}
+              <div className="bg-white rounded-2xl shadow-lg p-6 space-y-6">
+                {/* Location */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">📍 Localisation</h3>
+                  <p className="text-gray-700">{formData.localisation.address}</p>
+                  <p className="text-gray-600">{formData.localisation.city}, {formData.localisation.postalCode}</p>
+                </div>
+
+                {/* Property Type & Info */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">🏠 Type de propriété</h3>
+                  <p className="text-gray-700 mb-2">{formData.propertyType}</p>
+                  <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                    <div>👥 Invités: {formData.info.guests}</div>
+                    <div>🛏️ Chambres: {formData.info.bedrooms}</div>
+                    <div>🛏️ Lits: {formData.info.beds}</div>
+                    <div>🚿 Salles de bain: {formData.info.bathrooms}</div>
+                  </div>
+                </div>
+
+                {/* Title & Description */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">📝 Titre & Description</h3>
+                  <p className="text-gray-800 font-medium mb-2">{formData.title}</p>
+                  <p className="text-gray-600">{formData.description}</p>
+                </div>
+
+                {/* Price */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">💰 Prix</h3>
+                  <p className="text-green-600 font-semibold text-lg">{formData.price} MAD/nuit</p>
+                </div>
+
+                {/* Photos section preview */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">📸 Photos</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    {formData.photos.length > 0 ? (
+                      formData.photos.slice(0, 4).map((photo, index) => (
+                        <div key={index} className="aspect-square rounded-lg overflow-hidden bg-gray-100">
+                          {photo.includes('https') ? (
+                            <img
+                              className="w-full h-full object-cover"
+                              src={photo}
+                              alt="Property preview"
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center h-full bg-gray-200">
+                              📷
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="col-span-2 sm:col-span-4 text-center py-4 text-gray-500">
+                        No photos uploaded
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Documents section preview */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">📄 Documents</h3>
+                  {Object.keys(formData.documents).length > 0 ? (
+                    <div className="grid grid-cols-2 gap-4">
+                      {Object.entries(formData.documents).map(([docType, files]) => 
+                        files && files.length > 0 ? (
+                          <div key={docType} className="flex items-center justify-between bg-green-50 p-3 rounded-lg">
+                            <span className="text-sm text-green-700">
+                              {docType === 'property_deed' ? 'Acte de propriété' :
+                               docType === 'identity' ? 'Pièce d\'identité' :
+                               docType === 'tax_certificate' ? 'Certificat fiscal foncier' :
+                               docType === 'municipal_certificate' ? 'Attestation admin' : docType}
+                            </span>
+                            <span className="text-xs text-green-600">{files.length} fichier(s)</span>
+                          </div>
+                        ) : null
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500">Aucun document uploadé</p>
+                  )}
+                </div>
+
+                {/* Equipment section preview */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">⚙️ Équipements</h3>
+                  {formData.equipments && formData.equipments.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {formData.equipments.map((equip) => (
+                        <span key={equip} className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
+                          {equip === 'wifi' ? 'Wi-Fi' :
+                           equip === 'tv' ? 'TV' :
+                           equip === 'washer' ? 'Machine à laver' :
+                           equip === 'ac' ? 'Climatisé' :
+                           equip === 'heater' ? 'Chauffage' :
+                           equip === 'kitchen' ? 'Cuisine' :
+                           equip === 'parking' ? 'Parking' :
+                           equip === 'pool' ? 'Piscine' : equip}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500">Aucun équipement sélectionné</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Navigation */}
@@ -857,7 +1075,7 @@ export default function PropertyCreationSinglePage() {
 
             {/* Right Side - Action Buttons */}
             <div className="flex space-x-3 w-full sm:w-auto">
-              {currentStep < 8 ? (
+              {currentStep < 9 ? (
                 <>
                   <button
                     onClick={handleSaveDraft}

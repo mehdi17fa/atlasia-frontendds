@@ -47,7 +47,7 @@ export default function ListPropertyOwner() {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold mt-4">Mes Propriétés</h2>
         <button 
-        onClick={() => navigate("/add-property")}
+        onClick={() => navigate("/create-property")}
         className="text-green-700 text-3xl leading-none">+</button>
       </div>
 
