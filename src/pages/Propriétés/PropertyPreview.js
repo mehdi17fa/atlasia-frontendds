@@ -26,7 +26,7 @@ export default function PropertyPreview() {
   const [packs, setPacks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { user } = useContext(AuthContext);
+  const { user, token } = useContext(AuthContext);
 
   // Simple function to extract property ID
   const getPropertyId = () => {
@@ -309,6 +309,7 @@ export default function PropertyPreview() {
       mapImage={property.localisation}
       reviews={property.reviews || []}
       user={user}
+      token={token}
     />
   );
 }

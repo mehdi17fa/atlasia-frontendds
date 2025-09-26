@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useCallback } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 
@@ -12,7 +12,7 @@ const useReviews = () => {
   const API_BASE_URL = process.env.REACT_APP_API_URL;
 
   // Get reviews for a property
-  const getPropertyReviews = async (propertyId, page = 1, limit = 10, sort = 'newest') => {
+  const getPropertyReviews = useCallback(async (propertyId, page = 1, limit = 10, sort = 'newest') => {
     try {
       setLoading(true);
       setError(null);
@@ -32,10 +32,10 @@ const useReviews = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE_URL]);
 
   // Get user's reviewable bookings
-  const getReviewableBookings = async () => {
+  const getReviewableBookings = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -76,10 +76,10 @@ const useReviews = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE_URL, token]);
 
   // Submit a new review
-  const submitReview = async (reviewData) => {
+  const submitReview = useCallback(async (reviewData) => {
     try {
       setLoading(true);
       setError(null);
@@ -110,10 +110,10 @@ const useReviews = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE_URL, token, getReviewableBookings]);
 
   // Update an existing review
-  const updateReview = async (reviewId, reviewData) => {
+  const updateReview = useCallback(async (reviewId, reviewData) => {
     try {
       setLoading(true);
       setError(null);
@@ -140,10 +140,10 @@ const useReviews = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE_URL, token]);
 
   // Delete a review
-  const deleteReview = async (reviewId) => {
+  const deleteReview = useCallback(async (reviewId) => {
     try {
       setLoading(true);
       setError(null);
@@ -173,19 +173,19 @@ const useReviews = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE_URL, token, getReviewableBookings]);
 
   // Check if user can review a booking
-  const canReviewBooking = (bookingId) => {
+  const canReviewBooking = useCallback((bookingId) => {
     return reviewableBookings.some(booking => booking._id === bookingId);
-  };
+  }, [reviewableBookings]);
 
   // Get review for a specific booking
-  const getReviewForBooking = (bookingId) => {
+  const getReviewForBooking = useCallback((bookingId) => {
     // This would need to be implemented in the backend
     // For now, we'll assume we don't have this endpoint
     return null;
-  };
+  }, []);
 
   // Load reviewable bookings on mount if user is authenticated
   useEffect(() => {
