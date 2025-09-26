@@ -421,10 +421,10 @@ export default function WelcomeOwner() {
         <div className="flex gap-2 mb-6">
           <button 
             className="bg-green-700 text-white px-4 py-2 rounded-full font-semibold text-sm shadow hover:bg-green-800 transition flex items-center" 
-            onClick={() => navigate('/add-property')}
+            onClick={() => navigate('/create-property')}
           >
             <PlusIcon className="w-4 h-4 mr-2" />
-            Ajouter propriété
+            Créer propriété
           </button>
           <button 
             className="border border-green-800 text-green-700 px-4 py-2 rounded-full font-semibold text-sm bg-white hover:bg-green-50 transition flex items-center" 
@@ -469,13 +469,15 @@ export default function WelcomeOwner() {
               <p className="text-gray-500 text-sm mb-4">
                 Vous n'avez pas encore ajouté de propriétés. Commencez par ajouter votre première propriété.
               </p>
-              <button 
-                onClick={() => navigate('/add-property')}
-                className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center mx-auto"
-              >
-                <PlusIcon className="w-4 h-4 mr-2" />
-                Ajouter ma première propriété
-              </button>
+              <div className="flex gap-2 justify-center">
+                <button 
+                  onClick={() => navigate('/create-property')}
+                  className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center"
+                >
+                  <PlusIcon className="w-4 h-4 mr-2" />
+                  Créer propriété
+                </button>
+              </div>
             </div>
           ) : (
             <>

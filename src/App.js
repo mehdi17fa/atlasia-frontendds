@@ -40,17 +40,7 @@ import PropertySearchFlow from './pages/UserSearch/SearchFlow';
 
 // Property Owner
 import WelcomeOwner from './pages/propertyOwner/WelcomeOwner';
-import AddProperty from './pages/propertyOwner/addProperty';
-import PropertyTypeStep from './pages/propertyOwner/PropertyTypeStep';
-import PropertyInfoStep from './pages/propertyOwner/PropertyInfoStep';
-import PropertyEquipmentsStep from './pages/propertyOwner/PropertyEquipmentsStep';
-import PropertyPhotosStep from './pages/propertyOwner/PropertyPhotosStep';
-import PropertyTitleStep from './pages/propertyOwner/PropertyTitleStep';
-import PropertyDescriptionStep from './pages/propertyOwner/PropertyDescriptionStep';
-import PropertyPriceStep from './pages/propertyOwner/PropertyPriceStep';
-import PropertyDocumentsStep from './pages/propertyOwner/PropertyDocumentsStep';
-import PropertySummary from './pages/propertyOwner/PropertySummary';
-import PublishProperty from './pages/propertyOwner/PublishProperty';
+import PropertyCreationSinglePage from './pages/propertyOwner/PropertyCreationSinglePage';
 import MyProperties from './pages/propertyOwner/MyProperties';
 import ReservationPage from './pages/propertyOwner/ReservationPage';
 import PropertyPreview from './pages/Propriétés/PropertyPreview';
@@ -249,17 +239,7 @@ function App() {
 
         {/* Property owner flow - Require owner role */}
         <Route path="/owner-welcome" element={<ProtectedRoute allowedRoles={['owner']}><WelcomeOwner /></ProtectedRoute>} />
-        <Route path="/add-property" element={<ProtectedRoute allowedRoles={['owner']}><AddProperty /></ProtectedRoute>} />
-        <Route path="/property-type" element={<ProtectedRoute allowedRoles={['owner']}><PropertyTypeStep /></ProtectedRoute>} />
-        <Route path="/property-info" element={<ProtectedRoute allowedRoles={['owner']}><PropertyInfoStep /></ProtectedRoute>} />
-        <Route path="/property-equipments" element={<ProtectedRoute allowedRoles={['owner']}><PropertyEquipmentsStep /></ProtectedRoute>} />
-        <Route path="/property-photos" element={<ProtectedRoute allowedRoles={['owner']}><PropertyPhotosStep /></ProtectedRoute>} />
-        <Route path="/property-title" element={<ProtectedRoute allowedRoles={['owner']}><PropertyTitleStep /></ProtectedRoute>} />
-        <Route path="/property-description" element={<ProtectedRoute allowedRoles={['owner']}><PropertyDescriptionStep /></ProtectedRoute>} />
-        <Route path="/property-price" element={<ProtectedRoute allowedRoles={['owner']}><PropertyPriceStep /></ProtectedRoute>} />
-        <Route path="/property-documents" element={<ProtectedRoute allowedRoles={['owner']}><PropertyDocumentsStep /></ProtectedRoute>} />
-        <Route path="/property-summary" element={<ProtectedRoute allowedRoles={['owner']}><PropertySummary /></ProtectedRoute>} />
-        <Route path="/publish-property/:id" element={<ProtectedRoute allowedRoles={['owner']}><PublishProperty /></ProtectedRoute>} />
+        <Route path="/create-property" element={<ProtectedRoute allowedRoles={['owner']}><PropertyCreationSinglePage /></ProtectedRoute>} />
 
         <Route path="/my-properties" element={<ProtectedRoute allowedRoles={['owner']}><MyProperties /></ProtectedRoute>} />
         <Route path="/owner/income" element={<ProtectedRoute allowedRoles={['owner']}><OwnerIncomePage /></ProtectedRoute>} />
