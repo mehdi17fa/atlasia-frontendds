@@ -599,49 +599,122 @@ export default function PropertyCreationSinglePage() {
         {/* Mobile-Optimized Progress Bar */}
         <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 mb-6">
           <div className="mb-6">
-            {/* Mobile Progress Steps */}
-            <div className="flex items-center justify-between mb-4">
-              {steps.map((step, index) => (
-                <div 
-                  key={index} 
-                  className="flex flex-col items-center cursor-pointer flex-1 px-1"
-                  onClick={() => handleStepClick(index + 1)}
-                >
-                  <div className={`w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold transition-all duration-300 shadow-md ${
-                    index + 1 <= currentStep 
-                      ? 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 transform hover:scale-105' 
-                      : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  }`}>
-                    {index + 1}
+            {/* Mobile Progress Steps - New improved design */}
+            <div className="block sm:hidden">
+              {/* Mobile: Current Step Display */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="bg-gradient-to-r from-green-500 to-green-600 text-white w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shadow-lg">
+                    {currentStep}
                   </div>
-                  <span className="text-xs mt-1 sm:mt-2 text-gray-600 font-medium text-center leading-tight hidden sm:block">
-                    {step}
-                  </span>
-                  <span className="text-xs mt-1 text-gray-600 font-medium text-center leading-tight sm:hidden">
-                    {(() => {
-                      const frenchSteps = ['Localisation', 'Type', 'Infos', 'Équipements', 'Photos', 'Titre & Desc', 'Prix', 'Documents', 'Confirm'];
-                      return frenchSteps[index] || step.split(' ')[0];
-                    })()}
-                  </span>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">{steps[currentStep - 1]}</h3>
+                    <p className="text-sm text-gray-500">Étape {currentStep} sur {steps.length}</p>
+                  </div>
                 </div>
-              ))}
-            </div>
-            
-            {/* Enhanced Progress Bar */}
-            <div className="relative w-full bg-gray-200 rounded-full h-3 shadow-inner">
-              <div 
-                className="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full transition-all duration-500 ease-out shadow-lg"
-                style={{ width: `${(currentStep / steps.length) * 100}%` }}
-              >
-                <div className="absolute right-0 top-0 w-3 h-3 bg-white rounded-full shadow-md transform translate-x-1 -translate-y-0.5"></div>
+                <div className="text-right">
+                  <div className="text-sm font-medium text-green-600">
+                    {Math.round((currentStep / steps.length) * 100)}%
+                  </div>
+                  <div className="text-xs text-gray-400">Terminé</div>
+                </div>
+              </div>
+
+              {/* Mobile: Mini Progress Dots */}
+              <div className="flex items-center justify-center space-x-2 mb-4">
+                {steps.map((_, index) => (
+                  <div
+                    key={index}
+                    className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                      index + 1 < currentStep
+                        ? 'bg-green-500'
+                        : index + 1 === currentStep
+                        ? 'bg-green-500 ring-2 ring-green-300'
+                        : 'bg-gray-200'
+                    }`}
+                  />
+                ))}
+              </div>
+
+              {/* Mobile: Enhanced Progress Bar */}
+              <div className="relative w-full bg-gray-200 rounded-full h-2.5 shadow-inner">
+                <div 
+                  className="bg-gradient-to-r from-green-400 via-green-500 to-green-600 h-2.5 rounded-full transition-all duration-700 ease-out shadow-sm relative overflow-hidden"
+                  style={{ width: `${(currentStep / steps.length) * 100}%` }}
+                >
+                  {/* Animated shine effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-25 animate-pulse"></div>
+                </div>
+              </div>
+
+              {/* Mobile: Navigation buttons */}
+              <div className="flex justify-between mt-3">
+                <button 
+                  onClick={handlePrev}
+                  className={`text-xs px-3 py-1 rounded-full transition-all duration-200 ${
+                    currentStep > 1 
+                      ? 'text-gray-600 bg-gray-100 hover:bg-gray-200 cursor-pointer' 
+                      : 'text-transparent cursor-not-allowed'
+                  }`}
+                  disabled={currentStep <= 1}
+                >
+                  {currentStep > 1 ? 'Précédent' : ''}
+                </button>
+                <button 
+                  onClick={handleNext}
+                  className={`text-xs px-3 py-1 rounded-full transition-all duration-200 ${
+                    validateStep(currentStep) && currentStep < steps.length
+                      ? 'text-green-600 bg-green-100 hover:bg-green-200 cursor-pointer'
+                      : currentStep >= steps.length
+                      ? 'text-gray-600 bg-gray-100'
+                      : 'text-gray-400 cursor-not-allowed'
+                  }`}
+                  disabled={!validateStep(currentStep) || currentStep >= steps.length}
+                >
+                  {currentStep < steps.length ? 'Suivant' : 'Terminer'}
+                </button>
               </div>
             </div>
 
-            {/* Progress Text */}
-            <div className="text-center mt-3">
-              <span className="text-sm font-medium text-gray-600">
-                Étape {currentStep} sur {steps.length}
-              </span>
+            {/* Desktop Progress Steps - Keep original */}
+            <div className="hidden sm:block">
+              <div className="flex items-center justify-between mb-4">
+                {steps.map((step, index) => (
+                  <div 
+                    key={index} 
+                    className="flex flex-col items-center cursor-pointer flex-1 px-1"
+                    onClick={() => handleStepClick(index + 1)}
+                  >
+                    <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 shadow-md ${
+                      index + 1 <= currentStep 
+                        ? 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 transform hover:scale-105' 
+                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    }`}>
+                      {index + 1}
+                    </div>
+                    <span className="text-xs mt-2 text-gray-600 font-medium text-center leading-tight">
+                      {step}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Desktop Enhanced Progress Bar */}
+              <div className="relative w-full bg-gray-200 rounded-full h-3 shadow-inner">
+                <div 
+                  className="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full transition-all duration-500 ease-out shadow-lg"
+                  style={{ width: `${(currentStep / steps.length) * 100}%` }}
+                >
+                  <div className="absolute right-0 top-0 w-3 h-3 bg-white rounded-full shadow-md transform translate-x-1 -translate-y-0.5"></div>
+                </div>
+              </div>
+
+              {/* Desktop Progress Text */}
+              <div className="text-center mt-3">
+                <span className="text-sm font-medium text-gray-600">
+                  Étape {currentStep} sur {steps.length}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -1174,82 +1247,72 @@ export default function PropertyCreationSinglePage() {
 
         {/* Navigation */}
         <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 mt-6">
-          <div className="flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-0">
-            {/* Left Side - Back Button */}
-            <div className="w-full sm:w-auto">
-              {currentStep > 1 && (
+          <div className="flex flex-col items-center space-y-4">
+            {currentStep < 9 ? (
+              <>
+                {/* Main Action Button */}
                 <button
-                  onClick={handlePrev}
-                  className="flex items-center justify-center w-full sm:w-auto px-4 py-3 font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all duration-200"
+                  onClick={handleNext}
+                  className={`w-full px-6 py-3 font-semibold text-white rounded-xl transition-all duration-200 ${
+                    validateStep(currentStep)
+                      ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-lg hover:shadow-xl transform hover:scale-105'
+                      : 'bg-gray-300 cursor-not-allowed'
+                  }`}
+                  disabled={!validateStep(currentStep) || isLoading}
                 >
-                  <FaArrowLeft className="w-4 h-4 mr-2" />
-                  Retour
+                  <div className="flex items-center justify-center">
+                    Suivant
+                    <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
                 </button>
-              )}
-            </div>
-
-            {/* Right Side - Action Buttons */}
-            <div className="flex space-x-3 w-full sm:w-auto">
-              {currentStep < 9 ? (
-                <>
-                  <button
-                    onClick={handleSaveDraft}
-                    className="flex-1 sm:flex-none px-4 py-3 font-medium text-green-600 bg-green-100 rounded-xl hover:bg-green-200 transition-all duration-200 disabled:opacity-50"
-                    disabled={isLoading}
-                  >
-                    <div className="flex items-center justify-center">
-                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                      </svg>
-                      {isLoading ? 'Enregistrement...' : 'Enregistrer Brouillon'}
-                    </div>
-                  </button>
-                  <button
-                    onClick={handleNext}
-                    className={`flex-1 sm:flex-none px-6 py-3 font-semibold text-white rounded-xl transition-all duration-200 ${
-                      validateStep(currentStep)
-                        ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-lg hover:shadow-xl transform hover:scale-105'
-                        : 'bg-gray-300 cursor-not-allowed'
-                    }`}
-                    disabled={!validateStep(currentStep) || isLoading}
-                  >
-                    <div className="flex items-center justify-center">
-                      Suivant
-                      <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </div>
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={handleSaveDraft}
-                    className="flex-1 sm:flex-none px-4 py-3 font-medium text-green-600 bg-green-100 rounded-xl hover:bg-green-200 transition-all duration-200 disabled:opacity-50"
-                    disabled={isLoading}
-                  >
-                    <div className="flex items-center justify-center">
-                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                      </svg>
-                      {isLoading ? 'Enregistrement...' : 'Enregistrer comme Brouillon'}
-                    </div>
-                  </button>
-                  <button
-                    onClick={handlePublish}
-                    className="flex-1 sm:flex-none px-6 py-3 font-semibold text-white bg-gradient-to-r from-green-500 to-green-600 rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50"
-                    disabled={isLoading}
-                  >
-                    <div className="flex items-center justify-center">
-                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                      </svg>
-                      {isLoading ? 'Publication...' : 'Publier Propriété'}
-                    </div>
-                  </button>
-                </>
-              )}
-            </div>
+                
+                {/* Save Draft Button */}
+                <button
+                  onClick={handleSaveDraft}
+                  className="w-full px-4 py-3 font-medium text-green-600 bg-green-100 rounded-xl hover:bg-green-200 transition-all duration-200 disabled:opacity-50"
+                  disabled={isLoading}
+                >
+                  <div className="flex items-center justify-center">
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                    </svg>
+                    {isLoading ? 'Enregistrement...' : 'Enregistrer Brouillon'}
+                  </div>
+                </button>
+              </>
+            ) : (
+              <>
+                {/* Publish Button */}
+                <button
+                  onClick={handlePublish}
+                  className="w-full px-6 py-3 font-semibold text-white bg-gradient-to-r from-green-500 to-green-600 rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50"
+                  disabled={isLoading}
+                >
+                  <div className="flex items-center justify-center">
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                    {isLoading ? 'Publication...' : 'Publier Propriété'}
+                  </div>
+                </button>
+                
+                {/* Save Draft Button */}
+                <button
+                  onClick={handleSaveDraft}
+                  className="w-full px-4 py-3 font-medium text-green-600 bg-green-100 rounded-xl hover:bg-green-200 transition-all duration-200 disabled:opacity-50"
+                  disabled={isLoading}
+                >
+                  <div className="flex items-center justify-center">
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                    </svg>
+                    {isLoading ? 'Enregistrement...' : 'Enregistrer comme Brouillon'}
+                  </div>
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
