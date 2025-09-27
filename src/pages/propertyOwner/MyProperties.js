@@ -1,11 +1,11 @@
 // src/pages/MyProperties/MyProperties.js
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useCallback } from "react";
 import axios from "axios";
 import ListingCardGrid from "../../components/ListingCard/ListingCardGrid";
 import SectionTitle from "../../components/shared/SectionTitle";
 import { AuthContext } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { FaArrowLeft, FaUser } from 'react-icons/fa';
+import { FaArrowLeft } from 'react-icons/fa';
 
 const API_BASE = process.env.REACT_APP_API_URL;
 
@@ -15,13 +15,15 @@ export default function MyProperties() {
   const [publishedProperties, setPublishedProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [publishingProperty, setPublishingProperty] = useState(null);
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [availabilitySettings, setAvailabilitySettings] = useState({
+    startDate: '',
+    endDate: ''
+  });
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchMyProperties();
-  }, []);
-
-  const fetchMyProperties = async () => {
+  const fetchMyProperties = useCallback(async () => {
     setLoading(true);
     setError(null); 
     
@@ -106,6 +108,48 @@ export default function MyProperties() {
       setPublishedProperties([]);
     } finally {
       setLoading(false);
+    }
+  }, [token, user, navigate]);
+
+  useEffect(() => {
+    fetchMyProperties();
+  }, [fetchMyProperties]);
+
+  const handlePublishProperty = async (property) => {
+    setPublishingProperty(property);
+    setShowPublishModal(true);
+  };
+
+  const handleConfirmPublish = async () => {
+    if (!publishingProperty) return;
+
+    try {
+      const response = await axios.patch(
+        `${API_BASE}/api/property/${publishingProperty._id}/publish`,
+        {
+          start: availabilitySettings.startDate || null,
+          end: availabilitySettings.endDate || null
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token || localStorage.getItem('accessToken')}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.data.success) {
+        alert('Propriété publiée avec succès!');
+        // Refresh properties list
+        fetchMyProperties();
+      }
+    } catch (err) {
+      console.error('Error publishing property:', err);
+      alert(`Erreur lors de la publication: ${err.response?.data?.message || err.message}`);
+    } finally {
+      setShowPublishModal(false);
+      setPublishingProperty(null);
+      setAvailabilitySettings({ startDate: '', endDate: '' });
     }
   };
 
@@ -258,7 +302,53 @@ export default function MyProperties() {
       {/* Draft Properties */}
       <SectionTitle title="Brouillons" />
       {draftProperties.length > 0 ? (
-        <ListingCardGrid listings={draftProperties} showEditButton={true} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {draftProperties.map((property) => (
+            <div key={property._id} className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
+              {/* Image */}
+              <div className="relative">
+                <img 
+                  src={property.photos && property.photos.length > 0 ? property.photos[0] : '/placeholder.jpg'} 
+                  alt={property.title || 'Property'} 
+                  className="w-full h-40 object-cover"
+                />
+                <div className="absolute top-2 right-2 bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full font-medium">
+                  Brouillon
+                </div>
+              </div>
+              
+              {/* Content */}
+              <div className="p-4">
+                <p className="text-sm text-gray-600 mb-1">
+                  {property.localisation?.city || 'Localisation non spécifiée'}
+                </p>
+                <h3 className="font-semibold text-lg text-gray-900 mb-2 line-clamp-2">
+                  {property.title || 'Propriété sans titre'}
+                </h3>
+                <div className="flex items-center text-xs text-gray-500 mb-3 space-x-3">
+                  {property.info?.bedrooms && <span>{property.info.bedrooms} chambres</span>}
+                  {property.info?.guests && <span>{property.info.guests} personnes</span>}
+                </div>
+                
+                {/* Action buttons */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => navigate(`/edit-property/${property._id}`)}
+                    className="flex-1 px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                  >
+                    Modifier
+                  </button>
+                  <button
+                    onClick={() => handlePublishProperty(property)}
+                    className="flex-1 px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    Publier
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       ) : (
         <div className="text-center py-8 bg-gray-50 rounded-lg mb-8">
           <div className="text-gray-400 text-4xl mb-2">📝</div>
@@ -298,6 +388,65 @@ export default function MyProperties() {
           </svg>
         </button>
       </div>
+
+      {/* Publish Modal */}
+      {showPublishModal && publishingProperty && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Publier la propriété
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Définissez la période de disponibilité de votre propriété (optionnel).
+            </p>
+            
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Date de début (optionnel)
+                </label>
+                <input
+                  type="date"
+                  value={availabilitySettings.startDate}
+                  onChange={(e) => setAvailabilitySettings(prev => ({ ...prev, startDate: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Date de fin (optionnel)
+                </label>
+                <input
+                  type="date"
+                  value={availabilitySettings.endDate}
+                  onChange={(e) => setAvailabilitySettings(prev => ({ ...prev, endDate: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowPublishModal(false);
+                  setPublishingProperty(null);
+                  setAvailabilitySettings({ startDate: '', endDate: '' });
+                }}
+                className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleConfirmPublish}
+                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                Publier
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       </div>
     </div>
   );

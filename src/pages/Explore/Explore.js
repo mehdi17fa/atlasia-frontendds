@@ -37,12 +37,12 @@ export default function Explore() {
       }
 
       try {
-        
+        const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000';
         console.log(logMessage);
         console.log('User role:', user?.role);
         console.log('Is authenticated:', isAuthenticated);
-        console.log('🌐 API Base URL:', process.env.REACT_APP_API_URL);
-        console.log('🔗 Full request URL:', `${process.env.REACT_APP_API_URL}${endpoint}`);
+        console.log('🌐 API Base URL:', baseUrl);
+        console.log('🔗 Full request URL:', `${baseUrl}${endpoint}`);
         
         // Try with axios first, fallback to fetch if CORS issues persist
         let res;
@@ -63,7 +63,7 @@ export default function Explore() {
               }
             };
             
-            const response = await fetch(`${process.env.REACT_APP_API_URL}${endpoint}`, fetchOptions);
+            const response = await fetch(`${baseUrl}${endpoint}`, fetchOptions);
             
             if (!response.ok) {
               throw new Error(`HTTP ${response.status}: ${response.statusText}`);
