@@ -1,7 +1,7 @@
 // src/pages/CoHostPropertyPreview.jsx
 import React, { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import { api } from "../../api";
 import CoHostPropertyLayout from "../Layout/CohostPropertyLayout";
 import { AuthContext } from "../../context/AuthContext";
 import toast, { Toaster } from "react-hot-toast";
@@ -34,20 +34,12 @@ export default function CoHostPropertyPreview() {
   useEffect(() => {
     const fetchProperty = async () => {
       try {
-        const token = localStorage.getItem("accessToken");
-        if (!token) {
-          navigate("/login");
-          return;
-        }
-
-        const res = await axios.get(`${API_BASE}/api/property/${propertyId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await api.get(`/api/property/${propertyId}`);
 
         setProperty(res.data.property);
       } catch (err) {
         console.error("❌ Error fetching cohost property:", err);
-        if (err.response?.status === 401) navigate("/login");
+        // 401s are handled by the API interceptor (refresh or redirect)
       } finally {
         setLoading(false);
       }
@@ -105,12 +97,7 @@ export default function CoHostPropertyPreview() {
     }
 
     try {
-      const token = localStorage.getItem("accessToken");
-      const res = await axios.post(
-        `${API_BASE}/api/partner/request/${propertyId}`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const res = await api.post(`/api/partner/request/${propertyId}`, {});
 
       if (res.data.success) {
         setRequestSent(true);
