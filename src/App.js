@@ -13,6 +13,7 @@ import { AuthContext } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import SignUpScreen from './pages/SignUp/SignUpScreen';
+import SignUpWizard from './pages/SignUp/SignUpWizard';
 import IdentificationScreen from './pages/SignUp/IdentificationScreen';
 import ProfileSignupScreen from './pages/SignUp/CompleteProfileScreen';
 import SignupScreenConf from './pages/SignUp/SignUpConfScreen';
@@ -200,7 +201,8 @@ function App() {
         
         {/* General / Auth - Only accessible when NOT authenticated */}
         <Route path="/login" element={<ProtectedRoute requireAuth={false}><LoginScreen /></ProtectedRoute>} />
-        <Route path="/signup" element={<ProtectedRoute requireAuth={false}><SignUpScreen /></ProtectedRoute>} />
+        {/* New consolidated signup wizard; keep legacy screens accessible if needed */}
+        <Route path="/signup" element={<ProtectedRoute requireAuth={false}><SignUpWizard /></ProtectedRoute>} />
         <Route path="/signup-confirmation" element={<ProtectedRoute requireAuth={false}><SignupScreenConf /></ProtectedRoute>} />
         <Route path="/identification" element={<ProtectedRoute requireAuth={false}><IdentificationScreen /></ProtectedRoute>} />
         <Route
