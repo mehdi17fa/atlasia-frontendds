@@ -2,12 +2,11 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { AuthContext } from '../../context/AuthContext';
-import { tokenStorage } from '../../utils/tokenStorage';
 
 export default function SignupScreenConf() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useContext(AuthContext);
+  useContext(AuthContext);
   const email = location.state?.email || localStorage.getItem('signupEmail') || '';
   
   // Debug logging for email retrieval
@@ -32,24 +31,24 @@ export default function SignupScreenConf() {
     return () => clearInterval(interval);
   }, [isTimerActive, timer]);
 
-  const handleVerify = async () => {
+  const verifyCode = async (codeString) => {
     try {
       // Debug logging
-      console.log('Verification attempt:', { email, code: code.join(''), allDigits: code });
-      
+      console.log('Verification attempt:', { email, code: codeString, allDigits: code });
+
       if (!email) {
         alert('Email not found. Please try signing up again.');
         return;
       }
-      
-      if (code.join('').length !== 6) {
+
+      if (!/^\d{6}$/.test(codeString)) {
         alert('Please enter all 6 digits.');
         return;
       }
 
       const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/verify`, {
         email,
-        code: code.join(''),
+        code: codeString,
       });
 
       console.log("✅ Verification successful:", {
@@ -57,14 +56,16 @@ export default function SignupScreenConf() {
         user: response.data.user
       });
 
-      // ✅ Don't auto-login after verification - user needs to complete profile first
-      // Just navigate to identification step
       navigate('/identification', { state: { email } });
     } catch (err) {
       console.error('Verification error:', err.response?.data || err.message);
       alert(err.response?.data?.message || 'Verification failed');
       setError(true);
     }
+  };
+
+  const handleVerify = async () => {
+    await verifyCode(code.join(''));
   };
 
   const handleSendAgain = async () => {
@@ -88,8 +89,8 @@ export default function SignupScreenConf() {
       // Split the pasted code into individual digits
       const digits = text.split('');
       setCode(digits);
-      // Auto-verify when pasting complete code
-      setTimeout(() => handleVerify(), 300);
+      // Auto-verify immediately with pasted code
+      verifyCode(text);
       return;
     }
     
@@ -101,8 +102,8 @@ export default function SignupScreenConf() {
     if (text && index === 5) {
       const allFilled = updated.every(digit => digit !== '');
       if (allFilled) {
-        // Auto-verify when last digit is entered - use longer timeout to ensure state is updated
-        setTimeout(() => handleVerify(), 300);
+        // Auto-verify immediately with the freshly composed code
+        verifyCode(updated.join(''));
         return;
       }
     }
@@ -128,8 +129,8 @@ export default function SignupScreenConf() {
     if (pastedText.length === 6 && /^\d{6}$/.test(pastedText)) {
       const digits = pastedText.split('');
       setCode(digits);
-      // Auto-verify when pasting complete code
-      setTimeout(() => handleVerify(), 300);
+      // Auto-verify immediately with pasted text
+      verifyCode(pastedText);
     } else {
       // Handle partial paste or invalid content
       const cleanText = pastedText.replace(/\D/g, ''); // Remove non-digits
@@ -144,8 +145,8 @@ export default function SignupScreenConf() {
         // Check if all digits are filled after partial paste
         const allFilled = updated.every(digit => digit !== '');
         if (allFilled) {
-          // Auto-verify when all digits are filled
-          setTimeout(() => handleVerify(), 300);
+          // Auto-verify immediately when all digits are filled
+          verifyCode(updated.join(''));
           return;
         }
         
