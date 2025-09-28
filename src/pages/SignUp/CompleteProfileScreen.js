@@ -180,15 +180,15 @@ const handleFinish = async () => {
                   </button>
 
                   {showCountryDropdown && (
-                    <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    <div className="absolute top-full left-0 z-50 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto min-w-[240px] w-64 sm:w-72">
                       {countries.map((country) => (
                         <button
                           key={country.code}
                           onClick={() => handleCountrySelect(country)}
-                          className="w-full flex items-center px-3 py-2 hover:bg-gray-50 text-left"
+                          className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-left whitespace-nowrap"
                         >
-                          <span className="mr-3">{country.flag}</span>
-                          <span className="mr-2 font-medium">{country.code}</span>
+                          <span>{country.flag}</span>
+                          <span className="font-medium">{country.code}</span>
                           <span className="text-sm text-gray-600">{country.name}</span>
                         </button>
                       ))}

@@ -307,11 +307,11 @@ export default function SignUpWizard() {
                           <span className="ml-1 text-gray-500">▼</span>
                         </button>
                         {showCountryDropdown && (
-                          <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                          <div className="absolute top-full left-0 z-50 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto min-w-[240px] w-64 sm:w-72">
                             {countries.map((c) => (
-                              <button key={c.code} onClick={() => { setSelectedCountry(c); setShowCountryDropdown(false); }} className="w-full flex items-center px-3 py-2 hover:bg-gray-50 text-left">
-                                <span className="mr-3">{c.flag}</span>
-                                <span className="mr-2 font-medium">{c.code}</span>
+                              <button key={c.code} onClick={() => { setSelectedCountry(c); setShowCountryDropdown(false); }} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-left whitespace-nowrap">
+                                <span className="">{c.flag}</span>
+                                <span className="font-medium">{c.code}</span>
                                 <span className="text-sm text-gray-600">{c.name}</span>
                               </button>
                             ))}
