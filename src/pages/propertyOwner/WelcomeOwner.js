@@ -30,33 +30,46 @@ const API_BASE = process.env.REACT_APP_API_URL;
 
 
 function CoHostRequestCard({ request, onAccept, onReject, loading, isHighlighted = false }) {
+  const getInitials = (name) => {
+    if (!name) return 'U';
+    const parts = String(name).trim().split(/\s+/);
+    const first = parts[0]?.[0] || '';
+    const second = parts[1]?.[0] || '';
+    return (first + second).toUpperCase() || 'U';
+  };
   return (
-    <div className={`bg-white border rounded-lg p-4 mb-4 shadow-sm transition-all duration-300 ${
+    <div className={`bg-white border rounded-xl p-4 mb-4 shadow-sm transition-all duration-300 hover:shadow-md ${
       isHighlighted ? 'border-green-500 bg-green-50 ring-2 ring-green-200' : 'border-gray-200'
     }`}>
       {isHighlighted && (
-        <div className="bg-green-600 text-white text-xs px-2 py-1 rounded-full inline-block mb-2 font-semibold">
+        <div className="bg-green-600 text-white text-xs px-2 py-1 rounded-full inline-flex items-center mb-2 font-semibold">
           <SparklesIcon className="w-3 h-3 inline mr-1" />
           Nouvelle demande
         </div>
       )}
-      <div className="flex items-start space-x-4">
-        <img
-          src={request.partner?.profilePic || "/placeholder-profile.jpg"}
-          alt="Partner"
-          className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
-        />
+      <div className="flex items-start gap-3">
+        {request.partner?.profilePic ? (
+          <img
+            src={request.partner.profilePic}
+            alt="Partner"
+            className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
+          />
+        ) : (
+          <div className="w-12 h-12 rounded-full border-2 border-gray-200 bg-gray-100 text-gray-700 flex items-center justify-center text-sm font-semibold">
+            {getInitials(request.partner?.fullName || request.partner?.displayName)}
+          </div>
+        )}
         <div className="flex-1">
-          <div className="flex justify-between items-start">
+          <div className="flex justify-between items-start gap-2">
             <div className="flex-1">
-              <h4 className="font-semibold text-gray-900">
+              <h4 className="font-semibold text-gray-900 leading-snug">
                 {request.partner?.fullName || request.partner?.displayName || "Utilisateur"}
               </h4>
-              <p className="text-sm text-gray-600">{request.partner?.email}</p>
+              <p className="text-sm text-gray-600 truncate max-w-[240px] sm:max-w-[360px]">{request.partner?.email}</p>
               
               {/* Property Info with Image */}
               <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center gap-3">
                   {request.property?.photos?.[0] && (
                     <S3Image
                       src={request.property.photos[0]}
@@ -78,11 +91,11 @@ function CoHostRequestCard({ request, onAccept, onReject, loading, isHighlighted
                 </div>
               </div>
             </div>
-            <div className="flex flex-col space-y-2 ml-4">
+            <div className="flex flex-col space-y-2 ml-2 min-w-[120px]">
               <button
                 onClick={() => onAccept(request._id)}
                 disabled={loading}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center"
+                className="bg-green-600 text-white px-4 py-2 rounded-full text-sm hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center"
               >
                 {loading ? "..." : (
                   <>
@@ -94,7 +107,7 @@ function CoHostRequestCard({ request, onAccept, onReject, loading, isHighlighted
               <button
                 onClick={() => onReject(request._id)}
                 disabled={loading}
-                className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center"
+                className="bg-red-600 text-white px-4 py-2 rounded-full text-sm hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center"
               >
                 {loading ? "..." : (
                   <>
@@ -106,7 +119,7 @@ function CoHostRequestCard({ request, onAccept, onReject, loading, isHighlighted
             </div>
           </div>
           <div className="flex items-center justify-between mt-3">
-            <p className="text-xs text-gray-400 flex items-center">
+            <p className="text-xs text-gray-500 flex items-center">
               <CalendarDaysIcon className="w-3 h-3 mr-1" />
               Demande reçue le {new Date(request.createdAt).toLocaleDateString('fr-FR', {
                 day: '2-digit',
