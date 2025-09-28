@@ -29,7 +29,7 @@ export default function SignUpWizard() {
   const [profileImage, setProfileImage] = useState(null);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [fullName, setFullName] = useState('');
-  const [selectedCountry, setSelectedCountry] = useState({ code: '+212', flag: '🇲🇦', name: 'Morocco' });
+  const [selectedCountry, setSelectedCountry] = useState({ code: '+212', flag: '🇲🇦', name: 'Morocco', nationalLength: 9 });
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [gender, setGender] = useState('');
   const fileInputRef = useRef(null);
@@ -43,6 +43,11 @@ export default function SignUpWizard() {
 
   const validateEmail = (candidate) => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(candidate);
   const validatePassword = (candidate) => /^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(candidate);
+
+  const getNationalLength = (country) => {
+    if (!country) return 10;
+    return country.nationalLength ?? 10;
+  };
 
   const handleSignupStep = async () => {
     if (!email || !password || !confirmPassword) {
@@ -117,7 +122,7 @@ export default function SignUpWizard() {
     }
   };
 
-  const isProfileFormValid = fullName.trim() !== '' && phoneNumber.length === 10 && Boolean(gender);
+  const isProfileFormValid = fullName.trim() !== '' && phoneNumber.length === getNationalLength(selectedCountry) && Boolean(gender);
 
   const handleFinishProfile = async () => {
     if (!isProfileFormValid) return;
@@ -148,15 +153,15 @@ export default function SignUpWizard() {
   };
 
   const countries = [
-    { code: '+1', flag: '🇺🇸', name: 'United States' },
-    { code: '+44', flag: '🇬🇧', name: 'United Kingdom' },
-    { code: '+33', flag: '🇫🇷', name: 'France' },
-    { code: '+212', flag: '🇲🇦', name: 'Morocco' },
-    { code: '+213', flag: '🇩🇿', name: 'Algeria' },
-    { code: '+216', flag: '🇹🇳', name: 'Tunisia' },
-    { code: '+20', flag: '🇪🇬', name: 'Egypt' },
-    { code: '+91', flag: '🇮🇳', name: 'India' },
-    { code: '+971', flag: '🇦🇪', name: 'UAE' },
+    { code: '+1', flag: '🇺🇸', name: 'United States', nationalLength: 10 },
+    { code: '+44', flag: '🇬🇧', name: 'United Kingdom', nationalLength: 10 },
+    { code: '+33', flag: '🇫🇷', name: 'France', nationalLength: 9 },
+    { code: '+212', flag: '🇲🇦', name: 'Morocco', nationalLength: 9 },
+    { code: '+213', flag: '🇩🇿', name: 'Algeria', nationalLength: 9 },
+    { code: '+216', flag: '🇹🇳', name: 'Tunisia', nationalLength: 8 },
+    { code: '+20', flag: '🇪🇬', name: 'Egypt', nationalLength: 10 },
+    { code: '+91', flag: '🇮🇳', name: 'India', nationalLength: 10 },
+    { code: '+971', flag: '🇦🇪', name: 'UAE', nationalLength: 9 },
   ];
 
   return (

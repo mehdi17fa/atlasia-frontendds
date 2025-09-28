@@ -14,6 +14,7 @@ const ProfileSignupScreen = () => {
     code: '+212',
     flag: '🇲🇦',
     name: 'Morocco',
+    nationalLength: 9,
   });
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [profileType, setProfileType] = useState('');
@@ -31,15 +32,15 @@ const ProfileSignupScreen = () => {
   }, []);
 
   const countries = [
-    { code: '+1', flag: '🇺🇸', name: 'United States' },
-    { code: '+44', flag: '🇬🇧', name: 'United Kingdom' },
-    { code: '+33', flag: '🇫🇷', name: 'France' },
-    { code: '+212', flag: '🇲🇦', name: 'Morocco' },
-    { code: '+213', flag: '🇩🇿', name: 'Algeria' },
-    { code: '+216', flag: '🇹🇳', name: 'Tunisia' },
-    { code: '+20', flag: '🇪🇬', name: 'Egypt' },
-    { code: '+91', flag: '🇮🇳', name: 'India' },
-    { code: '+971', flag: '🇦🇪', name: 'UAE' },
+    { code: '+1', flag: '🇺🇸', name: 'United States', nationalLength: 10 },
+    { code: '+44', flag: '🇬🇧', name: 'United Kingdom', nationalLength: 10 },
+    { code: '+33', flag: '🇫🇷', name: 'France', nationalLength: 9 },
+    { code: '+212', flag: '🇲🇦', name: 'Morocco', nationalLength: 9 },
+    { code: '+213', flag: '🇩🇿', name: 'Algeria', nationalLength: 9 },
+    { code: '+216', flag: '🇹🇳', name: 'Tunisia', nationalLength: 8 },
+    { code: '+20', flag: '🇪🇬', name: 'Egypt', nationalLength: 10 },
+    { code: '+91', flag: '🇮🇳', name: 'India', nationalLength: 10 },
+    { code: '+971', flag: '🇦🇪', name: 'UAE', nationalLength: 9 },
   ];
 
   const handleImageUpload = (event) => {
@@ -55,7 +56,8 @@ const ProfileSignupScreen = () => {
   };
 
   const handlePhoneNumberChange = (e) => {
-    const onlyNums = e.target.value.replace(/\D/g, '').slice(0, 10);
+    const maxLen = selectedCountry.nationalLength ?? 10;
+    const onlyNums = e.target.value.replace(/\D/g, '').slice(0, maxLen);
     setPhoneNumber(onlyNums);
   };
 
@@ -64,7 +66,7 @@ const ProfileSignupScreen = () => {
     if (!/\d/.test(value)) setFullName(value);
   };
 
-  const isFormValid = fullName.trim() !== '' && phoneNumber.length === 10 && gender;
+  const isFormValid = fullName.trim() !== '' && phoneNumber.length === (selectedCountry.nationalLength ?? 10) && gender;
 
 const handleFinish = async () => {
   if (!isFormValid) return;
