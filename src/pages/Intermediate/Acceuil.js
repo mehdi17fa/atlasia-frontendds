@@ -111,10 +111,10 @@ const PropertyCard = ({ property }) => {
           </div>
 
           <button
-            onClick={() => navigate(`/property/${property._id}`)}
+            onClick={() => property?._id && navigate(`/cohosting-preview/${property._id}`)}
             className="text-green-600 hover:text-green-700 text-sm font-medium"
           >
-            Voir détails
+            Devenir co-hôte
           </button>
         </div>
       </div>
