@@ -1,6 +1,6 @@
 // src/pages/CohostingExplore/CohostingExplore.js
 import React, { useEffect, useState, useContext } from "react";
-import axios from "axios";
+import { api } from "../../api";
 import ListingCardGrid from "../../components/ListingCard/ListingCardGrid";
 import SectionTitle from "../../components/shared/SectionTitle";
 import { useNavigate } from "react-router-dom";
@@ -18,16 +18,7 @@ export default function CohostingExplore() {
       try {
         console.log("🚀 Making API call to: /api/property/available-for-cohosting");
         
-        const authToken = token || localStorage.getItem("accessToken");
-        if (!authToken) {
-          alert("Vous devez être connecté pour voir ces propriétés");
-          navigate("/login");
-          return;
-        }
-        
-        const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/property/available-for-cohosting`, {
-          headers: { Authorization: `Bearer ${authToken}` }
-        });
+        const res = await api.get(`/api/property/available-for-cohosting`);
         
         console.log("✅ API call successful:", res.data);
         setProperties(res.data.properties || []);
@@ -47,7 +38,10 @@ export default function CohostingExplore() {
           data: err.response?.data
         });
         
-        if (err.response?.status === 403) {
+        if (err.response?.status === 401) {
+          navigate("/login");
+          return;
+        } else if (err.response?.status === 403) {
           alert("Vous devez avoir un rôle de partenaire pour voir ces propriétés");
           navigate(-1);
         }
