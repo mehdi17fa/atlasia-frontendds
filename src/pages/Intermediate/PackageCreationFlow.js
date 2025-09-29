@@ -507,6 +507,77 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
                 <p className="text-gray-600">Ajoutez des restaurants, activités ou services à votre package</p>
                 <p className="text-sm text-gray-500 mt-1">Au moins un élément est requis</p>
               </div>
+
+              {/* Live preview of selected items */}
+              {(formData.restaurants.length > 0 || formData.activities.length > 0 || formData.services.length > 0) && (
+                <div className="bg-green-50 border border-green-200 rounded-xl p-4 sm:p-5">
+                  <h3 className="text-lg font-semibold text-green-800 mb-3">Éléments ajoutés</h3>
+                  <div className="space-y-4">
+                    {/* Restaurants preview */}
+                    {formData.restaurants.length > 0 && (
+                      <div>
+                        <div className="text-sm font-medium text-green-700 mb-2">Restaurants</div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {formData.restaurants.map((item, index) => (
+                            <div key={`rest-${index}`} className="bg-white border border-gray-200 rounded-lg p-3 flex items-start gap-3">
+                              {item.thumbnail && (
+                                <S3Image src={item.thumbnail} alt={item.name} className="w-12 h-12 object-cover rounded-md" fallbackSrc="/placeholder.jpg" />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <div className="font-medium text-gray-900 truncate">{item.name}</div>
+                                <div className="text-sm text-gray-600 truncate">{item.price} MAD</div>
+                              </div>
+                              <button onClick={() => removeItem('restaurants', index)} className="text-red-600 bg-red-100 hover:bg-red-200 rounded-md px-2 py-1 text-xs font-medium">Retirer</button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Activities preview */}
+                    {formData.activities.length > 0 && (
+                      <div>
+                        <div className="text-sm font-medium text-green-700 mb-2">Activités</div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {formData.activities.map((item, index) => (
+                            <div key={`act-${index}`} className="bg-white border border-gray-200 rounded-lg p-3 flex items-start gap-3">
+                              {item.thumbnail && (
+                                <S3Image src={item.thumbnail} alt={item.name} className="w-12 h-12 object-cover rounded-md" fallbackSrc="/placeholder.jpg" />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <div className="font-medium text-gray-900 truncate">{item.name}</div>
+                                <div className="text-sm text-gray-600 truncate">{item.price} MAD</div>
+                              </div>
+                              <button onClick={() => removeItem('activities', index)} className="text-red-600 bg-red-100 hover:bg-red-200 rounded-md px-2 py-1 text-xs font-medium">Retirer</button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Services preview */}
+                    {formData.services.length > 0 && (
+                      <div>
+                        <div className="text-sm font-medium text-green-700 mb-2">Services</div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {formData.services.map((item, index) => (
+                            <div key={`srv-${index}`} className="bg-white border border-gray-200 rounded-lg p-3 flex items-start gap-3">
+                              {item.thumbnail && (
+                                <S3Image src={item.thumbnail} alt={item.name} className="w-12 h-12 object-cover rounded-md" fallbackSrc="/placeholder.jpg" />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <div className="font-medium text-gray-900 truncate">{item.name}</div>
+                                <div className="text-sm text-gray-600 truncate">{item.price} MAD</div>
+                              </div>
+                              <button onClick={() => removeItem('services', index)} className="text-red-600 bg-red-100 hover:bg-red-200 rounded-md px-2 py-1 text-xs font-medium">Retirer</button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             
             <div className="space-y-8">
               {/* Existing Items */}
