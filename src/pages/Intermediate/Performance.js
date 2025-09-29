@@ -1,10 +1,147 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaStar, FaHome, FaCalendarAlt, FaDollarSign, FaChartLine, FaUser } from 'react-icons/fa';
+import { FaArrowLeft, FaStar, FaHome, FaCalendarAlt, FaDollarSign, FaChartLine } from 'react-icons/fa';
 import { AuthContext } from '../../context/AuthContext';
-import axios from 'axios';
+import { api } from '../../api';
 
-const API_BASE = process.env.REACT_APP_API_URL;
+const monthBoundaries = (date) => {
+  const start = new Date(date.getFullYear(), date.getMonth(), 1, 0, 0, 0, 0);
+  const end = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
+  return { start, end };
+};
+
+const parseDate = (value) => {
+  if (!value) return null;
+  const candidate = new Date(value);
+  if (!Number.isNaN(candidate.getTime())) return candidate;
+
+  const numericValue = typeof value === 'number' ? value : Number.parseInt(value, 10);
+  if (!Number.isNaN(numericValue)) {
+    const numericDate = new Date(numericValue);
+    if (!Number.isNaN(numericDate.getTime())) return numericDate;
+  }
+  return null;
+};
+
+const normaliseNumber = (value) => {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : 0;
+};
+
+const chooseMetric = (baseValue, computedValue) => {
+  const baseNum = normaliseNumber(baseValue);
+  const computedNum = normaliseNumber(computedValue);
+
+  if (computedNum > 0 && baseNum <= 0) return computedNum;
+  if (baseNum > 0 && computedNum <= 0) return baseNum;
+  if (computedNum > 0 && baseNum > 0) return computedNum;
+  return Math.max(baseNum, computedNum, 0);
+};
+
+const extractReservations = (properties = []) => {
+  return properties.flatMap((property) => {
+    const reservations = Array.isArray(property?.reservations)
+      ? property.reservations
+      : Array.isArray(property?.bookings)
+        ? property.bookings
+        : [];
+    return reservations.map((reservation) => ({ ...reservation, __propertyId: property?._id }));
+  });
+};
+
+const nightsWithinMonth = (reservation, start, end) => {
+  const checkIn = parseDate(reservation?.checkIn || reservation?.startDate || reservation?.from || reservation?.createdAt);
+  const checkOutRaw = reservation?.checkOut || reservation?.endDate || reservation?.to;
+  const checkOut = parseDate(checkOutRaw) || (checkIn ? new Date(checkIn.getTime() + 24 * 60 * 60 * 1000) : null);
+  if (!checkIn || !checkOut) return 0;
+
+  const overlapStart = checkIn > start ? checkIn : start;
+  const overlapEnd = checkOut < end ? checkOut : end;
+  const diff = overlapEnd.getTime() - overlapStart.getTime();
+  if (diff <= 0) return 0;
+  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+};
+
+const extractReviewsFromProperties = (properties = []) => {
+  return properties.flatMap((property) => {
+    if (!Array.isArray(property?.reviews)) return [];
+    return property.reviews.map((review, index) => ({
+      id: review?._id || review?.id || `${property?._id || 'property'}-${index}`,
+      customerName: review?.customerName || review?.guestName || review?.user?.fullName || review?.user?.displayName || review?.user?.name || 'Client',
+      rating: normaliseNumber(review?.rating ?? review?.note ?? review?.score),
+      comment: review?.comment || review?.message || review?.text || ''
+    }));
+  });
+};
+
+const extractReviewsFromPayload = (reviews = []) => {
+  return reviews.map((review, index) => ({
+    id: review?._id || review?.id || `api-review-${index}`,
+    customerName: review?.customerName || review?.guestName || review?.user?.fullName || review?.user?.displayName || review?.user?.name || 'Client',
+    rating: normaliseNumber(review?.rating ?? review?.note ?? review?.score),
+    comment: review?.comment || review?.message || review?.text || ''
+  }));
+};
+
+const computeAggregatedMetrics = ({ basePerformance, properties, packageBookings }) => {
+  const managedProperties = chooseMetric(basePerformance?.managedProperties, properties.length);
+
+  const reservationsFromProperties = extractReservations(properties);
+  const bookings = Array.isArray(packageBookings) ? packageBookings : [];
+  const now = new Date();
+  const { start, end } = monthBoundaries(now);
+  const daysInMonth = end.getDate();
+
+  const propertyMonthlyReservations = reservationsFromProperties.filter((reservation) => {
+    const date = parseDate(reservation?.checkIn || reservation?.startDate || reservation?.from || reservation?.createdAt);
+    return date && date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+  }).length;
+
+  const packageMonthlyReservations = bookings.filter((booking) => {
+    const date = parseDate(booking?.checkIn || booking?.startDate || booking?.createdAt);
+    return date && date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+  }).length;
+
+  const computedMonthlyReservations = propertyMonthlyReservations + packageMonthlyReservations;
+
+  const propertyRevenue = reservationsFromProperties.reduce((sum, reservation) => {
+    const amount = reservation?.totalAmount ?? reservation?.totalPrice ?? reservation?.amount ?? reservation?.price ?? 0;
+    return sum + normaliseNumber(amount);
+  }, 0);
+
+  const packageRevenue = bookings.reduce((sum, booking) => {
+    const amount = booking?.totalAmount ?? booking?.totalPrice ?? booking?.amount ?? booking?.price ?? 0;
+    return sum + normaliseNumber(amount);
+  }, 0);
+
+  const computedTotalRevenue = propertyRevenue + packageRevenue;
+
+  const totalReservedNights = reservationsFromProperties.reduce((total, reservation) => {
+    return total + nightsWithinMonth(reservation, start, end);
+  }, 0);
+
+  const computedOccupancy = managedProperties > 0 && daysInMonth > 0
+    ? Math.min(100, Math.round((totalReservedNights / (managedProperties * daysInMonth)) * 100))
+    : 0;
+
+  const combinedReviews = [
+    ...extractReviewsFromPayload(basePerformance?.reviews || []),
+    ...extractReviewsFromProperties(properties)
+  ].filter((review, index, self) => review.rating > 0 && index === self.findIndex((r) => r.id === review.id));
+
+  const averageRating = combinedReviews.length > 0
+    ? combinedReviews.reduce((sum, review) => sum + review.rating, 0) / combinedReviews.length
+    : basePerformance?.rating || 0;
+
+  return {
+    managedProperties: Math.round(managedProperties),
+    monthlyReservations: Math.round(chooseMetric(basePerformance?.monthlyReservations, computedMonthlyReservations)),
+    totalRevenue: chooseMetric(basePerformance?.totalRevenue, computedTotalRevenue),
+    occupancyRate: chooseMetric(basePerformance?.occupancyRate, computedOccupancy),
+    rating: averageRating,
+    reviews: combinedReviews.slice(0, 6)
+  };
+};
 
 const Performance = () => {
   const navigate = useNavigate();
@@ -18,50 +155,48 @@ const Performance = () => {
     reviews: []
   });
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState(null);
 
   useEffect(() => {
     fetchPerformanceData();
-  }, []);
+  }, [user]);
 
   const fetchPerformanceData = async () => {
     try {
-      const token = localStorage.getItem("accessToken") || localStorage.getItem("token");
-      if (!token) {
-        console.log("No token found, redirecting to login");
-        navigate("/login");
-        return;
-      }
+      setLoading(true);
+      setErrorMessage(null);
 
-      console.log("Fetching performance data with token:", token.substring(0, 20) + "...");
-      
-      // Fetch partner performance data
-      const response = await axios.get(`${API_BASE}/api/partner/performance`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const [performanceResponse, propertiesResponse, packageBookingsResponse] = await Promise.all([
+        api.get('/api/partner/performance').catch((error) => {
+          if (error.response?.status === 404) return null;
+          throw error;
+        }),
+        api.get('/api/partner/my-properties'),
+        api.get('/api/packagebooking/partner').catch((error) => {
+          if ([400, 404].includes(error.response?.status)) return null;
+          throw error;
+        })
+      ]);
+
+      const basePerformance = performanceResponse?.data?.success
+        ? (performanceResponse.data.data || performanceResponse.data.performance || {})
+        : {};
+
+      const properties = propertiesResponse?.data?.success && Array.isArray(propertiesResponse.data.properties)
+        ? propertiesResponse.data.properties
+        : [];
+
+      const packageBookings = packageBookingsResponse?.data?.success && Array.isArray(packageBookingsResponse.data.bookings)
+        ? packageBookingsResponse.data.bookings
+        : [];
+
+      const aggregated = computeAggregatedMetrics({
+        basePerformance,
+        properties,
+        packageBookings
       });
 
-      console.log("Performance API response:", response.data);
-      
-      if (response.data.success) {
-        const data = response.data.data || response.data.performance;
-        setPerformanceData({
-          managedProperties: data.managedProperties || 0,
-          monthlyReservations: data.monthlyReservations || 0,
-          totalRevenue: data.totalRevenue || 0,
-          occupancyRate: data.occupancyRate || 0,
-          rating: data.rating || 0,
-          reviews: data.reviews || []
-        });
-      } else {
-        // If API returns success: false, use empty state
-        setPerformanceData({
-          managedProperties: 0,
-          monthlyReservations: 0,
-          totalRevenue: 0,
-          occupancyRate: 0,
-          rating: 0,
-          reviews: []
-        });
-      }
+      setPerformanceData(aggregated);
     } catch (error) {
       console.error('Error fetching performance data:', error);
       console.error('Error details:', {
@@ -70,17 +205,20 @@ const Performance = () => {
         data: error.response?.data,
         message: error.message
       });
-      
-      // If API fails completely, show empty state with a message
+      const message = error.response?.data?.message || "Impossible de charger les données de performance. Vérifiez votre connexion.";
       setPerformanceData({
         managedProperties: 0,
         monthlyReservations: 0,
         totalRevenue: 0,
         occupancyRate: 0,
         rating: 0,
-        reviews: [],
-        error: "Impossible de charger les données de performance. Vérifiez votre connexion."
+        reviews: []
       });
+      setErrorMessage(message);
+
+      if (error.response?.status === 401) {
+        navigate('/login');
+      }
     } finally {
       setLoading(false);
     }
@@ -162,13 +300,13 @@ const Performance = () => {
         </div>
 
         {/* Error Message */}
-        {performanceData.error && (
+        {errorMessage && (
           <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
             <div className="flex items-center">
               <div className="text-red-600 mr-3">⚠️</div>
               <div>
                 <h4 className="text-red-800 font-medium">Erreur de connexion</h4>
-                <p className="text-red-700 text-sm">{performanceData.error}</p>
+                <p className="text-red-700 text-sm">{errorMessage}</p>
               </div>
             </div>
           </div>
@@ -203,7 +341,7 @@ const Performance = () => {
           <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 md:p-6 rounded-lg border border-purple-200 transition-transform hover:shadow-lg hover:scale-[1.02]">
             <div className="flex items-center justify-between mb-2">
               <FaChartLine className="text-purple-600 w-5 h-5 md:w-6 md:h-6" />
-              <span className="text-2xl md:text-3xl font-bold text-purple-700">{performanceData.occupancyRate || 0}%</span>
+              <span className="text-2xl md:text-3xl font-bold text-purple-700">{Math.max(0, Math.round(performanceData.occupancyRate || 0))}%</span>
             </div>
             <p className="text-sm md:text-base text-gray-700">Taux d'occupation</p>
           </div>
