@@ -47,7 +47,7 @@ function CoHostRequestCard({ request, onAccept, onReject, loading, isHighlighted
           Nouvelle demande
         </div>
       )}
-      <div className="flex items-start gap-3">
+      <div className="flex items-stretch gap-3">
         {request.partner?.profilePic ? (
           <img
             src={request.partner.profilePic}
@@ -59,37 +59,15 @@ function CoHostRequestCard({ request, onAccept, onReject, loading, isHighlighted
             {getInitials(request.partner?.fullName || request.partner?.displayName)}
           </div>
         )}
-        <div className="flex-1">
+        <div className="flex-1 flex flex-col">
           <div className="flex justify-between items-start gap-2">
             <div className="flex-1">
               <h4 className="font-semibold text-gray-900 leading-snug">
                 {request.partner?.fullName || request.partner?.displayName || "Utilisateur"}
               </h4>
-              <p className="text-sm text-gray-600 truncate max-w-[240px] sm:max-w-[360px]">{request.partner?.email}</p>
+              <p className="text-sm text-gray-600 truncate">{request.partner?.email}</p>
               
-              {/* Property Info with Image */}
-              <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
-                <div className="flex items-center gap-3">
-                  {request.property?.photos?.[0] && (
-                    <S3Image
-                      src={request.property.photos[0]}
-                      alt="Property"
-                      className="w-16 h-12 rounded-lg object-cover"
-                      fallbackSrc="/placeholder.jpg"
-                    />
-                  )}
-                  <div>
-                    <p className="text-sm font-medium text-green-700">
-                      {request.property?.title || "Titre non disponible"}
-                    </p>
-                    <p className="text-xs text-gray-500 flex items-center">
-                      <MapPinIcon className="w-3 h-3 mr-1" />
-                      {request.property?.localisation?.city || "Localisation non spécifiée"}
-                      {request.property?.localisation?.address && `, ${request.property.localisation.address}`}
-                    </p>
-                  </div>
-                </div>
-              </div>
+              {/* Property info moved below to span full card width */}
             </div>
             <div className="flex flex-col space-y-2 ml-2 min-w-[120px]">
               <button
@@ -118,23 +96,48 @@ function CoHostRequestCard({ request, onAccept, onReject, loading, isHighlighted
               </button>
             </div>
           </div>
-          <div className="flex items-center justify-between mt-3">
-            <p className="text-xs text-gray-500 flex items-center">
-              <CalendarDaysIcon className="w-3 h-3 mr-1" />
-              Demande reçue le {new Date(request.createdAt).toLocaleDateString('fr-FR', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
+          {/* request info moved below property info */}
+        </div>
+      </div>
+      {/* Full-width Property Info */}
+      <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-100 w-full">
+        <div className="flex items-center gap-4">
+          {request.property?.photos?.[0] && (
+            <S3Image
+              src={request.property.photos[0]}
+              alt="Property"
+              className="w-24 h-16 rounded-lg object-cover"
+              fallbackSrc="/placeholder.jpg"
+            />
+          )}
+          <div className="flex-1">
+            <p className="text-sm font-medium text-green-700">
+              {request.property?.title || "Titre non disponible"}
             </p>
-            <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full font-medium flex items-center">
-              <ClockIcon className="w-3 h-3 mr-1" />
-              En attente
-            </span>
+            <p className="text-xs text-gray-600 flex items-center">
+              <MapPinIcon className="w-3 h-3 mr-1" />
+              {request.property?.localisation?.city || "Localisation non spécifiée"}
+              {request.property?.localisation?.address && `, ${request.property.localisation.address}`}
+            </p>
           </div>
         </div>
+      </div>
+      {/* Request meta info under property info */}
+      <div className="flex items-center justify-between mt-3">
+        <p className="text-xs text-gray-500 flex items-center">
+          <CalendarDaysIcon className="w-3 h-3 mr-1" />
+          Demande reçue le {new Date(request.createdAt).toLocaleDateString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })}
+        </p>
+        <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full font-medium flex items-center">
+          <ClockIcon className="w-3 h-3 mr-1" />
+          En attente
+        </span>
       </div>
     </div>
   );
