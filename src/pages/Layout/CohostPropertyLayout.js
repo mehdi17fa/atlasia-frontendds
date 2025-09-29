@@ -22,7 +22,8 @@ export default function CoHostPropertyLayout({
   reviews,
   onCoHostClick,
   propertyId,
-  showReservations = false
+  showReservations = false,
+  requestSent = false
 }) {
   const { user } = useContext(AuthContext);
   const [activeTab, setActiveTab] = useState("reserved");
@@ -216,10 +217,15 @@ export default function CoHostPropertyLayout({
           <div className="text-center">
             <button
               onClick={onCoHostClick}
-              className="bg-green-500 hover:bg-green-600 text-black rounded-2xl px-6 py-3 font-semibold shadow flex items-center justify-center mx-auto"
+              disabled={requestSent}
+              className={`rounded-2xl px-6 py-3 font-semibold shadow flex items-center justify-center mx-auto transition-colors ${
+                requestSent
+                  ? 'bg-gray-200 text-gray-600 cursor-not-allowed'
+                  : 'bg-green-500 hover:bg-green-600 text-black'
+              }`}
             >
               <CheckIcon className="w-5 h-5 mr-2" />
-              Devenir Co-hoster
+              {requestSent ? 'Demande envoyée' : 'Devenir Co-hoster'}
             </button>
           </div>
         </>

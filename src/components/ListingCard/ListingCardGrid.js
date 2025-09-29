@@ -5,7 +5,7 @@ import S3Image from "../S3Image";
 import ImageCarousel from "../ImageCarousel";
 import { useFavorites } from "../../hooks/useFavorites";
 
-export default function ListingCardGrid({ listings, onCardClick, showEditButton = false }) {
+export default function ListingCardGrid({ listings, onCardClick, showEditButton = false, actionButtonText }) {
   const { favorites, isFavorited, toggleFavorite, isAuthenticated } = useFavorites();
   const [visibleCards, setVisibleCards] = useState([]);
   const navigate = useNavigate();
@@ -155,6 +155,18 @@ export default function ListingCardGrid({ listings, onCardClick, showEditButton 
                 </span>
                 <span className="text-sm text-gray-500 leading-tight">/ nuit</span>
               </div>
+
+              {/* Optional action button (e.g., Postuler) */}
+              {actionButtonText && (
+                <div className="mt-3">
+                  <button
+                    onClick={() => onCardClick && onCardClick(listing._id)}
+                    className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                  >
+                    {actionButtonText}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         );

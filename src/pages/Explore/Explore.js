@@ -52,7 +52,7 @@ export default function Explore() {
           if (corsError.code === 'ERR_NETWORK' || corsError.message.includes('CORS')) {
             console.log('⚠️ Axios CORS issue detected, trying direct fetch...');
             
-            const token = localStorage.getItem('accessToken');
+            const token = localStorage.getItem('atlasia_access_token') || localStorage.getItem('accessToken');
             const fetchOptions = {
               method: 'GET',
               credentials: 'include',

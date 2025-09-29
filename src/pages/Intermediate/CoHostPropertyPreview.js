@@ -126,6 +126,7 @@ export default function CoHostPropertyPreview() {
         reviews={property.reviews || []}
         user={user}
         onCoHostClick={handleCoHostClick}
+        requestSent={requestSent}
       />
     </>
   );
