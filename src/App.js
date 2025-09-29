@@ -191,6 +191,8 @@ function App() {
           <Route path="restauration" element={<Restauration />} />
           <Route path="activites" element={<Activites />} />
           <Route path="packages" element={<Packages />} />
+          {/* Package details route for tourist section */}
+          <Route path="packages/:packageId" element={<PackageBooking />} />
         </Route>
 
         <Route path="/search" element={<PropertySearchFlow />} />
