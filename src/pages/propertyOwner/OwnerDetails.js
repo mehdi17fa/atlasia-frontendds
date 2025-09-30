@@ -5,6 +5,7 @@ import { StarIcon } from "@heroicons/react/24/solid";
 import { MapPinIcon, HomeIcon } from "@heroicons/react/24/outline";
 import InitialsAvatar from "../../components/shared/InitialsAvatar";
 import S3Image from "../../components/S3Image";
+import PropertyOptionsMenu from "../../components/shared/PropertyOptionsMenu";
 import { AuthContext } from "../../context/AuthContext";
 
 export default function OwnerDetails() {
@@ -15,6 +16,56 @@ export default function OwnerDetails() {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Property management functions
+  const handlePropertyEdit = (property) => {
+    navigate(`/edit-property/${property._id}`);
+  };
+
+  const handlePropertyDelete = async (property) => {
+    if (window.confirm(`Êtes-vous sûr de vouloir supprimer la propriété "${property.title || 'cette propriété'}" ?`)) {
+      try {
+        const deleteUrl = `/api/property/${property._id}`;
+        console.log('🗑️ Attempting to delete property:', {
+          propertyId: property._id,
+          url: deleteUrl,
+          fullUrl: `${api.defaults.baseURL}${deleteUrl}`,
+          method: 'DELETE'
+        });
+        
+        const response = await api.delete(deleteUrl);
+        
+        console.log('✅ Delete response:', response);
+        
+        if (response.data.success) {
+          // Refresh properties list
+          const updatedProperties = properties.filter(p => p._id !== property._id);
+          setProperties(updatedProperties);
+          // Show success message
+          alert('Propriété supprimée avec succès');
+        } else {
+          throw new Error(response.data.message || 'Erreur lors de la suppression');
+        }
+      } catch (error) {
+        console.error('❌ Error deleting property:', {
+          error: error,
+          response: error.response,
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+          message: error.message
+        });
+        
+        const errorMessage = error.response?.data?.message || error.message || 'Erreur lors de la suppression de la propriété';
+        alert(`Erreur: ${errorMessage} (Status: ${error.response?.status || 'N/A'})`);
+        throw error; // Re-throw to let PropertyOptionsMenu handle it
+      }
+    }
+  };
+
+  const handlePropertyInfo = (property) => {
+    navigate(`/property/${property._id}`);
+  };
 
   useEffect(() => {
     const fetchOwnerAndProperties = async () => {
@@ -204,15 +255,24 @@ export default function OwnerDetails() {
               {properties.map((property) => (
                 <div
                   key={property._id}
-                  className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-                  onClick={() => navigate(`/property/${property._id}`)}
+                  className="relative border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow"
                 >
                   <S3Image
                     src={property.photos?.[0]}
                     alt={property.title}
-                    className="w-full h-48 object-cover"
+                    className="w-full h-48 object-cover cursor-pointer"
                     fallbackSrc="/villa1.jpg"
+                    onClick={() => navigate(`/property/${property._id}`)}
                   />
+                  
+                  {/* Options menu */}
+                  <PropertyOptionsMenu
+                    property={property}
+                    onEdit={handlePropertyEdit}
+                    onDelete={handlePropertyDelete}
+                    onInfo={handlePropertyInfo}
+                  />
+                  
                   <div className="p-4">
                     <h3 className="font-semibold text-lg text-gray-900 mb-2 line-clamp-1">
                       {property.title || 'Propriété sans titre'}

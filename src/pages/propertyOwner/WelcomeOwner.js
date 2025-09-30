@@ -500,8 +500,48 @@ export default function WelcomeOwner() {
               <ListingCardGrid
                 listings={propertiesToShow}
                 onCardClick={handleCardClick}
-                showEditButton={true}
-                actionButtonText="Gérer"
+                showOptionsMenu={true}
+                onPropertyEdit={(property) => navigate(`/edit-property/${property._id}`)}
+                onPropertyDelete={async (property) => {
+                  if (window.confirm(`Êtes-vous sûr de vouloir supprimer la propriété "${property.title || 'cette propriété'}" ?`)) {
+                    try {
+                      const deleteUrl = `/api/property/${property._id}`;
+                      console.log('🗑️ Attempting to delete property:', {
+                        propertyId: property._id,
+                        url: deleteUrl,
+                        fullUrl: `${api.defaults.baseURL}${deleteUrl}`,
+                        method: 'DELETE'
+                      });
+                      
+                      const response = await api.delete(deleteUrl);
+                      
+                      console.log('✅ Delete response:', response);
+                      
+                      if (response.data.success) {
+                        // Refresh properties list
+                        fetchOwnerProperties();
+                        // Show success message
+                        alert('Propriété supprimée avec succès');
+                      } else {
+                        throw new Error(response.data.message || 'Erreur lors de la suppression');
+                      }
+                    } catch (error) {
+                      console.error('❌ Error deleting property:', {
+                        error: error,
+                        response: error.response,
+                        status: error.response?.status,
+                        statusText: error.response?.statusText,
+                        data: error.response?.data,
+                        message: error.message
+                      });
+                      
+                      const errorMessage = error.response?.data?.message || error.message || 'Erreur lors de la suppression de la propriété';
+                      alert(`Erreur: ${errorMessage} (Status: ${error.response?.status || 'N/A'})`);
+                      throw error; // Re-throw to let PropertyOptionsMenu handle it
+                    }
+                  }
+                }}
+                onPropertyInfo={(property) => navigate(`/property/${property._id}`)}
               />
               
               {ownerProperties.length > 6 && (

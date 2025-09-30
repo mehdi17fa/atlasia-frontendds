@@ -360,7 +360,7 @@ export default function MyProperties() {
       {/* Published Properties */}
       <SectionTitle title="Propriétés Publiées" />
       {publishedProperties.length > 0 ? (
-        <ListingCardGrid listings={publishedProperties} showEditButton={true} />
+        <ListingCardGrid listings={publishedProperties} />
       ) : (
         <div className="text-center py-8 bg-gray-50 rounded-lg">
           <div className="text-gray-400 text-4xl mb-2">🏠</div>

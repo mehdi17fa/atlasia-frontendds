@@ -105,7 +105,6 @@ export default function CohostingExplore() {
           <ListingCardGrid 
             listings={properties} 
             onCardClick={handleCardClick}
-            actionButtonText="Postuler"
           />
         </>
       )}

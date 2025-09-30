@@ -1,11 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { FaHeart, FaEdit } from "react-icons/fa";
+import { FaHeart } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import S3Image from "../S3Image";
 import ImageCarousel from "../ImageCarousel";
 import { useFavorites } from "../../hooks/useFavorites";
+import PropertyOptionsMenu from "../shared/PropertyOptionsMenu";
 
-export default function ListingCardGrid({ listings, onCardClick, showEditButton = false, actionButtonText }) {
+export default function ListingCardGrid({ 
+  listings, 
+  onCardClick, 
+  showOptionsMenu = false,
+  onPropertyEdit,
+  onPropertyDelete,
+  onPropertyInfo
+}) {
   const { favorites, isFavorited, toggleFavorite, isAuthenticated } = useFavorites();
   const [visibleCards, setVisibleCards] = useState([]);
   const navigate = useNavigate();
@@ -20,11 +28,6 @@ export default function ListingCardGrid({ listings, onCardClick, showEditButton 
     }
     
     await toggleFavorite(id, 'property');
-  };
-
-  const handleEditProperty = (e, propertyId) => {
-    e.stopPropagation();
-    navigate(`/edit-property/${propertyId}`);
   };
 
   // Animate cards one by one on mount
@@ -53,29 +56,34 @@ export default function ListingCardGrid({ listings, onCardClick, showEditButton 
               ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}
               hover:-translate-y-2`}
           >
+            {/* Options menu - positioned outside the image container */}
+            {showOptionsMenu && (
+              <div className="absolute top-2 right-2 z-20">
+                <PropertyOptionsMenu
+                  property={listing}
+                  onEdit={onPropertyEdit}
+                  onDelete={onPropertyDelete}
+                  onInfo={onPropertyInfo}
+                />
+              </div>
+            )}
+
             {/* Image box with rounded corners and border */}
             <div className="relative bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
-              {/* Heart button (top right) */}
-              <button
-                onClick={(e) => handleToggleFavorite(e, listing._id)}
-                className="absolute top-2 right-2 bg-white bg-opacity-90 backdrop-blur-sm rounded-full p-1.5 shadow-md transform transition hover:scale-110 active:scale-95 z-10"
-              >
-                <FaHeart
-                  className={`w-4 h-4 transition-colors duration-300 ${
-                    isFavorite ? "text-red-500" : "text-gray-400 hover:text-red-400"
-                  }`}
-                />
-              </button>
-
-              {/* Edit button (top left) - only show if showEditButton is true */}
-              {showEditButton && (
-                <button
-                  onClick={(e) => handleEditProperty(e, listing._id)}
-                  className="absolute top-2 left-2 bg-white bg-opacity-90 backdrop-blur-sm rounded-full p-1.5 shadow-md transform transition hover:scale-110 active:scale-95 z-10"
-                  title="Modifier la propriété"
-                >
-                  <FaEdit className="w-4 h-4 text-blue-600 hover:text-blue-700 transition-colors duration-300" />
-                </button>
+              {/* Heart button - only show if options menu is not shown */}
+              {!showOptionsMenu && (
+                <div className="absolute top-2 right-2 z-10">
+                  <button
+                    onClick={(e) => handleToggleFavorite(e, listing._id)}
+                    className="bg-white bg-opacity-90 backdrop-blur-sm rounded-full p-1.5 shadow-md transform transition hover:scale-110 active:scale-95"
+                  >
+                    <FaHeart
+                      className={`w-4 h-4 transition-colors duration-300 ${
+                        isFavorite ? "text-red-500" : "text-gray-400 hover:text-red-400"
+                      }`}
+                    />
+                  </button>
+                </div>
               )}
 
               {/* Image content */}
@@ -156,17 +164,6 @@ export default function ListingCardGrid({ listings, onCardClick, showEditButton 
                 <span className="text-sm text-gray-500 leading-tight">/ nuit</span>
               </div>
 
-              {/* Optional action button (e.g., Postuler) */}
-              {actionButtonText && (
-                <div className="mt-3">
-                  <button
-                    onClick={() => onCardClick && onCardClick(listing._id)}
-                    className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
-                  >
-                    {actionButtonText}
-                  </button>
-                </div>
-              )}
             </div>
           </div>
         );

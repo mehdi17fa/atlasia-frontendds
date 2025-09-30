@@ -5,6 +5,19 @@ import { tokenStorage } from './utils/tokenStorage';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
+// Log API configuration on startup
+console.log('🔧 API Configuration:', {
+  REACT_APP_API_URL: process.env.REACT_APP_API_URL,
+  API_URL: API_URL,
+  isConfigured: !!API_URL
+});
+
+if (!API_URL) {
+  console.error('❌ CRITICAL: REACT_APP_API_URL is not set!');
+  console.error('Please create a .env file with: REACT_APP_API_URL=http://localhost:4000');
+  console.error('Then restart the React development server.');
+}
+
 export const api = axios.create({
   baseURL: API_URL,
   withCredentials: true, // Important for CORS with credentials

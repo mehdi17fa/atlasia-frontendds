@@ -212,7 +212,6 @@ export default function Explore() {
           <ListingCardGrid 
             listings={properties} 
             onCardClick={handleCardClick}
-            actionButtonText={getActionButtonText()}
           />
         </>
       )}
