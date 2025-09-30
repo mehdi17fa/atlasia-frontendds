@@ -271,7 +271,7 @@ export default function BookingRequest() {
     setError(null);
 
     try {
-      // Step 1: Create booking
+      // Step 1: Create booking (critical path)
       const bookingPayload = {
         propertyId,
         checkIn: new Date(localCheckIn).toISOString(),
@@ -301,45 +301,44 @@ export default function BookingRequest() {
         }
       );
 
-      console.log("Booking response:", bookingResponse.data);
+      console.log("Booking response:", bookingResponse.status, bookingResponse.data);
 
-      if (!bookingResponse.data.success) {
-        throw new Error("Booking creation failed");
+      const bookingData = bookingResponse?.data || {};
+      const httpOk = bookingResponse?.status >= 200 && bookingResponse?.status < 300;
+      const createdOk = bookingData.success === true || Boolean(bookingData.bookingId) || Boolean(bookingData.booking && bookingData.booking._id) || Boolean(bookingData._id || bookingData.id);
+      if (!httpOk) {
+        throw new Error(bookingData.message || "Booking creation failed");
+      }
+      if (!createdOk) {
+        console.warn("Booking created (HTTP OK) but response body missing identifiers; proceeding without bookingId");
       }
 
-      const bookingId = bookingResponse.data.bookingId;
+      const bookingId = bookingData.bookingId || bookingData.booking?._id || bookingData._id || bookingData.id || null;
 
       const senderId = bookingData.userId || (localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user"))._id : null);
 
       if (!senderId) {
-        throw new Error("User ID not found");
+        console.warn("User ID not found for conversation; booking created but chat will be skipped");
       }
 
-      // Step 2: Create or get conversation
+      // Step 2 (best-effort): Create conversation
       let conversationId = null;
       try {
-        const conversationPayload = {
-          senderId,
-          receiverId: hostId,
-        };
-
-        console.log("Creating conversation with payload:", conversationPayload);
-        console.log("Attempting POST to:", `${API_BASE_URL}/chat/conversation`);
-
-        const conversationResponse = await axios.post(
-          `${API_BASE_URL}/chat/conversation`,
-          conversationPayload,
-          { headers: { Authorization: `Bearer ${authToken}` } }
-        );
-
-        console.log("Conversation response:", conversationResponse.data);
-        conversationId = conversationResponse.data._id;
+        if (senderId && hostId) {
+          const conversationPayload = { senderId, receiverId: hostId };
+          console.log("Creating conversation with payload:", conversationPayload);
+          const conversationResponse = await axios.post(
+            `${API_BASE_URL}/chat/conversation`,
+            conversationPayload,
+            { headers: { Authorization: `Bearer ${authToken}` } }
+          );
+          conversationId = conversationResponse.data._id;
+        }
       } catch (err) {
-        console.error("Failed to create conversation:", err);
-        console.warn("Proceeding without conversation creation");
+        console.warn("Non-blocking: failed to create conversation", err?.response?.data || err.message);
       }
 
-      // Step 3: Send guestMessage as chat message (if conversationId exists)
+      // Step 3 (best-effort): Send guest message
       if (conversationId) {
         try {
           const messagePayload = {
@@ -347,37 +346,17 @@ export default function BookingRequest() {
             senderId,
             text: `Booking request for property ${propertyId}: ${guestMessage}`,
           };
-
-          console.log("Sending chat message with payload:", messagePayload);
-          console.log("Attempting POST to:", `${API_BASE_URL}/chat/message`);
-
-          const messageResponse = await axios.post(
+          await axios.post(
             `${API_BASE_URL}/chat/message`,
             messagePayload,
             { headers: { Authorization: `Bearer ${authToken}` } }
           );
-
-          console.log("Message response:", messageResponse.data);
         } catch (err) {
-          console.error("Failed to send chat message:", err);
-          console.warn("Proceeding to chat without sending message");
+          console.warn("Non-blocking: failed to send chat message", err?.response?.data || err.message);
         }
       }
 
-      // Step 4: Redirect to chat with updated chatData
-      console.log("Navigating to chat with state:", {
-        chatData: {
-          recipientId: hostId,
-          avatar: hostPhoto || "A",
-          sender: hostName || "Hôte",
-        },
-        conversationId,
-        bookingId,
-        propertyId,
-        guestMessage,
-        message: "Booking request sent successfully!",
-      });
-
+      // Step 4: Always navigate after successful booking
       navigate(`/chat/${hostId}`, {
         state: {
           chatData: {
@@ -394,7 +373,9 @@ export default function BookingRequest() {
       });
     } catch (err) {
       console.error("Booking error:", err);
-      setError(err?.response?.data?.message || "Failed to request booking. Please try again.");
+      const backendMsg = err?.response?.data?.message || err?.response?.data?.error;
+      const friendly = backendMsg || err?.message || "Failed to request booking. Please try again.";
+      setError(friendly);
     } finally {
       setLoading(false);
     }
