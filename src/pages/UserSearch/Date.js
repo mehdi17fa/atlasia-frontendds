@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 const DateSelectionScreens = ({ selectedDestination, onBack }) => {
   const [selectedDates, setSelectedDates] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
-  const [currentMonth, setCurrentMonth] = useState(new Date(2025, 5));
+  const [currentMonth, setCurrentMonth] = useState(new Date());
   const [isRangeSelection, setIsRangeSelection] = useState(false);
   const navigate = useNavigate();
 
@@ -38,6 +38,12 @@ const DateSelectionScreens = ({ selectedDestination, onBack }) => {
 
   const handleDateClick = (dateObj) => {
     if (!dateObj.isCurrentMonth) return;
+    
+    // Disable past dates
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (dateObj.date < today) return;
+    
     const time = dateObj.date.getTime();
     if (isRangeSelection) {
       setSelectedDates((prev) => {
@@ -57,13 +63,22 @@ const DateSelectionScreens = ({ selectedDestination, onBack }) => {
   };
 
   const getDayClassName = (dateObj) => {
-    let className = "w-10 h-10 flex items-center justify-center text-sm cursor-pointer rounded-full ";
+    let className = "w-10 h-10 flex items-center justify-center text-sm rounded-full ";
+    
     if (!dateObj.isCurrentMonth) {
       className += "text-gray-300 ";
-    } else if (isDateSelected(dateObj)) {
-      className += "bg-green-800 text-white font-medium ";
     } else {
-      className += "text-gray-700 hover:bg-gray-100 ";
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const isPastDate = dateObj.date < today;
+      
+      if (isPastDate) {
+        className += "text-gray-300 cursor-not-allowed ";
+      } else if (isDateSelected(dateObj)) {
+        className += "bg-green-800 text-white font-medium cursor-pointer ";
+      } else {
+        className += "text-gray-700 hover:bg-gray-100 cursor-pointer ";
+      }
     }
     return className;
   };
@@ -167,16 +182,22 @@ const DateSelectionScreens = ({ selectedDestination, onBack }) => {
           </div>
 
           <div className="grid grid-cols-7 gap-1 mb-8">
-            {days.map((dateObj, index) => (
-              <button
-                key={index}
-                onClick={() => handleDateClick(dateObj)}
-                className={getDayClassName(dateObj)}
-                disabled={!dateObj.isCurrentMonth}
-              >
-                {dateObj.day}
-              </button>
-            ))}
+            {days.map((dateObj, index) => {
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              const isPastDate = dateObj.isCurrentMonth && dateObj.date < today;
+              
+              return (
+                <button
+                  key={index}
+                  onClick={() => handleDateClick(dateObj)}
+                  className={getDayClassName(dateObj)}
+                  disabled={!dateObj.isCurrentMonth || isPastDate}
+                >
+                  {dateObj.day}
+                </button>
+              );
+            })}
           </div>
         </div>
 

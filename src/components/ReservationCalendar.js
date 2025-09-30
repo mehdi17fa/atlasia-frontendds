@@ -1,7 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-
-const API_BASE_URL = `${process.env.REACT_APP_API_URL}/api`;
+import React, { useState } from 'react';
+import { formatDateToLocalString } from '../utils/dateUtils';
 
 const ReservationCalendar = ({ 
   propertyId, 
@@ -17,29 +15,14 @@ const ReservationCalendar = ({
   const [selectedCheckOut, setSelectedCheckOut] = useState(
     initialCheckOut ? new Date(initialCheckOut) : null
   );
-  const [unavailableDates, setUnavailableDates] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [hoveredDate, setHoveredDate] = useState(null);
 
-  useEffect(() => {
-    fetchPropertyAvailability();
-  }, [propertyId]);
-
-  const fetchPropertyAvailability = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get(`${API_BASE_URL}/property/${propertyId}/availability`);
-      if (response.data && response.data.unavailableDates) {
-        setUnavailableDates(response.data.unavailableDates.map(date => new Date(date)));
-      }
-    } catch (error) {
-      console.error('Error fetching property availability:', error);
-      // If API doesn't exist yet, we'll work without availability data
-      setUnavailableDates([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Note: Availability checking can be added later when the API endpoint is ready
+  // To add property-specific availability:
+  // 1. Uncomment the useEffect and fetchPropertyAvailability function
+  // 2. Add back the unavailableDates state
+  // 3. Update isDateUnavailable to check both past dates and unavailable dates
+  // 4. Make sure the API endpoint /api/property/:id/availability exists
 
   const getDaysInMonth = (date) => {
     const year = date.getFullYear();
@@ -68,13 +51,9 @@ const ReservationCalendar = ({
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    // Past dates are unavailable
-    if (date < today) return true;
-    
-    // Check if date is in unavailable dates
-    return unavailableDates.some(unavailableDate => 
-      date.toDateString() === unavailableDate.toDateString()
-    );
+    // Only past dates are unavailable for now
+    // Property-specific availability can be added later
+    return date < today;
   };
 
   const isDateInRange = (date) => {
@@ -102,18 +81,23 @@ const ReservationCalendar = ({
       if (date > selectedCheckIn) {
         setSelectedCheckOut(date);
       } else if (date < selectedCheckIn) {
+        // If clicking a date before check-in, swap them
         setSelectedCheckOut(selectedCheckIn);
         setSelectedCheckIn(date);
+      } else {
+        // Same date clicked, deselect
+        setSelectedCheckIn(null);
+        setSelectedCheckOut(null);
       }
     }
   };
 
   const handleConfirm = () => {
     if (selectedCheckIn && selectedCheckOut) {
-      onDateSelect(
-        selectedCheckIn.toISOString().split('T')[0],
-        selectedCheckOut.toISOString().split('T')[0]
-      );
+      const checkInStr = formatDateToLocalString(selectedCheckIn);
+      const checkOutStr = formatDateToLocalString(selectedCheckOut);
+      console.log('ReservationCalendar sending dates:', { checkInStr, checkOutStr });
+      onDateSelect(checkInStr, checkOutStr);
     }
   };
 
@@ -146,7 +130,7 @@ const ReservationCalendar = ({
       return `${baseClass} bg-green-100 text-green-700`;
     }
     
-    if (hoveredDate && isDateInRange(date, selectedCheckIn, hoveredDate)) {
+    if (hoveredDate && selectedCheckIn && !selectedCheckOut && date > selectedCheckIn && date < hoveredDate) {
       return `${baseClass} bg-green-50 text-green-600`;
     }
     
@@ -168,16 +152,6 @@ const ReservationCalendar = ({
 
   const dayNames = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 
-  if (loading) {
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
-          <p className="mt-4 text-center">Chargement du calendrier...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

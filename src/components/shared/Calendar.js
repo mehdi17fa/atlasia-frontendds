@@ -37,6 +37,7 @@ export default function Calendar({ value, onChange, mode = "single" }) {
   const [currentYear, setCurrentYear] = useState(initialYear);
   const [viewMode, setViewMode] = useState("day"); // "day" | "month" | "year"
   const [rangeSelecting, setRangeSelecting] = useState(false);
+  const [hoveredDate, setHoveredDate] = useState(null);
 
   // For year selection, show a range around the current year
   const yearRange = [];
@@ -138,7 +139,15 @@ export default function Calendar({ value, onChange, mode = "single" }) {
   function isInRange(day) {
     if (isSingle || !selectedDate[0] || !selectedDate[1]) return false;
     const d = new Date(currentYear, currentMonth, day);
-    return d >= selectedDate[0] && d <= selectedDate[1];
+    return d > selectedDate[0] && d < selectedDate[1];
+  }
+
+  function isHoveredRange(day) {
+    if (isSingle || !selectedDate[0] || selectedDate[1] || !hoveredDate) return false;
+    const d = new Date(currentYear, currentMonth, day);
+    const start = selectedDate[0] < hoveredDate ? selectedDate[0] : hoveredDate;
+    const end = selectedDate[0] < hoveredDate ? hoveredDate : selectedDate[0];
+    return d > start && d < end;
   }
 
   function isRangeStart(day) {
@@ -277,6 +286,7 @@ export default function Calendar({ value, onChange, mode = "single" }) {
             let isStart = false;
             let isEnd = false;
             let isBetween = false;
+            let isHovered = false;
 
             if (isSingle) {
               isSelected =
@@ -295,6 +305,7 @@ export default function Calendar({ value, onChange, mode = "single" }) {
                 isInRange(dayObj.day) &&
                 !isStart &&
                 !isEnd;
+              isHovered = dayObj.isCurrent && isHoveredRange(dayObj.day);
             }
 
             return (
@@ -308,8 +319,16 @@ export default function Calendar({ value, onChange, mode = "single" }) {
                   ${!isSingle && isStart ? "bg-green-800 text-white font-bold" : ""}
                   ${!isSingle && isEnd ? "bg-green-800 text-white font-bold" : ""}
                   ${!isSingle && isBetween ? "bg-green-100 text-green-900 font-bold" : ""}
-                  ${dayObj.isCurrent && !isSelected && !isStart && !isEnd && !isBetween ? "bg-white shadow hover:bg-green-100" : ""}
+                  ${!isSingle && isHovered ? "bg-green-50 text-green-700" : ""}
+                  ${dayObj.isCurrent && !isSelected && !isStart && !isEnd && !isBetween && !isHovered ? "bg-white shadow hover:bg-green-100" : ""}
                   rounded-lg transition`}
+                onMouseEnter={() => {
+                  if (dayObj.isCurrent && !isSingle && selectedDate[0] && !selectedDate[1]) {
+                    const date = new Date(currentYear, currentMonth, dayObj.day);
+                    setHoveredDate(date);
+                  }
+                }}
+                onMouseLeave={() => setHoveredDate(null)}
               >
                 {dayObj.day}
               </button>
