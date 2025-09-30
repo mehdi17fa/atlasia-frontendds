@@ -124,10 +124,10 @@ const S3ImageUpload = ({
       });
       setPreviews([]);
 
-      // Call success callback
+      // Call success callback (pass raw results array for consistency)
       if (onUpload) {
         try {
-          const callbackData = multiple ? results : results[0];
+          const callbackData = multiple ? results : [results[0]];
           onUpload(callbackData);
         } catch (callbackError) {
           console.error("Error in upload callback:", callbackError);
