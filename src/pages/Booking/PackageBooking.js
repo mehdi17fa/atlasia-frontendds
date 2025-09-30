@@ -277,7 +277,17 @@ export default function PackageBooking() {
                           {item.description && (
                             <p className="text-sm text-gray-600">{item.description}</p>
                           )}
-                          <p className="text-sm font-medium text-green-600">{item.price} MAD</p>
+                          <div className="flex items-center space-x-3 mt-1">
+                            <p className="text-sm font-medium text-green-600">{item.price} MAD</p>
+                            {item.scheduledTime && (
+                              <div className="flex items-center text-xs text-blue-600">
+                                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>{item.scheduledTime}</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -304,7 +314,17 @@ export default function PackageBooking() {
                           {item.description && (
                             <p className="text-sm text-gray-600">{item.description}</p>
                           )}
-                          <p className="text-sm font-medium text-green-600">{item.price} MAD</p>
+                          <div className="flex items-center space-x-3 mt-1">
+                            <p className="text-sm font-medium text-green-600">{item.price} MAD</p>
+                            {item.scheduledTime && (
+                              <div className="flex items-center text-xs text-blue-600">
+                                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>{item.scheduledTime}</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))}

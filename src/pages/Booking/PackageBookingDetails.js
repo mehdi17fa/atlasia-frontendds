@@ -314,10 +314,36 @@ const PackageBookingDetails = () => {
             </div>
 
             {/* Services and Activities */}
-            {(packageData?.services?.length > 0 || packageData?.activities?.length > 0) && (
+            {(packageData?.restaurants?.length > 0 || packageData?.services?.length > 0 || packageData?.activities?.length > 0) && (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Services et activités inclus</h2>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Restaurants, Services et Activités Inclus</h2>
                 
+                {packageData.restaurants?.length > 0 && (
+                  <div className="mb-4">
+                    <h3 className="font-medium text-gray-900 mb-2">Restaurants</h3>
+                    <ul className="space-y-2">
+                      {packageData.restaurants.map((restaurant, index) => (
+                        <li key={index} className="flex flex-col text-gray-600">
+                          <div className="flex items-center">
+                            <svg className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                            <span>{restaurant.name} - {restaurant.price} MAD</span>
+                          </div>
+                          {restaurant.scheduledTime && (
+                            <div className="flex items-center ml-6 mt-1 text-xs text-blue-600">
+                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              <span>Réservé pour {restaurant.scheduledTime}</span>
+                            </div>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
                 {packageData.services?.length > 0 && (
                   <div className="mb-4">
                     <h3 className="font-medium text-gray-900 mb-2">Services</h3>
@@ -339,11 +365,21 @@ const PackageBookingDetails = () => {
                     <h3 className="font-medium text-gray-900 mb-2">Activités</h3>
                     <ul className="space-y-2">
                       {packageData.activities.map((activity, index) => (
-                        <li key={index} className="flex items-center text-gray-600">
-                          <svg className="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                          {activity.name}
+                        <li key={index} className="flex flex-col text-gray-600">
+                          <div className="flex items-center">
+                            <svg className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                            <span>{activity.name} - {activity.price} MAD</span>
+                          </div>
+                          {activity.scheduledTime && (
+                            <div className="flex items-center ml-6 mt-1 text-xs text-blue-600">
+                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              <span>Prévu à {activity.scheduledTime}</span>
+                            </div>
+                          )}
                         </li>
                       ))}
                     </ul>

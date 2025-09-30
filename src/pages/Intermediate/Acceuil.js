@@ -186,7 +186,7 @@ const PackageCard = ({ package: pkg }) => {
         </div>
 
         <button
-          onClick={() => navigate(`/package/${pkg._id}`)}
+          onClick={() => navigate(`/edit-package/${pkg._id}`)}
           className="text-green-600 hover:text-green-700 text-sm font-medium"
         >
           Voir détails

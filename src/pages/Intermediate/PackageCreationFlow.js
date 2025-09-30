@@ -526,6 +526,14 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
                               <div className="flex-1 min-w-0">
                                 <div className="font-medium text-gray-900 truncate">{item.name}</div>
                                 <div className="text-sm text-gray-600 truncate">{item.price} MAD</div>
+                                {item.scheduledTime && (
+                                  <div className="text-xs text-blue-600 mt-1 flex items-center">
+                                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    {item.scheduledTime}
+                                  </div>
+                                )}
                               </div>
                               <button onClick={() => removeItem('restaurants', index)} className="text-red-600 bg-red-100 hover:bg-red-200 rounded-md px-2 py-1 text-xs font-medium">Retirer</button>
                             </div>
@@ -547,6 +555,14 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
                               <div className="flex-1 min-w-0">
                                 <div className="font-medium text-gray-900 truncate">{item.name}</div>
                                 <div className="text-sm text-gray-600 truncate">{item.price} MAD</div>
+                                {item.scheduledTime && (
+                                  <div className="text-xs text-blue-600 mt-1 flex items-center">
+                                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    {item.scheduledTime}
+                                  </div>
+                                )}
                               </div>
                               <button onClick={() => removeItem('activities', index)} className="text-red-600 bg-red-100 hover:bg-red-200 rounded-md px-2 py-1 text-xs font-medium">Retirer</button>
                             </div>
@@ -832,10 +848,10 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
 
 // Item Section Component with inline editing
 const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditItem, isExpanded, onToggleExpanded }) => {
-  const [newItem, setNewItem] = useState({ name: '', description: '', price: '', thumbnail: '' });
+  const [newItem, setNewItem] = useState({ name: '', description: '', price: '', thumbnail: '', scheduledTime: '' });
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
-  const [editingItem, setEditingItem] = useState({ name: '', description: '', price: '', thumbnail: '' });
+  const [editingItem, setEditingItem] = useState({ name: '', description: '', price: '', thumbnail: '', scheduledTime: '' });
 
   // Auto-show add form when section becomes expanded
   useEffect(() => {
@@ -848,7 +864,7 @@ const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditIt
 
   const handleAdd = () => {
     onAddItem(category, newItem);
-    setNewItem({ name: '', description: '', price: '', thumbnail: '' });
+    setNewItem({ name: '', description: '', price: '', thumbnail: '', scheduledTime: '' });
     setShowAddForm(false);
     onToggleExpanded(category, false); // Collapse the section after adding
   };
@@ -869,19 +885,19 @@ const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditIt
 
   const cancelEditing = () => {
     setEditingIndex(null);
-    setEditingItem({ name: '', description: '', price: '', thumbnail: '' });
+    setEditingItem({ name: '', description: '', price: '', thumbnail: '', scheduledTime: '' });
   };
 
   const handleCancelAdd = () => {
     setShowAddForm(false);
-    setNewItem({ name: '', description: '', price: '', thumbnail: '' });
+    setNewItem({ name: '', description: '', price: '', thumbnail: '', scheduledTime: '' });
     onToggleExpanded(category, false); // Collapse the section when canceling
   };
 
   const saveEdit = () => {
     onEditItem(category, editingIndex, editingItem);
     setEditingIndex(null);
-    setEditingItem({ name: '', description: '', price: '', thumbnail: '' });
+    setEditingItem({ name: '', description: '', price: '', thumbnail: '', scheduledTime: '' });
   };
 
   return (
@@ -933,6 +949,17 @@ const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditIt
                     step="0.01"
                   />
                   <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Heure de Réservation (Optionnel)</label>
+                    <input
+                      type="time"
+                      value={editingItem.scheduledTime}
+                      onChange={(e) => setEditingItem({...editingItem, scheduledTime: e.target.value})}
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                      placeholder="HH:MM"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Ex: 14:30 pour 2:30 PM</p>
+                  </div>
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Image</label>
                     <S3ImageUpload
                       onUpload={(url) => setEditingItem({...editingItem, thumbnail: url})}
@@ -974,6 +1001,16 @@ const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditIt
                         <p className="text-sm text-gray-600 mt-1">{item.description}</p>
                       )}
                       <p className="text-sm font-medium text-green-600 mt-1">{item.price} MAD</p>
+                      {item.scheduledTime && (
+                        <p className="text-sm text-blue-600 mt-1">
+                          <span className="inline-flex items-center">
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {item.scheduledTime}
+                          </span>
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="flex space-x-2 ml-4">
@@ -1023,6 +1060,17 @@ const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditIt
             min="0"
             step="0.01"
           />
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Heure de Réservation (Optionnel)</label>
+            <input
+              type="time"
+              value={newItem.scheduledTime}
+              onChange={(e) => setNewItem({...newItem, scheduledTime: e.target.value})}
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+              placeholder="HH:MM"
+            />
+            <p className="text-xs text-gray-500 mt-1">Ex: 14:30 pour 2:30 PM - Laissez vide si flexible</p>
+          </div>
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">Image (Optionnel)</label>
             <S3ImageUpload
@@ -1084,9 +1132,19 @@ const PackagePreview = ({ formData, availableProperties }) => {
             {formData.restaurants.length > 0 && (
               <div>
                 <h5 className="font-medium text-green-600">Restaurants ({formData.restaurants.length})</h5>
-                <ul className="text-sm text-gray-600 mt-1">
+                <ul className="text-sm text-gray-600 mt-1 space-y-1">
                   {formData.restaurants.map((item, index) => (
-                    <li key={index}>{item.name} - {item.price} MAD</li>
+                    <li key={index} className="flex flex-col">
+                      <span>{item.name} - {item.price} MAD</span>
+                      {item.scheduledTime && (
+                        <span className="text-xs text-blue-600 flex items-center mt-0.5">
+                          <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          {item.scheduledTime}
+                        </span>
+                      )}
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -1095,9 +1153,19 @@ const PackagePreview = ({ formData, availableProperties }) => {
             {formData.activities.length > 0 && (
               <div>
                 <h5 className="font-medium text-green-600">Activities ({formData.activities.length})</h5>
-                <ul className="text-sm text-gray-600 mt-1">
+                <ul className="text-sm text-gray-600 mt-1 space-y-1">
                   {formData.activities.map((item, index) => (
-                    <li key={index}>{item.name} - {item.price} MAD</li>
+                    <li key={index} className="flex flex-col">
+                      <span>{item.name} - {item.price} MAD</span>
+                      {item.scheduledTime && (
+                        <span className="text-xs text-blue-600 flex items-center mt-0.5">
+                          <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          {item.scheduledTime}
+                        </span>
+                      )}
+                    </li>
                   ))}
                 </ul>
               </div>
