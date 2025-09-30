@@ -257,23 +257,23 @@ export default function SearchResultsPage() {
       <div className="transition duration-300 ease-in-out opacity-100">
         {/* Desktop Header */}
         <div className="hidden md:flex items-center justify-between px-6 py-4 bg-white shadow-sm sticky top-0 z-10">
-          <div className="flex items-center space-x-4">
+          {/* Left: Back arrow only */}
+          <div className="flex items-center space-x-2">
             <button
               onClick={() => navigate('/')}
-              className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+              className="flex items-center px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Retour à l'accueil"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
-              <span className="text-sm font-medium">Retour à l'accueil</span>
             </button>
+          </div>
+          {/* Center: ATLASIA branding */}
+          <div className="flex-1 flex items-center justify-center">
             <h1 className="text-2xl font-bold text-green-800">ATLASIA</h1>
           </div>
-          <div className="flex-1 max-w-3xl mx-10">
-            <div className="flex items-center justify-center">
-              <h2 className="text-xl font-semibold text-gray-700">Résultats de recherche</h2>
-            </div>
-          </div>
+          {/* Right: search button and results title repositioned near cards */}
           <div className="flex gap-4">
             <button
               onClick={() => navigate('/search')}
@@ -324,10 +324,13 @@ export default function SearchResultsPage() {
           </div>
         </div>
 
-        {/* Search info */}
+        {/* Search info and page title row */}
         <div className="px-4 py-4">
           <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-gray-700">Résultats de recherche</h2>
+            </div>
+            <div className="flex items-center space-x-4 mt-3">
               <div>
                 <span className="text-sm text-gray-500">Destination:</span>
                 <span className="ml-2 font-medium">{searchParams.destination || "Toutes les destinations"}</span>

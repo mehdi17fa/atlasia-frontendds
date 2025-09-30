@@ -277,8 +277,9 @@ export default function BookingRequest() {
       return;
     }
 
-    // Try to get token from state first, then from localStorage as fallback
+    // Try to get token from state first, then from localStorage as fallback (support both keys)
     const token = authToken || 
+                 localStorage.getItem("atlasia_access_token") ||
                  localStorage.getItem("accessToken");
     
     console.log("Auth Debug:", {
@@ -357,7 +358,7 @@ export default function BookingRequest() {
           const conversationResponse = await axios.post(
             `${API_BASE_URL}/chat/conversation`,
             conversationPayload,
-            { headers: { Authorization: `Bearer ${authToken}` } }
+            { headers: { Authorization: `Bearer ${token}` } }
           );
           conversationId = conversationResponse.data._id;
         }
@@ -376,7 +377,7 @@ export default function BookingRequest() {
           await axios.post(
             `${API_BASE_URL}/chat/message`,
             messagePayload,
-            { headers: { Authorization: `Bearer ${authToken}` } }
+            { headers: { Authorization: `Bearer ${token}` } }
           );
         } catch (err) {
           console.warn("Non-blocking: failed to send chat message", err?.response?.data || err.message);

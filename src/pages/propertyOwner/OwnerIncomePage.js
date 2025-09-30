@@ -31,7 +31,7 @@ const OwnerIncomePage = () => {
         hasUserId: !!user?._id,
         user: user
       });
-      toast.error('Please log in to view your income');
+      toast.error('Veuillez vous connecter pour voir vos revenus');
       navigate('/login');
       return;
     }
@@ -61,23 +61,23 @@ const OwnerIncomePage = () => {
       if (response.data.success) {
         setIncomeData(response.data);
         if (response.data.bookingCount === 0) {
-          const period = startDate && endDate ? `from ${startDate} to ${endDate}` : 'all time';
-          toast(`No confirmed or completed bookings found for ${period}.`, {
+          const period = startDate && endDate ? `du ${startDate} au ${endDate}` : 'toute la période';
+          toast(`Aucune réservation confirmée ou terminée trouvée pour ${period}.`, {
             icon: 'ℹ️',
             style: { background: '#fff', color: '#333' },
           });
         }
       } else {
-        setError('Failed to fetch income data');
-        toast.error('Failed to fetch income data');
+        setError('Échec du chargement des revenus');
+        toast.error('Échec du chargement des revenus');
       }
     } catch (err) {
       console.error('Error fetching income:', err);
-      const errorMessage = err.response?.data?.message || 'An unexpected error occurred';
+      const errorMessage = err.response?.data?.message || 'Une erreur inattendue est survenue';
       setError(errorMessage);
       if (err.response?.status === 401 || err.response?.status === 403) {
         console.log('🔐 Token invalid or expired, redirecting to login');
-        toast.error('Session expired, please log in again');
+        toast.error('Session expirée, veuillez vous reconnecter');
         // Use the proper logout function instead of manual clearing
         if (window.authLogout) {
           window.authLogout();
@@ -89,7 +89,7 @@ const OwnerIncomePage = () => {
         navigate('/login');
       } else if (err.response?.status === 500) {
         console.log('⚠️ Server error:', err.response?.data);
-        toast.error('Unable to fetch income due to a server error. Please try again later.');
+        toast.error("Impossible de récupérer les revenus en raison d'une erreur serveur. Veuillez réessayer plus tard.");
       } else {
         toast.error(errorMessage);
       }
@@ -169,16 +169,16 @@ const OwnerIncomePage = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col items-center">
         {/* Section Title */}
         <div className="mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Vos Revenus</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Vos revenus</h1>
           <p className="text-gray-600">Consultez vos revenus et statistiques de réservation</p>
         </div>
 
       {/* Date Filter */}
-      <div className="w-full max-w-lg bg-white rounded-lg shadow-md p-6 mb-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Filter by Stay Dates</h3>
+      <div className="w-full max-w-lg bg-white rounded-lg shadow-md p-6 mb-6 text-center">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">Filtrer par dates de séjour</h3>
         <div className="flex flex-col sm:flex-row gap-4">
           <input
             type="date"
@@ -202,37 +202,37 @@ const OwnerIncomePage = () => {
             onClick={applyFilter}
             className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition duration-200"
           >
-            Apply Filter
+            Appliquer le filtre
           </button>
           <button
             onClick={resetFilter}
             className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300 transition duration-200"
           >
-            Reset
+            Réinitialiser
           </button>
         </div>
       </div>
 
       {/* Income Summary */}
       {loading && (
-        <div className="text-gray-600 text-lg">Loading income data...</div>
+        <div className="text-gray-600 text-lg">Chargement des revenus...</div>
       )}
       {error && (
         <div className="text-red-600 text-lg bg-red-100 p-4 rounded-md">
-          Error: {error}
+          Erreur : {error}
         </div>
       )}
       {!loading && !error && (
-        <div className="w-full max-w-lg bg-white rounded-lg shadow-md p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Total Income</h2>
+        <div className="w-full max-w-lg bg-white rounded-lg shadow-md p-6 mb-6 text-center">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Revenu total</h2>
           <p className="text-3xl font-bold text-green-600">
-            ${incomeData.income.toLocaleString()}
+            {incomeData.income.toLocaleString('fr-MA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD
           </p>
           <p className="text-gray-600 mt-2">
-            From {incomeData.bookingCount} booking{incomeData.bookingCount !== 1 ? 's' : ''}
+            Sur {incomeData.bookingCount} réservation{incomeData.bookingCount !== 1 ? 's' : ''}
           </p>
           <p className="text-gray-500 text-sm mt-2">
-            Income is based on subtotal (base rental amount before fees).
+            Le revenu est basé sur le sous-total (montant de location avant frais).
           </p>
         </div>
       )}
@@ -240,7 +240,7 @@ const OwnerIncomePage = () => {
       {/* Property Breakdown */}
       {!loading && !error && incomeData.properties?.length > 0 && (
         <div className="w-full max-w-lg bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Income by Property</h2>
+          <h2 className="text-xl font-semibold text-gray-800 mb-4 text-center">Revenu par propriété</h2>
           <div className="space-y-4">
             {incomeData.properties.map((property) => (
               <div
@@ -250,11 +250,11 @@ const OwnerIncomePage = () => {
                 <div>
                   <p className="text-gray-800 font-medium">{property.propertyTitle}</p>
                   <p className="text-gray-600 text-sm">
-                    {property.bookingCount} booking{property.bookingCount !== 1 ? 's' : ''}
+                    {property.bookingCount} réservation{property.bookingCount !== 1 ? 's' : ''}
                   </p>
                 </div>
                 <p className="text-green-600 font-bold">
-                  ${property.propertyIncome.toLocaleString()}
+                  {property.propertyIncome.toLocaleString('fr-MA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD
                 </p>
               </div>
             ))}
@@ -265,12 +265,12 @@ const OwnerIncomePage = () => {
       {/* Next Steps: Link to detailed bookings */}
       <div className="mt-6 text-center">
         <p className="text-gray-600">
-          To view detailed bookings, check your{' '}
+          Pour voir les réservations détaillées, consultez vos{' '}
           <a
             href="/owner/bookings?status=confirmed,completed"
             className="text-green-600 hover:text-green-800 underline"
           >
-            booking requests
+            demandes de réservation
           </a>.
         </p>
       </div>
