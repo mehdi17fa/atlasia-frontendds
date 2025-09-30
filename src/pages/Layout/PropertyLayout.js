@@ -39,8 +39,21 @@ export default function PropertyLayout({
   const isLoggedIn = !!user && !!(token || fallbackToken);
   const authToken = token || fallbackToken;
 
-  const [checkIn, setCheckIn] = useState('');
-  const [checkOut, setCheckOut] = useState('');
+  // Auto-fill dates with tomorrow and day after
+  const getTomorrow = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0];
+  };
+  
+  const getDayAfter = () => {
+    const dayAfter = new Date();
+    dayAfter.setDate(dayAfter.getDate() + 2);
+    return dayAfter.toISOString().split('T')[0];
+  };
+
+  const [checkIn, setCheckIn] = useState(getTomorrow());
+  const [checkOut, setCheckOut] = useState(getDayAfter());
   const [guests, setGuests] = useState(1);
   const [error, setError] = useState(null);
   const [showReviewForm, setShowReviewForm] = useState(false);
@@ -409,37 +422,83 @@ export default function PropertyLayout({
       <div className="border rounded-2xl p-4 shadow-sm mx-4 md:mx-0">
         <h2 className="font-semibold text-lg mb-3">Book This Property</h2>
         {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Check-in</label>
-            <input
-              type="date"
-              value={checkIn}
-              onChange={(e) => setCheckIn(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-              min={new Date().toISOString().split('T')[0]}
-            />
+        
+        {/* Reservation Widget - Horizontal Layout */}
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="flex flex-col lg:flex-row items-center gap-4">
+            {/* Dates Section */}
+            <div className="flex-1 flex flex-col sm:flex-row gap-4 w-full">
+              {/* Check-in */}
+              <div className="flex-1">
+                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">CHECK-IN</label>
+                <input
+                  type="date"
+                  value={checkIn}
+                  onChange={(e) => setCheckIn(e.target.value)}
+                  className="w-full text-lg font-medium text-gray-900 border-none outline-none bg-transparent"
+                  min={new Date().toISOString().split('T')[0]}
+                />
+              </div>
+              
+              {/* Divider */}
+              <div className="hidden sm:block w-px bg-gray-200"></div>
+              
+              {/* Check-out */}
+              <div className="flex-1">
+                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">CHECKOUT</label>
+                <input
+                  type="date"
+                  value={checkOut}
+                  onChange={(e) => setCheckOut(e.target.value)}
+                  className="w-full text-lg font-medium text-gray-900 border-none outline-none bg-transparent"
+                  min={checkIn || new Date().toISOString().split('T')[0]}
+                />
+              </div>
+              
+              {/* Divider */}
+              <div className="hidden sm:block w-px bg-gray-200"></div>
+              
+              {/* Guests */}
+              <div className="flex-1">
+                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">GUESTS</label>
+                <div className="flex items-center">
+                  <input
+                    type="number"
+                    min="1"
+                    value={guests}
+                    onChange={(e) => setGuests(Number(e.target.value))}
+                    className="w-full text-lg font-medium text-gray-900 border-none outline-none bg-transparent"
+                  />
+                  <span className="text-gray-500 ml-1">guest{guests > 1 ? 's' : ''}</span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Reserve Button */}
+            <div className="w-full lg:w-auto">
+              <button
+                onClick={handleBooking}
+                disabled={!isLoggedIn || !checkIn || !checkOut || guests < 1}
+                className={`w-full lg:w-auto px-8 py-4 rounded-xl text-white font-semibold text-lg transition-all ${
+                  !isLoggedIn 
+                    ? 'bg-gray-300 cursor-not-allowed opacity-50'
+                    : (!checkIn || !checkOut || guests < 1)
+                      ? 'bg-orange-500 hover:bg-orange-600 shadow-md hover:shadow-lg'
+                      : 'bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 shadow-md hover:shadow-lg'
+                }`}
+              >
+                {!isLoggedIn 
+                  ? '🔒 Connectez-vous pour réserver'
+                  : (!checkIn || !checkOut || guests < 1)
+                    ? '📅 Sélectionnez vos dates et invités'
+                    : 'Reserve'
+                }
+              </button>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Check-out</label>
-            <input
-              type="date"
-              value={checkOut}
-              onChange={(e) => setCheckOut(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-              min={checkIn || new Date().toISOString().split('T')[0]}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Guests</label>
-            <input
-              type="number"
-              min="1"
-              value={guests}
-              onChange={(e) => setGuests(Number(e.target.value))}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-            />
-          </div>
+          
+          {/* Disclaimer */}
+          <p className="text-gray-500 text-sm mt-3 text-center">You won't be charged yet</p>
         </div>
       </div>
       <div className="mx-4 md:mx-0">

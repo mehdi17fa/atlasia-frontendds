@@ -1,0 +1,130 @@
+---
+alwaysApply: true
+---
+# Architecture Guidelines
+
+### Domain Boundaries
+Default to a **modular, service-oriented architecture**:  
+- Users/Auth  
+- Listings  
+- Search  
+- Availability  
+- Pricing  
+- Reservations  
+- Payments  
+- Messaging  
+- Reviews  
+- Notifications  
+
+### Data
+- Favor normalized core tables  
+- Denormalize selectively for read paths  
+- Design idempotent writes for reservation and payment flows  
+- Use optimistic locking or transactional guarantees around availability and booking  
+
+### Availability
+- Store canonical availability and pricing rules  
+- Derive fast read models for search  
+- Guard against double-booking with **atomic operations** and **unique constraints** on `(listing_id, start_date, end_date)`
+
+### Payments
+- Abstract gateway  
+- Implement webhooks with:  
+  - Signature verification  
+  - Retry/backoff  
+  - Idempotency keys  
+- Persist event logs  
+
+### Observability
+- Add structured logs, metrics, and traces on all critical paths:  
+  - Search  
+  - Quote  
+  - Book  
+  - Pay  
+- Ship error details with **correlation IDs**
+
+### Security
+- Enforce **authz policies per domain**  
+- Validate inputs at boundaries  
+- Protect PII  
+- Follow least privilege and secret management best practices  
+
+---
+
+# Bug Fixing Protocol
+
+1. Reproduce from reported steps or logs; if missing, infer from failing tests or recent diffs. Capture a failing test first.  
+2. Scope the impact: affected module, surface, data, and side effects.  
+3. Implement the **smallest safe change**; prefer local fixes over broad refactors unless warranted.  
+4. Add regression tests at the lowest layer demonstrating the bug; include edge cases around:  
+   - Dates  
+   - Time zones  
+   - Currency rounding  
+   - Race conditions in booking  
+5. Document the root cause and mitigation notes in PR description or code comments.  
+
+---
+
+# Development Workflow
+
+- When creating features:  
+  - Write a brief plan with acceptance criteria, data changes, and risk areas  
+  - Generate/update migrations and seeds  
+  - Implement with tests  
+  - Run type checks and linters  
+  - Validate via local scenarios  
+
+- Prefer **incremental PRs** with clear diffs; keep changeset atomic per domain.  
+
+- For search and ranking:  
+  - Separate retrieval (filters/facets) from ranking logic  
+  - Ensure index updates on listing or availability changes  
+
+---
+
+# Prompt Usage Inside Cursor
+
+- Use `@files` and `@folders` to add **precise context**  
+- Avoid vague, codebase-wide edits unless in **Agent Mode** with an explicit plan  
+- If user references “bugs I told you about”:  
+  - Retrieve most recent chat context and touched files  
+  - Link changes to those defects and include test coverage  
+
+- When uncertain:  
+  - Request or search for exact file via `@filename`  
+  - Or use drag-and-drop context to prevent hallucinations  
+
+---
+
+# Coding Standards
+
+- Maintain consistency with existing patterns and framework conventions  
+- Add adapters when integrating new libraries  
+- Include docstrings and usage comments for public functions and API handlers  
+- Validate inputs at boundaries with clear error messages  
+- Ensure deterministic:  
+  - Date/time handling (**UTC, explicit time zones**)  
+  - Currency math (**decimal/fixed**)  
+
+---
+
+# Guardrails
+
+- Never perform destructive bulk edits without a clear plan and tests  
+- Do not invent files or APIs; if needed, create scaffolding in small steps with stubs and TODOs  
+- Prefer precise diffs and avoid context flooding  
+- Only attach minimal relevant files/rules to each action  
+
+---
+
+# Outputs
+
+For each task, produce:  
+- A short plan  
+- Code diffs  
+- Tests  
+- Verification note (how to run, what to expect)  
+
+For bug fixes, include:  
+- Root cause  
+- Regression test proof  
