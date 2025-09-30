@@ -5,6 +5,79 @@ import { api } from '../../api';
 import S3Image from '../../components/S3Image';
 import S3ImageUpload from '../../components/S3ImageUpload';
 
+// Helpers: availability day computations (module scope so all components can use them)
+// Return a Set of allowed weekday indices 0..6 (0=Lun ... 6=Dim)
+export const normalizePropertyAllowedDays = (property) => {
+  if (!property) return new Set([0,1,2,3,4,5,6]);
+  const fromStrings = property.availabilityDays || property.availableDays || property.daysAvailable;
+  const fromObj = property.availability?.days || property.availability?.daysOfWeek;
+  let raw = fromStrings || fromObj || [0,1,2,3,4,5,6];
+  const map = { mon:0, monday:0, tue:1, tuesday:1, wed:2, wednesday:2, thu:3, thursday:3, fri:4, friday:4, sat:5, saturday:5, sun:6, sunday:6 };
+  const result = new Set();
+  (Array.isArray(raw) ? raw : [raw]).forEach((d) => {
+    if (typeof d === 'number') {
+      if (d >= 0 && d <= 6) result.add(d);
+    } else if (typeof d === 'string') {
+      const key = d.trim().toLowerCase();
+      const short = key.slice(0,3);
+      if (map[key] !== undefined) result.add(map[key]);
+      else if (map[short] !== undefined) result.add(map[short]);
+    }
+  });
+  return result.size ? result : new Set([0,1,2,3,4,5,6]);
+};
+
+// Compute weekday indices present in a date range (inclusive)
+export const getRangeDays = (start, end) => {
+  if (!start || !end) return new Set([0,1,2,3,4,5,6]);
+  try {
+    const s = new Date(start);
+    const e = new Date(end);
+    if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime()) || s > e) return new Set([0,1,2,3,4,5,6]);
+    const set = new Set();
+    const cur = new Date(s);
+    while (cur <= e) {
+      const jsDay = cur.getDay(); // 0=Sun..6=Sat
+      const idx = jsDay === 0 ? 6 : jsDay - 1; // 0=Lun..6=Dim
+      set.add(idx);
+      cur.setDate(cur.getDate() + 1);
+    }
+    return set;
+  } catch {
+    return new Set([0,1,2,3,4,5,6]);
+  }
+};
+
+// Format an array of ISO date strings into compact French ranges
+export const formatDatesAsRanges = (isoDates) => {
+  if (!Array.isArray(isoDates) || isoDates.length === 0) return '';
+  // unique + sort
+  const dates = Array.from(new Set(isoDates)).sort();
+  const toLocale = (iso) => new Date(iso).toLocaleDateString();
+  const ranges = [];
+  let start = dates[0];
+  let prev = dates[0];
+  const isNextDay = (a, b) => {
+    const da = new Date(a);
+    const db = new Date(b);
+    const next = new Date(da);
+    next.setDate(da.getDate() + 1);
+    return next.toISOString().slice(0,10) === b;
+  };
+  for (let i = 1; i < dates.length; i++) {
+    const cur = dates[i];
+    if (!isNextDay(prev, cur)) {
+      ranges.push([start, prev]);
+      start = cur;
+    }
+    prev = cur;
+  }
+  ranges.push([start, prev]);
+  return ranges
+    .map(([s, e]) => (s === e ? `${toLocale(s)}` : `${toLocale(s)} → ${toLocale(e)}`))
+    .join(', ');
+};
+
 const CreatePackageForm = ({ onSuccess, onCancel }) => {
   const navigate = useNavigate();
   const { token } = useContext(AuthContext);
@@ -350,6 +423,8 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
     'Réviser & Publier'
   ];
 
+  // removed old weekday helpers (we now use concrete date selection)
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-28">
@@ -534,6 +609,11 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
                                     {item.scheduledTime}
                                   </div>
                                 )}
+                                {item.availableDates && item.availableDates.length > 0 && (
+                                  <div className="text-xs text-green-700 mt-1">
+                                    Dates: {formatDatesAsRanges(item.availableDates)}
+                                  </div>
+                                )}
                               </div>
                               <button onClick={() => removeItem('restaurants', index)} className="text-red-600 bg-red-100 hover:bg-red-200 rounded-md px-2 py-1 text-xs font-medium">Retirer</button>
                             </div>
@@ -563,6 +643,11 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
                                     {item.scheduledTime}
                                   </div>
                                 )}
+                                {item.availableDates && item.availableDates.length > 0 && (
+                                  <div className="text-xs text-green-700 mt-1">
+                                    Dates: {formatDatesAsRanges(item.availableDates)}
+                                  </div>
+                                )}
                               </div>
                               <button onClick={() => removeItem('activities', index)} className="text-red-600 bg-red-100 hover:bg-red-200 rounded-md px-2 py-1 text-xs font-medium">Retirer</button>
                             </div>
@@ -584,6 +669,11 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
                               <div className="flex-1 min-w-0">
                                 <div className="font-medium text-gray-900 truncate">{item.name}</div>
                                 <div className="text-sm text-gray-600 truncate">{item.price} MAD</div>
+                                {item.availableDates && item.availableDates.length > 0 && (
+                                  <div className="text-xs text-green-700 mt-1">
+                                    Dates: {formatDatesAsRanges(item.availableDates)}
+                                  </div>
+                                )}
                               </div>
                               <button onClick={() => removeItem('services', index)} className="text-red-600 bg-red-100 hover:bg-red-200 rounded-md px-2 py-1 text-xs font-medium">Retirer</button>
                             </div>
@@ -606,6 +696,8 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
                 onEditItem={editItem}
                 isExpanded={expandedSection === 'restaurants'}
                 onToggleExpanded={handleToggleExpanded}
+                availableProperties={availableProperties}
+                pkgForm={formData}
               />
               
               {/* Activities */}
@@ -618,6 +710,8 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
                 onEditItem={editItem}
                 isExpanded={expandedSection === 'activities'}
                 onToggleExpanded={handleToggleExpanded}
+                availableProperties={availableProperties}
+                pkgForm={formData}
               />
               
               {/* Services */}
@@ -630,6 +724,8 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
                 onEditItem={editItem}
                 isExpanded={expandedSection === 'services'}
                 onToggleExpanded={handleToggleExpanded}
+                availableProperties={availableProperties}
+                pkgForm={formData}
               />
             </div>
           </div>
@@ -847,11 +943,19 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
 };
 
 // Item Section Component with inline editing
-const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditItem, isExpanded, onToggleExpanded }) => {
-  const [newItem, setNewItem] = useState({ name: '', description: '', price: '', thumbnail: '', scheduledTime: '' });
+const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditItem, isExpanded, onToggleExpanded, availableProperties = [], pkgForm = {} }) => {
+  const [newItem, setNewItem] = useState({ name: '', description: '', price: '', thumbnail: '', scheduledTime: '', availableDates: [] });
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
-  const [editingItem, setEditingItem] = useState({ name: '', description: '', price: '', thumbnail: '', scheduledTime: '' });
+  const [editingItem, setEditingItem] = useState({ name: '', description: '', price: '', thumbnail: '', scheduledTime: '', availableDates: [] });
+  const [tempDateAdd, setTempDateAdd] = useState('');
+  const [tempDateEdit, setTempDateEdit] = useState('');
+  const [dateModeAdd, setDateModeAdd] = useState('single'); // 'single' | 'range'
+  const [dateModeEdit, setDateModeEdit] = useState('single');
+  const [rangeStartAdd, setRangeStartAdd] = useState('');
+  const [rangeEndAdd, setRangeEndAdd] = useState('');
+  const [rangeStartEdit, setRangeStartEdit] = useState('');
+  const [rangeEndEdit, setRangeEndEdit] = useState('');
 
   // Auto-show add form when section becomes expanded
   useEffect(() => {
@@ -864,7 +968,7 @@ const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditIt
 
   const handleAdd = () => {
     onAddItem(category, newItem);
-    setNewItem({ name: '', description: '', price: '', thumbnail: '', scheduledTime: '' });
+    setNewItem({ name: '', description: '', price: '', thumbnail: '', scheduledTime: '', availableDates: [] });
     setShowAddForm(false);
     onToggleExpanded(category, false); // Collapse the section after adding
   };
@@ -885,7 +989,7 @@ const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditIt
 
   const cancelEditing = () => {
     setEditingIndex(null);
-    setEditingItem({ name: '', description: '', price: '', thumbnail: '', scheduledTime: '' });
+    setEditingItem({ name: '', description: '', price: '', thumbnail: '', scheduledTime: '', availableDates: [] });
   };
 
   const handleCancelAdd = () => {
@@ -897,7 +1001,32 @@ const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditIt
   const saveEdit = () => {
     onEditItem(category, editingIndex, editingItem);
     setEditingIndex(null);
-    setEditingItem({ name: '', description: '', price: '', thumbnail: '', scheduledTime: '' });
+    setEditingItem({ name: '', description: '', price: '', thumbnail: '', scheduledTime: '', availableDates: [] });
+  };
+
+  // Date selector controls
+  const minDate = pkgForm.startDate || '';
+  const maxDate = pkgForm.endDate || '';
+  const withinRange = (iso) => {
+    if (!minDate || !maxDate) return true;
+    return iso >= minDate && iso <= maxDate;
+  };
+
+  const expandRangeToDates = (startISO, endISO) => {
+    if (!startISO || !endISO) return [];
+    let start = startISO;
+    let end = endISO;
+    if (minDate && start < minDate) start = minDate;
+    if (maxDate && end > maxDate) end = maxDate;
+    if (end < start) return [];
+    const dates = [];
+    const cur = new Date(start);
+    const endDate = new Date(end);
+    while (cur <= endDate) {
+      dates.push(cur.toISOString().slice(0,10));
+      cur.setDate(cur.getDate() + 1);
+    }
+    return dates;
   };
 
   return (
@@ -958,6 +1087,78 @@ const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditIt
                       placeholder="HH:MM"
                     />
                     <p className="text-xs text-gray-500 mt-1">Ex: 14:30 pour 2:30 PM</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Dates disponibles</label>
+                    <div className="flex flex-wrap items-center gap-3 mb-2">
+                      <label className={`text-sm font-medium ${dateModeEdit==='single'?'text-green-700':'text-gray-600'}`}>
+                        <input type="radio" className="mr-1" checked={dateModeEdit==='single'} onChange={()=>setDateModeEdit('single')} /> Date unique
+                      </label>
+                      <label className={`text-sm font-medium ${dateModeEdit==='range'?'text-green-700':'text-gray-600'}`}>
+                        <input type="radio" className="mr-1" checked={dateModeEdit==='range'} onChange={()=>setDateModeEdit('range')} /> Intervalle
+                      </label>
+                    </div>
+                    {dateModeEdit === 'single' ? (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="date"
+                          value={tempDateEdit}
+                          onChange={(e) => setTempDateEdit(e.target.value)}
+                          min={minDate}
+                          max={maxDate}
+                          className="px-3 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!tempDateEdit || !withinRange(tempDateEdit)) return;
+                            const set = new Set(editingItem.availableDates || []);
+                            set.add(tempDateEdit);
+                            setEditingItem({ ...editingItem, availableDates: Array.from(set).sort() });
+                            setTempDateEdit('');
+                          }}
+                          className="px-3 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700"
+                        >
+                          Ajouter
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <input type="date" value={rangeStartEdit} onChange={(e)=>setRangeStartEdit(e.target.value)} min={minDate} max={maxDate} className="px-3 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                        <span className="text-gray-500">→</span>
+                        <input type="date" value={rangeEndEdit} onChange={(e)=>setRangeEndEdit(e.target.value)} min={minDate} max={maxDate} className="px-3 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const dates = expandRangeToDates(rangeStartEdit, rangeEndEdit);
+                            if (!dates.length) return;
+                            const set = new Set(editingItem.availableDates || []);
+                            dates.forEach(d=>set.add(d));
+                            setEditingItem({ ...editingItem, availableDates: Array.from(set).sort() });
+                            setRangeStartEdit('');
+                            setRangeEndEdit('');
+                          }}
+                          className="px-3 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700"
+                        >
+                          Ajouter l'intervalle
+                        </button>
+                      </div>
+                    )}
+                    {editingItem.availableDates && editingItem.availableDates.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {editingItem.availableDates.map((d) => (
+                          <span key={d} className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
+                            {new Date(d).toLocaleDateString()}
+                            <button
+                              type="button"
+                              onClick={() => setEditingItem({ ...editingItem, availableDates: editingItem.availableDates.filter(x => x !== d) })}
+                              className="text-green-700 hover:text-green-900"
+                            >×</button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <p className="text-xs text-gray-500 mt-1">Limité par la disponibilité de la propriété et la période choisie.</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Image</label>
@@ -1072,6 +1273,78 @@ const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditIt
             <p className="text-xs text-gray-500 mt-1">Ex: 14:30 pour 2:30 PM - Laissez vide si flexible</p>
           </div>
           <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Dates disponibles</label>
+            <div className="flex flex-wrap items-center gap-3 mb-2">
+              <label className={`text-sm font-medium ${dateModeAdd==='single'?'text-green-700':'text-gray-600'}`}>
+                <input type="radio" className="mr-1" checked={dateModeAdd==='single'} onChange={()=>setDateModeAdd('single')} /> Date unique
+              </label>
+              <label className={`text-sm font-medium ${dateModeAdd==='range'?'text-green-700':'text-gray-600'}`}>
+                <input type="radio" className="mr-1" checked={dateModeAdd==='range'} onChange={()=>setDateModeAdd('range')} /> Intervalle
+              </label>
+            </div>
+            {dateModeAdd === 'single' ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={tempDateAdd}
+                  onChange={(e) => setTempDateAdd(e.target.value)}
+                  min={minDate}
+                  max={maxDate}
+                  className="px-3 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!tempDateAdd || !withinRange(tempDateAdd)) return;
+                    const set = new Set(newItem.availableDates || []);
+                    set.add(tempDateAdd);
+                    setNewItem({ ...newItem, availableDates: Array.from(set).sort() });
+                    setTempDateAdd('');
+                  }}
+                  className="px-3 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700"
+                >
+                  Ajouter
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2">
+                <input type="date" value={rangeStartAdd} onChange={(e)=>setRangeStartAdd(e.target.value)} min={minDate} max={maxDate} className="px-3 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                <span className="text-gray-500">→</span>
+                <input type="date" value={rangeEndAdd} onChange={(e)=>setRangeEndAdd(e.target.value)} min={minDate} max={maxDate} className="px-3 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const dates = expandRangeToDates(rangeStartAdd, rangeEndAdd);
+                    if (!dates.length) return;
+                    const set = new Set(newItem.availableDates || []);
+                    dates.forEach(d=>set.add(d));
+                    setNewItem({ ...newItem, availableDates: Array.from(set).sort() });
+                    setRangeStartAdd('');
+                    setRangeEndAdd('');
+                  }}
+                  className="px-3 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700"
+                >
+                  Ajouter l'intervalle
+                </button>
+              </div>
+            )}
+            {newItem.availableDates && newItem.availableDates.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {newItem.availableDates.map((d) => (
+                  <span key={d} className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
+                    {new Date(d).toLocaleDateString()}
+                    <button
+                      type="button"
+                      onClick={() => setNewItem({ ...newItem, availableDates: newItem.availableDates.filter(x => x !== d) })}
+                      className="text-green-700 hover:text-green-900"
+                    >×</button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <p className="text-xs text-gray-500 mt-1">Limité par la disponibilité de la propriété et la période choisie.</p>
+          </div>
+          <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">Image (Optionnel)</label>
             <S3ImageUpload
               onUpload={(url) => setNewItem({...newItem, thumbnail: url})}
@@ -1121,8 +1394,8 @@ const PackagePreview = ({ formData, availableProperties }) => {
           <div>
             <h4 className="font-medium text-gray-700 mb-2">Propriété & Dates</h4>
             <p><strong>Propriété:</strong> {selectedProperty?.title}</p>
-            <p><strong>Date de Début:</strong> {new Date(formData.startDate).toLocaleDateString()}</p>
-            <p><strong>Date de Fin:</strong> {new Date(formData.endDate).toLocaleDateString()}</p>
+            <p><strong>Date de Début:</strong> {formData.startDate ? new Date(formData.startDate).toLocaleDateString() : '-'}</p>
+            <p><strong>Date de Fin:</strong> {formData.endDate ? new Date(formData.endDate).toLocaleDateString() : '-'}</p>
           </div>
         </div>
 
@@ -1143,6 +1416,9 @@ const PackagePreview = ({ formData, availableProperties }) => {
                           </svg>
                           {item.scheduledTime}
                         </span>
+                      )}
+                      {item.availableDates && item.availableDates.length > 0 && (
+                        <span className="text-xs text-green-700 mt-0.5">Dates: {item.availableDates.map(d => new Date(d).toLocaleDateString()).join(', ')}</span>
                       )}
                     </li>
                   ))}
@@ -1165,6 +1441,9 @@ const PackagePreview = ({ formData, availableProperties }) => {
                           {item.scheduledTime}
                         </span>
                       )}
+                      {item.availableDates && item.availableDates.length > 0 && (
+                        <span className="text-xs text-green-700 mt-0.5">Dates: {item.availableDates.map(d => new Date(d).toLocaleDateString()).join(', ')}</span>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -1176,7 +1455,12 @@ const PackagePreview = ({ formData, availableProperties }) => {
                 <h5 className="font-medium text-green-600">Services ({formData.services.length})</h5>
                 <ul className="text-sm text-gray-600 mt-1">
                   {formData.services.map((item, index) => (
-                    <li key={index}>{item.name} - {item.price} MAD</li>
+                    <li key={index} className="flex flex-col">
+                      <span>{item.name} - {item.price} MAD</span>
+                      {item.availableDates && item.availableDates.length > 0 && (
+                        <span className="text-xs text-green-700 mt-0.5">Dates: {item.availableDates.map(d => new Date(d).toLocaleDateString()).join(', ')}</span>
+                      )}
+                    </li>
                   ))}
                 </ul>
               </div>
