@@ -14,7 +14,20 @@ console.log('🔧 API Configuration:', {
   isConfigured: typeof API_URL === 'string'
 });
 
-// No hard failure if not set; using same-origin + dev proxy in development
+// Test API connection on startup
+if (API_URL) {
+  console.log('🔍 Testing API connection...');
+  fetch(`${API_URL}/api/health`)
+    .then(response => response.json())
+    .then(data => console.log('✅ API connection test successful:', data))
+    .catch(error => console.error('❌ API connection test failed:', error));
+}
+
+if (!API_URL) {
+  console.error('❌ CRITICAL: REACT_APP_API_URL is not set!');
+  console.error('Please create a .env file with: REACT_APP_API_URL=http://localhost:4000');
+  console.error('Then restart the React development server.');
+}
 
 export const api = axios.create({
   baseURL: API_URL,

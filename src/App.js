@@ -203,8 +203,8 @@ function App() {
         <Route path="/search" element={<PropertySearchFlow />} />
         <Route path="/search/results" element={<SearchResultsPage />} />
         
-        {/* Admin Dashboard - Public access (temporarily) */}
-        <Route path="/admin-dashboard" element={<AdminDashboard />} />
+        {/* Admin Dashboard - Direct URL access only */}
+        <Route path="/admin" element={<AdminDashboard />} />
         
         {/* General / Auth - Only accessible when NOT authenticated */}
         <Route path="/login" element={<ProtectedRoute requireAuth={false}><LoginScreen /></ProtectedRoute>} />
