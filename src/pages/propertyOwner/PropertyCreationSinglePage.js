@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import { FaArrowLeft } from 'react-icons/fa';
@@ -98,12 +98,18 @@ export default function PropertyCreationSinglePage() {
     },
     equipments: [],
     photos: [],
+    photoFiles: [], // Store actual File objects
     title: '',
     description: '',
-    price: '',
+    price: 1, // Changed from 0 to 1 to avoid validation issues
     documents: {},
     inventory: []
   });
+
+  // Debug: Log form data changes
+  useEffect(() => {
+    console.log("🔍 Form data changed:", formData);
+  }, [formData]);
 
   // Step navigation logic (following package creation pattern)
   const handleNext = () => {
@@ -133,6 +139,7 @@ export default function PropertyCreationSinglePage() {
   };
 
   const handleInputChange = (field, value, parentKey = null) => {
+    console.log(`📝 Input changed: ${field} = ${value} (type: ${typeof value})`);
     setFormData(prev => {
       if (parentKey) {
         return {
@@ -178,104 +185,22 @@ export default function PropertyCreationSinglePage() {
     setError('');
     
     try {
-      // Upload to S3 using enhanced service 
-      const { uploadFileToS3 } = await import('../../utilities/s3Service');
-      console.log('🔄 Starting S3 uploads...');
+      // Create preview URLs for immediate display
+      const previewUrls = files.map(file => URL.createObjectURL(file));
       
-      const uploadPromises = files.map(async (file) => {
-        console.log('📤 Processing file:', file.name, file.type, file.size);
-        
-        try {
-          const result = await uploadFileToS3(file, 'photos');
-          
-          console.log('✅ Upload result received for', file.name, ':', result);
-          
-          // Extract photo URL with multiple fallback methods
-          let photoUrl = null;
-          
-          if (result && typeof result === 'object') {
-            // Try standard format first
-            photoUrl = result.url || result.key || result.location;
-            console.log('📸 Standard format URL for', file.name, ':', photoUrl);
-            
-            // Try alternative names
-            if (!photoUrl) {
-              photoUrl = result.fileUrl || result.downloadUrl || result.uploadUrl;
-              console.log('📸 Alternative format URL for', file.name, ':', photoUrl);
-            }
-            
-            // Try any string in the object that looks like a URL
-            if (!photoUrl) {
-              const entries = Object.values(result);
-              for (const value of entries) {
-                if (typeof value === 'string' && value.length > 10 && value.includes('http')) {
-                  photoUrl = value;
-                  console.log('📸 Found URL in result object for', file.name, ':', photoUrl);
-                  break;
-                }
-              }
-            }
-          } else if (typeof result === 'string') {
-            photoUrl = result;
-            console.log('📸 Result is direct string URL for', file.name, ':', photoUrl);
-          }
-          
-          if (photoUrl && photoUrl.length > 10 && (photoUrl.includes('http') || photoUrl.includes('amazonaws'))) {
-            console.log('✅ Valid photo URL confirmed for', file.name, ':', photoUrl);
-            return photoUrl;
-          } else {
-            console.error('❌ Invalid photo URL extracted for', file.name, ':', result);
-            throw new Error(`URL invalide reçue du serveur pour ${file.name}: ${JSON.stringify(result, null, 2)}`);
-          }
-        } catch (fileError) {
-          console.error('❌ Upload error for file', file.name, ':', fileError);
-          
-          const errorMessage = fileError?.message || fileError?.toString() || 'Erreur inconnue';
-          
-          // Try to extract URL even from errors (backend inconsistency handling)
-          if (errorMessage.toLowerCase().includes('successfully') || errorMessage.toLowerCase().includes('uploaded')) {
-            console.log('⚠️ Backend marked successful upload as error for', file.name);
-            
-            // Try to extract URL from error response
-            let urlFromError = null;
-            
-            if (fileError.response?.data?.url || fileError.response?.data?.key) {
-              urlFromError = fileError.response.data.url || fileError.response.data.key;
-            } else {
-              // Search error message for URLs
-              const urlMatch = errorMessage.match(/https?:\/\/[^\s\n\)]+/i);
-              if (urlMatch) {
-                urlFromError = urlMatch[0];
-              }
-            }
-            
-            if (urlFromError) {
-              console.log('✅ Extracted URL from error response for', file.name, ':', urlFromError);
-              return urlFromError;
-            }
-          }
-          
-          throw fileError;
-        }
-      });
-      
-      // Wait for all uploads to complete
-      const photoUrls = await Promise.all(uploadPromises);
-      console.log('📸 All uploads completed:', photoUrls);
-      
-      // Add all URLs to photos array
+      // Add preview URLs and actual files to form data
       setFormData(prev => ({
         ...prev,
-        photos: [...prev.photos, ...photoUrls]
+        photos: [...prev.photos, ...previewUrls],
+        photoFiles: [...prev.photoFiles, ...files]
       }));
       
-      console.log('✅ All photos added to form successfully!', photoUrls.length, 'uploaded');
+      console.log('✅ Photos added to form for preview');
       setError('');
       
     } catch (error) {
-      console.error('❌ Upload error caught:', error);
-      const errorMessage = error?.message || error?.toString() || 'Erreur inconnue';
-      setError(`Erreur lors du téléchargement: ${errorMessage}. Certaines photos peuvent avoir été uploadées.`);
+      console.error('❌ Preview error:', error);
+      setError(`Erreur lors de la prévisualisation des photos: ${error.message}`);
     }
     
     // Clear the input
@@ -285,8 +210,76 @@ export default function PropertyCreationSinglePage() {
   const handleRemovePhoto = (index) => {
     setFormData(prev => ({
       ...prev,
-      photos: prev.photos.filter((_, i) => i !== index)
+      photos: prev.photos.filter((_, i) => i !== index),
+      photoFiles: prev.photoFiles.filter((_, i) => i !== index)
     }));
+  };
+
+  // Helper function to upload photos to property
+  const uploadPhotosToProperty = async (propertyId) => {
+    try {
+      if (formData.photoFiles && formData.photoFiles.length > 0) {
+        const uploadFormData = new FormData();
+        formData.photoFiles.forEach(file => {
+          uploadFormData.append('photos', file);
+        });
+
+        const response = await fetch(`${API_BASE}/api/property/${propertyId}/photos`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: uploadFormData
+        });
+
+        if (response.ok) {
+          console.log('✅ Photos uploaded successfully');
+            } else {
+          console.error('Failed to upload photos:', response.status);
+        }
+      }
+    } catch (error) {
+      console.error('Error uploading photos:', error);
+    }
+  };
+
+  // Helper function to upload documents to property
+  const uploadDocumentsToProperty = async (propertyId) => {
+    try {
+      const documentFiles = [];
+      
+      // Collect all document files
+      Object.entries(formData.documents).forEach(([docType, files]) => {
+        if (files && files.length > 0) {
+          files.forEach(file => {
+            if (file instanceof File) {
+              documentFiles.push(file);
+            }
+          });
+        }
+      });
+
+      if (documentFiles.length > 0) {
+        const formData = new FormData();
+        documentFiles.forEach(file => {
+          formData.append('documents', file);
+        });
+
+        const response = await fetch(`${API_BASE}/api/property/${propertyId}/documents`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: formData
+        });
+
+        if (!response.ok) {
+          console.error('Failed to upload documents:', response.status);
+        }
+      }
+    } catch (error) {
+      console.error('Error uploading documents:', error);
+    }
   };
 
   const handleDocumentUpload = (event, documentType) => {
@@ -378,7 +371,7 @@ export default function PropertyCreationSinglePage() {
       case 6:
         return formData.title.trim() !== '' && formData.description.trim() !== '';
       case 7:
-        return formData.price && parseFloat(formData.price) > 0;
+        return formData.price && formData.price > 0;
       case 8:
         return Object.values(formData.documents).some(docs => docs && docs.length > 0); // Check if any documents exist
       case 9:
@@ -433,33 +426,31 @@ export default function PropertyCreationSinglePage() {
       const mappedEquipments = formData.equipments.map(eq => equipmentMapping[eq] || eq);
 
       // Transform price structure to match backend schema
-      const priceValue = parseFloat(formData.price) || 0;
+      const priceValue = formData.price || 0;
       
-      // Transform documents structure to match backend schema (array of strings)
-      const documentsArray = [];
-      if (formData.documents) {
-        Object.entries(formData.documents).forEach(([docType, files]) => {
-          if (files && files.length > 0) {
-            files.forEach(file => {
-              if (file && file.name) {
-                documentsArray.push(file.name);
-              }
-            });
-          }
-        });
-      }
-      
+      // For draft, we don't need to upload photos yet - just save the basic info
       const payload = { 
-        ...formData,
+        localisation: formData.localisation,
+        propertyType: formData.propertyType,
+        info: formData.info,
         equipments: mappedEquipments,
+        title: formData.title,
+        description: formData.description,
         price: {
           weekdays: priceValue,
           weekend: priceValue
         },
-        documents: documentsArray, // Convert to array of strings
-        isDraft: true 
+        inventory: formData.inventory || [],
+        status: 'draft'
       };
+      
       console.log('💾 Saving property draft with payload:', payload);
+      console.log('🔍 Form data details:');
+      console.log('- Title:', formData.title, 'Type:', typeof formData.title);
+      console.log('- Price:', formData.price, 'Type:', typeof formData.price);
+      console.log('- Price value:', priceValue);
+      console.log('- Description:', formData.description);
+      console.log('🔍 Complete form data:', formData);
       
       const response = await fetch(`${API_BASE}/api/property`, {
         method: 'POST',
@@ -473,6 +464,12 @@ export default function PropertyCreationSinglePage() {
       if (response.ok) {
         const data = await response.json();
         console.log('✅ Property draft saved successfully:', data);
+        
+        // If we have photos, upload them after creating the property
+        if (formData.photos && formData.photos.length > 0) {
+          await uploadPhotosToProperty(data.property._id);
+        }
+        
         alert('Brouillon enregistré avec succès!');
         navigate('/owner-welcome');
       } else {
@@ -553,49 +550,34 @@ export default function PropertyCreationSinglePage() {
       const mappedEquipments = formData.equipments.map(eq => equipmentMapping[eq] || eq);
 
       // Transform price structure to match backend schema
-      const priceValue = parseFloat(formData.price) || 0;
-      
-      // Transform documents structure to match backend schema (array of strings)
-      const documentsArray = [];
-      if (formData.documents) {
-        Object.entries(formData.documents).forEach(([docType, files]) => {
-          if (files && files.length > 0) {
-            files.forEach(file => {
-              if (file && file.name) {
-                documentsArray.push(file.name);
-              }
-            });
-          }
-        });
-      }
+      const priceValue = formData.price || 0;
       
       const payload = { 
-        ...formData,
+        localisation: formData.localisation,
+        propertyType: formData.propertyType,
+        info: formData.info,
         equipments: mappedEquipments,
+        title: formData.title,
+        description: formData.description,
         price: {
           weekdays: priceValue,
           weekend: priceValue
         },
-        documents: documentsArray, // Convert to array of strings
+        inventory: formData.inventory || [],
         availability: {
           start: availabilitySettings.startDate ? new Date(availabilitySettings.startDate) : null,
           end: availabilitySettings.endDate ? new Date(availabilitySettings.endDate) : null
         },
         instantBooking: availabilitySettings.instantBooking,
-        isDraft: false, // Ensure publish flag is explicit
-        status: 'published' // Explicit status setting
+        status: 'published'
       };
+      
       console.log('🚀 Creating property for publish with payload:', payload);
-      console.log('🔍 Payload details:');
-      console.log('- Title:', payload.title);
-      console.log('- Description:', payload.description);
-      console.log('- Price:', payload.price);
-      console.log('- Status:', payload.status);
-      console.log('- Localisation:', payload.localisation);
-      console.log('- PropertyType:', payload.propertyType);
-      console.log('- Info:', payload.info);
-      console.log('- Photos:', payload.photos);
-      console.log('- Equipments:', payload.equipments);
+      console.log('🔍 Publish form data details:');
+      console.log('- Title:', formData.title, 'Type:', typeof formData.title);
+      console.log('- Price:', formData.price, 'Type:', typeof formData.price);
+      console.log('- Price value:', priceValue);
+      console.log('- Description:', formData.description);
       
       const response = await fetch(`${API_BASE}/api/property`, {
         method: 'POST',
@@ -609,6 +591,17 @@ export default function PropertyCreationSinglePage() {
       if (response.ok) {
         const data = await response.json();
         console.log('✅ Property created successfully:', data);
+        
+        // Upload photos after creating the property
+        if (formData.photos && formData.photos.length > 0) {
+          await uploadPhotosToProperty(data.property._id);
+        }
+        
+        // Upload documents if any
+        if (formData.documents && Object.keys(formData.documents).length > 0) {
+          await uploadDocumentsToProperty(data.property._id);
+        }
+        
         alert('Propriété créée et publiée avec succès!');
         setShowPublishModal(false);
         navigate('/owner-welcome');
@@ -1103,7 +1096,7 @@ export default function PropertyCreationSinglePage() {
                 <input
                   type="number"
                   value={formData.price}
-                  onChange={(e) => handleInputChange('price', e.target.value)}
+                  onChange={(e) => handleInputChange('price', parseFloat(e.target.value) || 0)}
                   placeholder="0"
                   className="w-full px-4 py-3 pr-16 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 text-gray-900 text-xl font-semibold"
                 />
@@ -1373,7 +1366,7 @@ export default function PropertyCreationSinglePage() {
                 {/* Price */}
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">💰 Prix</h3>
-                  <p className="text-green-600 font-semibold text-lg">{formData.price} MAD/nuit</p>
+                  <p className="text-green-600 font-semibold text-lg">{formData.price || 0} MAD/nuit</p>
                 </div>
 
                 {/* Photos section preview */}
