@@ -140,7 +140,7 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
   };
 
   const handleNext = () => {
-    if (currentStep < 6) {
+    if (currentStep < 5) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -200,11 +200,11 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
       case 2:
         return formData.restaurants.length > 0 || formData.activities.length > 0 || formData.services.length > 0;
       case 3:
-        return formData.startDate && formData.endDate && new Date(formData.startDate) <= new Date(formData.endDate);
-      case 4:
         return formData.name.trim() !== '' && formData.description.trim() !== '';
-      case 5:
+      case 4:
         return formData.totalPrice && parseFloat(formData.totalPrice) > 0;
+      case 5:
+        return true; // Review step is always valid
       default:
         return true;
     }
@@ -286,9 +286,8 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
     const validationErrors = [];
     if (!validateStep(1)) validationErrors.push('Property selection required');
     if (!validateStep(2)) validationErrors.push('At least one item (restaurant, activity, or service) required');
-    if (!validateStep(3)) validationErrors.push('Valid start and end dates required');
-    if (!validateStep(4)) validationErrors.push('Package name and description required');
-    if (!validateStep(5)) validationErrors.push('Total price required');
+    if (!validateStep(3)) validationErrors.push('Package name and description required');
+    if (!validateStep(4)) validationErrors.push('Total price required');
 
     if (validationErrors.length > 0) {
       setError(`Please complete all required steps: ${validationErrors.join(', ')}`);
@@ -417,7 +416,6 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
   const steps = [
     'Choisir Propriété',
     'Sélectionner Éléments',
-    'Définir Dates',
     'Informations De Base',
     'Définir Prix',
     'Réviser & Publier'
@@ -731,41 +729,9 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
           </div>
         )}
 
-          {/* Step 3: Set Dates - Enhanced Mobile Design */}
-        {currentStep === 3 && (
-            <div className="space-y-6">
-              <div className="text-center">
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Définir Dates</h2>
-                <p className="text-gray-600">Choisissez la période de disponibilité pour votre package</p>
-              </div>
-              
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">Date de Début</label>
-                <input
-                  type="date"
-                  value={formData.startDate}
-                  onChange={(e) => handleInputChange('startDate', e.target.value)}
-                  min={new Date().toISOString().split('T')[0]}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 text-gray-900"
-                />
-              </div>
-                  <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">Date de Fin</label>
-                <input
-                  type="date"
-                  value={formData.endDate}
-                  onChange={(e) => handleInputChange('endDate', e.target.value)}
-                  min={formData.startDate || new Date().toISOString().split('T')[0]}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 text-gray-900"
-                />
-              </div>
-            </div>
-          </div>
-        )}
 
-          {/* Step 4: Basic Info - Enhanced Mobile Design */}
-        {currentStep === 4 && (
+          {/* Step 3: Basic Info - Enhanced Mobile Design */}
+        {currentStep === 3 && (
             <div className="space-y-6">
               <div className="text-center">
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Informations De Base</h2>
@@ -797,8 +763,8 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
           </div>
         )}
 
-          {/* Step 5: Set Price - Enhanced Mobile Design */}
-        {currentStep === 5 && (
+          {/* Step 4: Set Price - Enhanced Mobile Design */}
+        {currentStep === 4 && (
             <div className="space-y-6">
               <div className="text-center">
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Définir Prix</h2>
@@ -825,8 +791,8 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
           </div>
         )}
 
-          {/* Step 6: Review - Enhanced Mobile Design */}
-        {currentStep === 6 && (
+          {/* Step 5: Review - Enhanced Mobile Design */}
+        {currentStep === 5 && (
             <div className="space-y-6">
               <div className="text-center">
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Réviser & Publier</h2>
