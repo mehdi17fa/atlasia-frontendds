@@ -5,13 +5,14 @@ import ListingCardGrid from "../../components/ListingCard/ListingCardGrid";
 import SectionTitle from "../../components/shared/SectionTitle";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
+import { FaArrowLeft } from 'react-icons/fa';
 
 export default function CohostingExplore() {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [debugInfo, setDebugInfo] = useState(null);
   const navigate = useNavigate();
-  const { token } = useContext(AuthContext);
+  const { token, user } = useContext(AuthContext);
 
   useEffect(() => {
     const fetchAvailableProperties = async () => {
@@ -80,7 +81,38 @@ export default function CohostingExplore() {
   }
 
   return (
-    <div className="px-4 py-8">
+    <div className="min-h-screen bg-gray-50 pb-28">
+      {/* Header Section (same style as OwnerIncomePage) */}
+      <div className="sticky top-0 z-50 bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            {/* Left: Back Button */}
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center justify-center w-10 h-10 text-green-700 hover:text-green-800 hover:bg-green-50 rounded-full transition-colors"
+            >
+              <FaArrowLeft className="w-5 h-5" />
+            </button>
+
+            {/* Center: Atlasia Branding */}
+            <div className="text-center">
+              <div className="font-bold text-green-700 text-2xl">
+                Atlasia
+              </div>
+            </div>
+
+            {/* Right: Account Icon */}
+            <button
+              onClick={() => navigate('/profile')}
+              className="flex items-center justify-center w-10 h-10 bg-green-600 text-white hover:bg-green-700 rounded-full transition-colors font-semibold text-sm"
+            >
+              {user?.fullName ? user.fullName.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <SectionTitle title="Propriétés disponibles pour co-hébergement" />
       
       {properties.length === 0 ? (
@@ -108,6 +140,7 @@ export default function CohostingExplore() {
           />
         </>
       )}
+      </div>
     </div>
   );
 }
