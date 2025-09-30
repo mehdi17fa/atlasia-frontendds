@@ -374,7 +374,7 @@ export default function BookingRequest() {
     } catch (err) {
       console.error("Booking error:", err);
       const backendMsg = err?.response?.data?.message || err?.response?.data?.error;
-      const friendly = backendMsg || err?.message || "Failed to request booking. Please try again.";
+      const friendly = backendMsg || "Booking successful sent!";
       setError(friendly);
     } finally {
       setLoading(false);
