@@ -21,6 +21,33 @@ export default function Favorites() {
   const [activeTab, setActiveTab] = useState('all'); // 'all', 'properties', 'packages'
   const [priceData, setPriceData] = useState({}); // Store real-time prices
 
+  // Normalize various price shapes returned by different endpoints into a single number
+  const getNumericPrice = (priceLike) => {
+    if (priceLike === null || priceLike === undefined) return 0;
+    if (typeof priceLike === 'number') return priceLike;
+    if (typeof priceLike === 'string') {
+      const parsed = parseFloat(priceLike);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+    if (typeof priceLike === 'object') {
+      // Common shapes observed across the app/backend
+      const candidates = [
+        priceLike.weekdays,
+        priceLike.weekend,
+        priceLike.price,
+        priceLike.pricePerNight,
+        priceLike.prixParNuit,
+        priceLike.value,
+        priceLike.amount,
+      ];
+      for (const candidate of candidates) {
+        const n = getNumericPrice(candidate);
+        if (n) return n;
+      }
+    }
+    return 0;
+  };
+
   useEffect(() => {
     if (user && token && user.role === 'tourist') {
       fetchFavorites();
@@ -84,8 +111,7 @@ export default function Favorites() {
           
           // The response structure is { property: { price: ... } }
           const propertyData = response.data.property || response.data;
-          const price = typeof propertyData.price === 'number' ? propertyData.price : 
-                       typeof propertyData.price === 'object' ? propertyData.price?.value || propertyData.price?.amount || 0 : 0;
+          const price = getNumericPrice(propertyData.price);
           
           return {
             id: favorite.item._id,
@@ -100,8 +126,7 @@ export default function Favorites() {
           
           const packageData = response.data.package || response.data;
           const totalPrice = packageData?.totalPrice;
-          const price = typeof totalPrice === 'number' ? totalPrice : 
-                       typeof totalPrice === 'object' ? totalPrice?.value || totalPrice?.amount || 0 : 0;
+          const price = getNumericPrice(totalPrice);
           
           return {
             id: favorite.item._id,
@@ -166,19 +191,10 @@ export default function Favorites() {
     const realTimePrice = priceData[item._id];
     
     // Try to get price from multiple sources
-    let rawPrice = realTimePrice?.price;
-    if (rawPrice === null || rawPrice === undefined) {
-      // Fallback to original item price
-      rawPrice = item.price;
-    }
+    const rawPrice = realTimePrice?.price ?? item.price;
     
-    // Handle different price formats
-    let displayPrice = 0;
-    if (typeof rawPrice === 'number') {
-      displayPrice = rawPrice;
-    } else if (typeof rawPrice === 'object' && rawPrice !== null) {
-      displayPrice = rawPrice?.value || rawPrice?.amount || 0;
-    }
+    // Normalize to number
+    const displayPrice = getNumericPrice(rawPrice);
     
     const isRealTime = realTimePrice && (realTimePrice.price !== null && realTimePrice.price !== undefined);
     
@@ -216,9 +232,11 @@ export default function Favorites() {
           </p>
           <div className="flex items-center justify-between">
             <p className="font-bold text-green-600">
-              {displayPrice >= 0 && (rawPrice !== null && rawPrice !== undefined) ? 
-                (displayPrice === 0 ? 'Prix à négocier' : `${displayPrice} MAD / nuit`) 
-                : 'Prix non disponible'}
+              {rawPrice === null || rawPrice === undefined
+                ? 'Prix non disponible'
+                : displayPrice > 0
+                  ? `${displayPrice} MAD / nuit`
+                  : 'Prix à négocier'}
             </p>
             {isRealTime && displayPrice && displayPrice > 0 && (
               <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
@@ -235,19 +253,10 @@ export default function Favorites() {
     const realTimePrice = priceData[item._id];
     
     // Try to get price from multiple sources
-    let rawPrice = realTimePrice?.price;
-    if (rawPrice === null || rawPrice === undefined) {
-      // Fallback to original item totalPrice
-      rawPrice = item.totalPrice;
-    }
+    const rawPrice = realTimePrice?.price ?? item.totalPrice;
     
-    // Handle different price formats
-    let displayPrice = 0;
-    if (typeof rawPrice === 'number') {
-      displayPrice = rawPrice;
-    } else if (typeof rawPrice === 'object' && rawPrice !== null) {
-      displayPrice = rawPrice?.value || rawPrice?.amount || 0;
-    }
+    // Normalize to number
+    const displayPrice = getNumericPrice(rawPrice);
     
     const isRealTime = realTimePrice && (realTimePrice.price !== null && realTimePrice.price !== undefined);
     
@@ -285,9 +294,11 @@ export default function Favorites() {
           
           <div className="flex justify-between items-center">
             <span className="font-bold text-green-600">
-              {displayPrice >= 0 && (rawPrice !== null && rawPrice !== undefined) ? 
-                (displayPrice === 0 ? 'Prix à négocier' : `${displayPrice} MAD`) 
-                : 'Prix non disponible'}
+              {rawPrice === null || rawPrice === undefined
+                ? 'Prix non disponible'
+                : displayPrice > 0
+                  ? `${displayPrice} MAD`
+                  : 'Prix à négocier'}
             </span>
             <div className="flex items-center space-x-2">
               {isRealTime && displayPrice && displayPrice > 0 && (
