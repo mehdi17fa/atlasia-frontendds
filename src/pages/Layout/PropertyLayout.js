@@ -451,9 +451,7 @@ export default function PropertyLayout({
                 <div className="flex-1">
                   <p className="font-medium text-secondary-900">{pack.name || 'Unnamed Pack'}</p>
                   <p className="text-sm text-secondary-500">{pack.description || 'Aucune description disponible'}</p>
-                  {pack.partnerName && (
-                    <p className="text-xs text-primary-600 mt-1">Par {pack.partnerName}</p>
-                  )}
+                  <p className="text-xs text-primary-600 mt-1">Par {pack.partner?.fullName || pack.partner?.displayName || pack.partnerName || (pack.partner?.email ? pack.partner.email.split('@')[0] : 'Partenaire')}</p>
                 </div>
                 <div className="text-primary-600">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
