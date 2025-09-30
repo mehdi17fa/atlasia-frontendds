@@ -402,19 +402,9 @@ export default function WelcomeOwner() {
       <div className="sticky top-0 z-50 bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
-            {/* Left: Back Button */}
-            <button
-              onClick={() => navigate('/')}
-              className="flex items-center justify-center w-10 h-10 text-green-700 hover:text-green-800 hover:bg-green-50 rounded-full transition-colors"
-            >
-              <FaArrowLeft className="w-5 h-5" />
-            </button>
-
-            {/* Center: Atlasia Branding */}
-            <div className="text-center">
-              <div className="font-bold text-green-700 text-2xl">
-                Atlasia
-              </div>
+            {/* Left: Atlasia Branding */}
+            <div className="font-bold text-green-700 text-2xl">
+              Atlasia
             </div>
 
             {/* Right: Account Icon */}
@@ -435,28 +425,32 @@ export default function WelcomeOwner() {
         </h1>
 
         <SectionTitle title="Gérer mes propriétés" />
-        <div className="flex gap-2 mb-6">
-          <button 
-            className="bg-green-700 text-white px-4 py-2 rounded-full font-semibold text-sm shadow hover:bg-green-800 transition flex items-center" 
-            onClick={() => navigate('/create-property')}
-          >
-            <PlusIcon className="w-4 h-4 mr-2" />
-            Créer propriété
-          </button>
-          <button 
-            className="border border-green-800 text-green-700 px-4 py-2 rounded-full font-semibold text-sm bg-white hover:bg-green-50 transition flex items-center" 
-            onClick={() => navigate('/my-properties')}
-          >
-            <HomeIcon className="w-4 h-4 mr-2" />
-            Voir mes propriétés
-          </button>
-          <button 
-            className="border border-green-800 text-green-700 px-4 py-2 rounded-full font-semibold text-sm bg-white hover:bg-green-50 transition flex items-center" 
-            onClick={() => navigate('/owner/income')}
-          >
-            <CurrencyDollarIcon className="w-4 h-4 mr-2" />
-            Voir mes revenus
-          </button>
+        <div className="flex flex-col gap-3 mb-6">
+          <div className="flex gap-2">
+            <button 
+              className="bg-green-700 text-white px-4 py-2 rounded-full font-semibold text-sm shadow hover:bg-green-800 transition flex items-center justify-center flex-1" 
+              onClick={() => navigate('/create-property')}
+            >
+              <PlusIcon className="w-4 h-4 mr-2" />
+              Créer propriété
+            </button>
+            <button 
+              className="border border-green-800 text-green-700 px-4 py-2 rounded-full font-semibold text-sm bg-white hover:bg-green-50 transition flex items-center justify-center flex-1 whitespace-nowrap" 
+              onClick={() => navigate('/my-properties')}
+            >
+              <HomeIcon className="w-4 h-4 mr-2" />
+              Voir mes propriétés
+            </button>
+          </div>
+          <div className="flex">
+            <button 
+              className="border border-green-800 text-green-700 px-4 py-2 rounded-full font-semibold text-sm bg-white hover:bg-green-50 transition flex items-center justify-center w-full" 
+              onClick={() => navigate('/owner/income')}
+            >
+              <CurrencyDollarIcon className="w-4 h-4 mr-2" />
+              Voir mes revenus et performance
+            </button>
+          </div>
         </div>
 
         {/* Owner Properties Grid */}
