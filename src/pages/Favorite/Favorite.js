@@ -6,11 +6,9 @@ import SectionTitle from '../../components/shared/SectionTitle';
 import { FaHeart, FaMapMarkerAlt, FaCalendarAlt, FaUsers, FaArrowLeft } from 'react-icons/fa';
 import S3Image from '../../components/S3Image';
 import axios from 'axios';
+import { api } from '../../api';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL ? `${process.env.REACT_APP_API_URL}/api` : `http://localhost:4000/api`;
-
-// API Configuration
-console.log('🔗 API_BASE_URL:', API_BASE_URL);
+const API_BASE_URL = `/api`;
 
 export default function Favorites() {
   const { user, token } = useContext(AuthContext);
@@ -61,7 +59,7 @@ export default function Favorites() {
       setLoading(true);
       setError(null);
       console.log('🔍 Fetching favorites from:', `${API_BASE_URL}/favorites/`);
-      const response = await axios.get(`${API_BASE_URL}/favorites/`, {
+      const response = await api.get(`${API_BASE_URL}/favorites/`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       console.log('✅ Favorites response:', response.data);
@@ -106,7 +104,7 @@ export default function Favorites() {
       try {
         if (favorite.itemType === 'property') {
           // Fetch property price using public endpoint
-          const response = await axios.get(`${API_BASE_URL}/property/public/${favorite.item._id}`);
+          const response = await api.get(`${API_BASE_URL}/property/public/${favorite.item._id}`);
           console.log('🔍 Property response:', response.data);
           
           // The response structure is { property: { price: ... } }
@@ -121,7 +119,7 @@ export default function Favorites() {
           };
         } else if (favorite.itemType === 'package') {
           // Fetch package price using public endpoint
-          const response = await axios.get(`${API_BASE_URL}/packages/${favorite.item._id}`);
+          const response = await api.get(`${API_BASE_URL}/packages/${favorite.item._id}`);
           console.log('🔍 Package response:', response.data);
           
           const packageData = response.data.package || response.data;
@@ -164,7 +162,7 @@ export default function Favorites() {
 
   const removeFavorite = async (favoriteId, itemId, itemType) => {
     try {
-      await axios.delete(`${API_BASE_URL}/favorites/${itemId}?itemType=${itemType}`, {
+      await api.delete(`${API_BASE_URL}/favorites/${itemId}?itemType=${itemType}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setFavorites(prev => prev.filter(fav => fav._id !== favoriteId));

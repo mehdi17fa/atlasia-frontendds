@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useContext } from 'react';
 import axios from 'axios';
+import { api } from '../api';
 import { AuthContext } from '../context/AuthContext';
 import { DocumentUploadDebugger } from '../utils/documentUploadDebug';
 import SectionTitle from '../components/shared/SectionTitle';
@@ -152,11 +153,8 @@ export default function DocumentUpload() {
         throw new Error(`Missing required document types: ${missingTypes.join(', ')}`);
       }
 
-      // Use environment variable for API URL
-      const API_BASE_URL = `${process.env.REACT_APP_API_URL}/api`;
-      
-      const response = await axios.post(
-        `${API_BASE_URL}/documents/upload`,
+      const response = await api.post(
+        `/api/documents/upload`,
         formData,
         {
           headers: {

@@ -22,7 +22,7 @@ export default function Inbox() {
         setLoading(true);
         console.log("Fetching conversations for user:", user._id);
         const res = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/chat/conversations/${user._id}`,
+          `/api/chat/conversations/${user._id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
@@ -33,7 +33,7 @@ export default function Inbox() {
           res.data.map(async (conv) => {
             try {
               const msgsRes = await axios.get(
-                `${process.env.REACT_APP_API_URL}/api/chat/messages/${conv._id}`,
+                `/api/chat/messages/${conv._id}`,
                 { headers: { Authorization: `Bearer ${token}` } }
               );
               console.log(`Messages for conversation ${conv._id}:`, msgsRes.data);

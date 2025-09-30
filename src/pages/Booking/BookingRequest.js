@@ -2,10 +2,12 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import axios from "axios";
+import { api } from "../../api";
 import S3ImageUpload from "../../components/S3ImageUpload";
 import ReservationCalendar from "../../components/ReservationCalendar";
 
-const API_BASE_URL = `${process.env.REACT_APP_API_URL}/api`;
+// Use relative paths with centralized api client
+const API_BASE_URL = `/api`;
 
 export default function BookingRequest() {
   const { propertyId } = useParams();
@@ -48,7 +50,7 @@ export default function BookingRequest() {
       }
 
       try {
-        const response = await axios.get(`${API_BASE_URL}/property/public/${propertyId}`);
+        const response = await api.get(`${API_BASE_URL}/property/public/${propertyId}`);
         if (response.data && response.data.property) {
           const property = response.data.property;
           setPropertyDetails(property);
@@ -321,7 +323,7 @@ export default function BookingRequest() {
       console.log("Submitting booking request with payload:", bookingPayload);
       console.log("Using token:", token ? `${token.substring(0, 20)}...` : "No token");
 
-      const bookingResponse = await axios.post(
+      const bookingResponse = await api.post(
         `${API_BASE_URL}/booking`,
         bookingPayload,
         {
@@ -355,7 +357,7 @@ export default function BookingRequest() {
         if (senderId && hostId) {
           const conversationPayload = { senderId, receiverId: hostId };
           console.log("Creating conversation with payload:", conversationPayload);
-          const conversationResponse = await axios.post(
+          const conversationResponse = await api.post(
             `${API_BASE_URL}/chat/conversation`,
             conversationPayload,
             { headers: { Authorization: `Bearer ${token}` } }
@@ -374,7 +376,7 @@ export default function BookingRequest() {
             senderId,
             text: `Booking request for property ${propertyId}: ${guestMessage}`,
           };
-          await axios.post(
+          await api.post(
             `${API_BASE_URL}/chat/message`,
             messagePayload,
             { headers: { Authorization: `Bearer ${token}` } }

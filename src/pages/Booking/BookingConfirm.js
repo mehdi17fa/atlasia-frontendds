@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import axios from "axios";
+import { api } from "../../api";
 
-const API_BASE_URL = `${process.env.REACT_APP_API_URL}/api`;
+const API_BASE_URL = `/api`;
 
 export default function BookingConfirm() {
   const { propertyId } = useParams();
@@ -47,7 +48,7 @@ export default function BookingConfirm() {
 
       console.log("Confirming booking with payload:", payload);
 
-      const response = await axios.post(`${API_BASE_URL}/booking`, payload, {
+      const response = await api.post(`${API_BASE_URL}/booking`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

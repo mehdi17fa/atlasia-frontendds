@@ -412,7 +412,7 @@ export const cleanS3Url = (url) => {
  * @returns {string} Full S3 URL or backend proxy URL
  */
 export const getS3Url = (key) => {
-  const API_URL = process.env.REACT_APP_API_URL;
+  const runtimeBase = (typeof window !== 'undefined' && window.__API_BASE_URL__) || (api?.defaults?.baseURL || '');
   
   // If it's a local file (starts with / or relative path), return as-is
   if (key.startsWith('/') || key.startsWith('./') || key.startsWith('../')) {
@@ -444,10 +444,10 @@ export const getS3Url = (key) => {
   if (parts.length >= 2) {
     const folder = parts[0];
     const filename = parts.slice(1).join('/');
-    return `${API_URL}/s3-proxy/${folder}/${encodeURIComponent(filename)}`;
+    return `${runtimeBase ? runtimeBase : ''}/s3-proxy/${folder}/${encodeURIComponent(filename)}`;
   } else {
     // If no folder specified, assume it's a property photo
-    return `${API_URL}/s3-proxy/property-photos/${encodeURIComponent(cleanKey)}`;
+    return `${runtimeBase ? runtimeBase : ''}/s3-proxy/property-photos/${encodeURIComponent(cleanKey)}`;
   }
 };
 

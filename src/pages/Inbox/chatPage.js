@@ -2,10 +2,12 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { api } from "../../api";
 import { io } from "socket.io-client";
 import { AuthContext } from "../../context/AuthContext";
 
-const API_BASE_URL = process.env.REACT_APP_API_URL;
+// Use relative API and socket URL; socket server should proxy in dev
+const API_BASE_URL = "";
 
 let socket;
 
@@ -89,8 +91,8 @@ export default function ChatPage() {
         if (!convoId) {
           console.log("Creating new conversation with payload:", { senderId: user._id, receiverId: recipientId });
           try {
-            const convoRes = await axios.post(
-              `${API_BASE_URL}/api/chat/conversation`,
+            const convoRes = await api.post(
+              `/api/chat/conversation`,
               { senderId: user._id, receiverId: recipientId },
               { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -106,8 +108,8 @@ export default function ChatPage() {
         if (convoId) {
           console.log("Fetching messages for conversation:", convoId);
           try {
-            const msgsRes = await axios.get(
-              `${API_BASE_URL}/api/chat/messages/${convoId}`,
+            const msgsRes = await api.get(
+              `/api/chat/messages/${convoId}`,
               { headers: { Authorization: `Bearer ${token}` } }
             );
             console.log("Messages response:", msgsRes.data);
@@ -141,8 +143,8 @@ export default function ChatPage() {
       const retryFetch = setTimeout(async () => {
         try {
           console.log("Retrying fetch for messages with conversationId:", conversationId);
-          const msgsRes = await axios.get(
-            `${API_BASE_URL}/api/chat/messages/${conversationId}`,
+          const msgsRes = await api.get(
+            `/api/chat/messages/${conversationId}`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
           console.log("Retry messages response:", msgsRes.data);
@@ -169,8 +171,8 @@ export default function ChatPage() {
 
       // Create conversation if none exists
       if (!convoId) {
-        const convoRes = await axios.post(
-          `${API_BASE_URL}/api/chat/conversation`,
+        const convoRes = await api.post(
+          `/api/chat/conversation`,
           { senderId: user._id, receiverId: recipientId },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -186,8 +188,8 @@ export default function ChatPage() {
 
       console.log("Sending message with payload:", payload);
 
-      const response = await axios.post(
-        `${API_BASE_URL}/api/chat/message`,
+      const response = await api.post(
+        `/api/chat/message`,
         payload,
         { headers: { Authorization: `Bearer ${token}` } }
       );

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { api } from '../api';
 
-const API_BASE_URL = `${process.env.REACT_APP_API_URL}/api`;
+const API_BASE_URL = `/api`;
 
 const ReservationCalendar = ({ 
   propertyId, 
@@ -28,7 +29,7 @@ const ReservationCalendar = ({
   const fetchPropertyAvailability = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_BASE_URL}/property/${propertyId}/availability`);
+      const response = await api.get(`${API_BASE_URL}/property/${propertyId}/availability`);
       if (response.data && response.data.unavailableDates) {
         setUnavailableDates(response.data.unavailableDates.map(date => new Date(date)));
       }

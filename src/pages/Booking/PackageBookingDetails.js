@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
+import { api } from "../../api";
 import { useNavigate, useParams } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import S3Image from "../../components/S3Image";
@@ -14,41 +15,15 @@ const PackageBookingDetails = () => {
   const [error, setError] = useState("");
 
 
-  // Create API instance with proper headers
+  // Central axios client with relative paths
   const apiCall = async (endpoint, options = {}) => {
-    const baseURL = process.env.REACT_APP_API_URL;
-    const url = `${baseURL}${endpoint}`;
-    
-    const defaultHeaders = {
-      "Content-Type": "application/json",
-    };
-
-    if (token) {
-      defaultHeaders.Authorization = `Bearer ${token}`;
-    }
-
-    const config = {
-      ...options,
-      headers: {
-        ...defaultHeaders,
-        ...options.headers,
-      },
-    };
-
-    const response = await fetch(url, config);
-    
-    if (!response.ok) {
-      if (response.status === 401) {
-        logout();
-        navigate("/login");
-        throw new Error("Session expired. Please log in again.");
-      }
-      
-      const errorData = await response.json().catch(() => ({ message: "Request failed" }));
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-    }
-
-    return await response.json();
+    const headers = { "Content-Type": "application/json" };
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const method = (options.method || "GET").toUpperCase();
+    const data = options.body ? (headers["Content-Type"] === 'application/json' ? JSON.parse(options.body) : options.body) : undefined;
+    const config = { headers, ...(options.signal ? { signal: options.signal } : {}), ...(options.params ? { params: options.params } : {}) };
+    const res = await api.request({ url: endpoint, method, data, ...config });
+    return res.data;
   };
 
   const fetchBookingDetails = async () => {

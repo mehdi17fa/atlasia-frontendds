@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
+import { api } from "../../api";
 import { useNavigate, useParams } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 // import S3Image from "../../components/S3Image";
@@ -24,41 +25,17 @@ const BookingDetails = () => {
   const [existingReview, setExistingReview] = useState(null);
   const [hasReviewed, setHasReviewed] = useState(false);
 
-  // Create API instance with proper headers
+  // Centralized API call using axios client with relative paths
   const apiCall = async (endpoint, options = {}) => {
-    const baseURL = process.env.REACT_APP_API_URL;
-    const url = `${baseURL}${endpoint}`;
-    
-    const defaultHeaders = {
-      "Content-Type": "application/json",
-    };
-
-    if (token) {
-      defaultHeaders.Authorization = `Bearer ${token}`;
-    }
-
-    const config = {
-      ...options,
-      headers: {
-        ...defaultHeaders,
-        ...options.headers,
-      },
-    };
-
-    const response = await fetch(url, config);
-    
-    if (!response.ok) {
-      if (response.status === 401) {
-        logout();
-        navigate("/login");
-        throw new Error("Session expired. Please log in again.");
-      }
-      
-      const errorData = await response.json().catch(() => ({ message: "Request failed" }));
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-    }
-
-    return await response.json();
+    const headers = { "Content-Type": "application/json" };
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const method = (options.method || "GET").toUpperCase();
+    const data = options.body ? (headers["Content-Type"] === 'application/json' ? JSON.parse(options.body) : options.body) : undefined;
+    const config = { headers, ...(options.signal ? { signal: options.signal } : {}), ...(options.params ? { params: options.params } : {}) };
+    const url = endpoint;
+    const client = api;
+    const res = await client.request({ url, method, data, ...config });
+    return res.data;
   };
 
   const fetchBookingDetails = async () => {
@@ -206,29 +183,21 @@ const BookingDetails = () => {
 
     setReviewLoading(true);
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/reviews/`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          propertyId: booking.property._id,
-          bookingId: booking._id,
-          rating: reviewData.rating,
-          comment: reviewData.comment
-        })
-      });
+      const response = await api.post(`/api/reviews/`, {
+        propertyId: booking.property._id,
+        bookingId: booking._id,
+        rating: reviewData.rating,
+        comment: reviewData.comment
+      }, { headers: { Authorization: `Bearer ${token}` } });
 
-      if (response.ok) {
+      if (response?.data) {
         alert("Review submitted successfully!");
         setReviewData({ rating: 0, comment: "" });
         setHasReviewed(true);
         // Refresh booking details
         fetchBookingDetails();
       } else {
-        const errorData = await response.json();
-        alert(`Error: ${errorData.message || 'Failed to submit review'}`);
+        alert('Failed to submit review');
       }
     } catch (error) {
       console.error('Error submitting review:', error);
@@ -252,20 +221,17 @@ const BookingDetails = () => {
     if (!booking || !user) return;
     
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/reviews/property/${booking.property._id}`, {
+      const response = await api.get(`/api/reviews/property/${booking.property._id}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      
-      if (response.ok) {
-        const data = await response.json();
+      const data = response.data;
         const userReview = data.reviews?.find(review => review.user._id === user._id);
         if (userReview) {
           setExistingReview(userReview);
           setHasReviewed(true);
         }
-      }
     } catch (error) {
       console.error('Error checking existing review:', error);
     }

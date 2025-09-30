@@ -3,20 +3,18 @@ import './config/axios'; // Import global axios configuration
 import { isTokenExpired } from './utils/tokenUtils';
 import { tokenStorage } from './utils/tokenStorage';
 
-const API_URL = process.env.REACT_APP_API_URL;
+// Prefer runtime-configurable base URL via window, fallback to env, then same-origin
+const API_URL = (typeof window !== 'undefined' && window.__API_BASE_URL__) || process.env.REACT_APP_API_URL || '';
 
 // Log API configuration on startup
 console.log('🔧 API Configuration:', {
   REACT_APP_API_URL: process.env.REACT_APP_API_URL,
+  runtime_API_BASE_URL: typeof window !== 'undefined' ? window.__API_BASE_URL__ : undefined,
   API_URL: API_URL,
-  isConfigured: !!API_URL
+  isConfigured: typeof API_URL === 'string'
 });
 
-if (!API_URL) {
-  console.error('❌ CRITICAL: REACT_APP_API_URL is not set!');
-  console.error('Please create a .env file with: REACT_APP_API_URL=http://localhost:4000');
-  console.error('Then restart the React development server.');
-}
+// No hard failure if not set; using same-origin + dev proxy in development
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -33,6 +31,19 @@ let globalNavigate = null;
 
 export const setGlobalNavigate = (navigate) => {
   globalNavigate = navigate;
+};
+
+// Allow runtime override of base URL (e.g., from an injected config script)
+export const setApiBaseUrl = (baseUrl) => {
+  try {
+    api.defaults.baseURL = baseUrl || '';
+    if (typeof window !== 'undefined') {
+      window.__API_BASE_URL__ = baseUrl || '';
+    }
+    console.log('🔧 API baseURL updated at runtime:', api.defaults.baseURL);
+  } catch (e) {
+    console.error('Failed to set API base URL at runtime:', e);
+  }
 };
 
 // Add token automatically if available

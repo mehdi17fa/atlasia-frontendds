@@ -37,7 +37,7 @@ export default function Explore() {
       }
 
       try {
-        const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000';
+        const baseUrl = '';
         console.log(logMessage);
         console.log('User role:', user?.role);
         console.log('Is authenticated:', isAuthenticated);
@@ -99,8 +99,8 @@ export default function Explore() {
         // Check for CORS-related errors
         if (err.code === 'ERR_NETWORK' || err.message.includes('CORS') || err.message.includes('Network Error')) {
           console.error('🚑 CORS Error detected!');
-          console.error('🔗 Request was trying to reach:', `${process.env.REACT_APP_API_URL}${endpoint}`);
-          console.error('🌐 Backend URL configured as:', process.env.REACT_APP_API_URL);
+        console.error('🔗 Request was trying to reach:', `${endpoint}`);
+        console.error('🌐 Using same-origin API via dev proxy');
           setError('CORS Error: Unable to connect to the backend. Please check if the backend is running and CORS is properly configured.');
         } else {
           setError(err.response?.data?.message || err.message || 'Failed to fetch properties');

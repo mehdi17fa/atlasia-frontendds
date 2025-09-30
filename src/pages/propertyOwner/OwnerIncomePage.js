@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { api } from '../../api';
 import { useNavigate } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 import { useAuth } from '../../hooks/useAuth';
 import { FaArrowLeft, FaUser } from 'react-icons/fa';
 
-const API_BASE_URL = `${process.env.REACT_APP_API_URL}/api`;
+const API_BASE_URL = `/api`;
 
 const OwnerIncomePage = () => {
   const { user, token, isLoading, isAuthenticated } = useAuth();
@@ -52,7 +53,7 @@ const OwnerIncomePage = () => {
         endDate: endDate || 'none'
       });
 
-      const response = await axios.get(`${API_BASE_URL}/booking/income?${params.toString()}`, {
+      const response = await api.get(`${API_BASE_URL}/booking/income?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
