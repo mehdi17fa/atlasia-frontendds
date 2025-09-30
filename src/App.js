@@ -18,7 +18,6 @@ import SignUpWizard from './pages/SignUp/SignUpWizard';
 import IdentificationScreen from './pages/SignUp/IdentificationScreen';
 import ProfileSignupScreen from './pages/SignUp/CompleteProfileScreen';
 import SignupScreenConf from './pages/SignUp/SignUpConfScreen';
-import SimplePropertyTest from './components/SimplePropertyTest';
 import LoginScreen from './pages/LogIn/LogInScreen';
 import PasswordRecoveryScreen from './pages/LogIn/PasswordRecoveryScreen';
 import PasswordRecoveryConfirmation from './pages/LogIn/PasswordRecoveryConfirmation';
@@ -257,7 +256,6 @@ function App() {
         <Route path="/owner/income" element={<ProtectedRoute allowedRoles={['owner']}><OwnerIncomePage /></ProtectedRoute>} />
         <Route path="/owner/reservations/:propertyId" element={<ProtectedRoute allowedRoles={['owner']}><ReservationPage /></ProtectedRoute>} />
         <Route path="/test-reservations" element={<ProtectedRoute><div className="p-6"><h1>Test Route Works!</h1></div></ProtectedRoute>} />
-        <Route path="/test-property-creation" element={<ProtectedRoute><SimplePropertyTest /></ProtectedRoute>} />
 
         {/* Booking - Require authentication */}
         <Route path="/booking/request/:propertyId" element={<ProtectedRoute><BookingRequest /></ProtectedRoute>} />
