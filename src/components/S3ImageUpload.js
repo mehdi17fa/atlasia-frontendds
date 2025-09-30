@@ -83,7 +83,9 @@ const S3ImageUpload = ({
       errors.forEach(error => toast.error(error));
     }
 
-    if (validFiles.length === 0) return;
+    if (validFiles.length === 0) {
+      return;
+    }
 
     setUploading(true);
     setPreviews(createPreviews(validFiles));
@@ -124,7 +126,13 @@ const S3ImageUpload = ({
 
       // Call success callback
       if (onUpload) {
-        onUpload(multiple ? results : results[0]);
+        try {
+          const callbackData = multiple ? results : results[0];
+          onUpload(callbackData);
+        } catch (callbackError) {
+          console.error("Error in upload callback:", callbackError);
+          toast.error("Upload completed but callback failed");
+        }
       }
 
       toast.success(`${validFiles.length} file(s) uploaded successfully!`);

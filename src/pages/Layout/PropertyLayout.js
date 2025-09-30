@@ -289,7 +289,12 @@ export default function PropertyLayout({
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-100 py-6 pb-28 space-y-8">
+      {/* Desktop Two-Column Layout */}
+      <div className="hidden lg:block">
+        <div className="max-w-7xl mx-auto px-6 py-6 pb-28">
+          <div className="flex gap-8">
+            {/* Left Column - Main Content */}
+            <div className="flex-1 space-y-8">
         {/* Property Title and Favorite Button */}
         <div className="flex items-center justify-between mb-6 mx-4 md:mx-0">
           <h1 className="text-3xl font-bold">{title}</h1>
@@ -419,89 +424,7 @@ export default function PropertyLayout({
         </div>
       </div>
       
-      <div className="border rounded-2xl p-4 shadow-sm mx-4 md:mx-0">
-        <h2 className="font-semibold text-lg mb-3">Book This Property</h2>
-        {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
-        
-        {/* Reservation Widget - Horizontal Layout */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <div className="flex flex-col lg:flex-row items-center gap-4">
-            {/* Dates Section */}
-            <div className="flex-1 flex flex-col sm:flex-row gap-4 w-full">
-              {/* Check-in */}
-              <div className="flex-1">
-                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">CHECK-IN</label>
-                <input
-                  type="date"
-                  value={checkIn}
-                  onChange={(e) => setCheckIn(e.target.value)}
-                  className="w-full text-lg font-medium text-gray-900 border-none outline-none bg-transparent"
-                  min={new Date().toISOString().split('T')[0]}
-                />
-              </div>
-              
-              {/* Divider */}
-              <div className="hidden sm:block w-px bg-gray-200"></div>
-              
-              {/* Check-out */}
-              <div className="flex-1">
-                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">CHECKOUT</label>
-                <input
-                  type="date"
-                  value={checkOut}
-                  onChange={(e) => setCheckOut(e.target.value)}
-                  className="w-full text-lg font-medium text-gray-900 border-none outline-none bg-transparent"
-                  min={checkIn || new Date().toISOString().split('T')[0]}
-                />
-              </div>
-              
-              {/* Divider */}
-              <div className="hidden sm:block w-px bg-gray-200"></div>
-              
-              {/* Guests */}
-              <div className="flex-1">
-                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">GUESTS</label>
-                <div className="flex items-center">
-                  <input
-                    type="number"
-                    min="1"
-                    value={guests}
-                    onChange={(e) => setGuests(Number(e.target.value))}
-                    className="w-full text-lg font-medium text-gray-900 border-none outline-none bg-transparent"
-                  />
-                  <span className="text-gray-500 ml-1">guest{guests > 1 ? 's' : ''}</span>
-                </div>
-              </div>
-            </div>
-            
-            {/* Reserve Button */}
-            <div className="w-full lg:w-auto">
-              <button
-                onClick={handleBooking}
-                disabled={!isLoggedIn || !checkIn || !checkOut || guests < 1}
-                className={`w-full lg:w-auto px-8 py-4 rounded-xl text-white font-semibold text-lg transition-all ${
-                  !isLoggedIn 
-                    ? 'bg-gray-300 cursor-not-allowed opacity-50'
-                    : (!checkIn || !checkOut || guests < 1)
-                      ? 'bg-orange-500 hover:bg-orange-600 shadow-md hover:shadow-lg'
-                      : 'bg-green-600 hover:bg-green-700 shadow-md hover:shadow-lg'
-                }`}
-              >
-                {!isLoggedIn 
-                  ? '🔒 Connectez-vous pour réserver'
-                  : (!checkIn || !checkOut || guests < 1)
-                    ? '📅 Sélectionnez vos dates et invités'
-                    : 'Reserve'
-                }
-              </button>
-            </div>
-          </div>
-          
-          {/* Disclaimer */}
-          <p className="text-gray-500 text-sm mt-3 text-center">You won't be charged yet</p>
-        </div>
-      </div>
-      <div className="mx-4 md:mx-0">
+          <div>
         <h2 className="font-semibold text-lg mb-3">Ce que propose ce logement</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm text-gray-700 font-medium">
           {features.map((feature, index) => (
@@ -671,6 +594,338 @@ export default function PropertyLayout({
           </div>
         )}
       </div>
+            </div>
+
+            {/* Right Column - Sticky Booking Widget */}
+            <div className="w-80 flex-shrink-0">
+              <div className="sticky top-1/2 -translate-y-1/2">
+                <div className="border rounded-2xl p-4 shadow-sm">
+                  <h2 className="font-semibold text-lg mb-3">Réserver ce logement</h2>
+                  {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
+                  
+                  {/* Reservation Widget - Vertical Layout for Desktop */}
+                  <div className="bg-white rounded-xl border border-gray-200 p-4">
+                    <div className="space-y-4">
+                      {/* Check-in */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">ARRIVÉE</label>
+                        <input
+                          type="date"
+                          value={checkIn}
+                          onChange={(e) => setCheckIn(e.target.value)}
+                          className="w-full text-lg font-medium text-gray-900 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                          min={new Date().toISOString().split('T')[0]}
+                        />
+                      </div>
+                      
+                      {/* Check-out */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">DÉPART</label>
+                        <input
+                          type="date"
+                          value={checkOut}
+                          onChange={(e) => setCheckOut(e.target.value)}
+                          className="w-full text-lg font-medium text-gray-900 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                          min={checkIn || new Date().toISOString().split('T')[0]}
+                        />
+                      </div>
+                      
+                      {/* Guests */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">VOYAGEURS</label>
+                        <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-green-500">
+                          <input
+                            type="number"
+                            min="1"
+                            value={guests}
+                            onChange={(e) => setGuests(Number(e.target.value))}
+                            className="w-full text-lg font-medium text-gray-900 border-none outline-none bg-transparent"
+                          />
+                          <span className="text-gray-500 ml-1">{guests > 1 ? 'voyageurs' : 'voyageur'}</span>
+                        </div>
+                      </div>
+                      
+                      {/* Reserve Button */}
+                      <button
+                        onClick={handleBooking}
+                        disabled={!isLoggedIn || !checkIn || !checkOut || guests < 1}
+                        className={`w-full px-6 py-4 rounded-xl text-white font-semibold text-lg transition-all ${
+                          !isLoggedIn || !checkIn || !checkOut || guests < 1
+                            ? 'bg-gray-400 cursor-not-allowed opacity-60'
+                            : 'bg-green-600 hover:bg-green-700 shadow-md hover:shadow-lg'
+                        }`}
+                      >
+                        {!isLoggedIn 
+                          ? '🔒 Connectez-vous pour réserver'
+                          : 'Réserver'
+                        }
+                      </button>
+                    </div>
+                    
+                    {/* Disclaimer */}
+                    <p className="text-gray-500 text-sm mt-3 text-center">Vous ne serez pas encore débité</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Layout */}
+      <div className="lg:hidden max-w-4xl mx-auto px-4 py-6 pb-28 space-y-8">
+        {/* Mobile Content */}
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold">{title}</h1>
+          <button 
+            onClick={handleToggleFavorite}
+            className="p-3 text-green-600 hover:text-green-700 transition-colors"
+            title={isFavorited(propertyId) ? "Remove from favorites" : "Add to favorites"}
+          >
+            <FaHeart
+              className={`w-6 h-6 transition-colors duration-300 ${
+                isFavorited(propertyId) ? "text-red-500" : "text-green-600 hover:text-red-500"
+              }`}
+            />
+          </button>
+        </div>
+
+        {/* Image Gallery */}
+        {photos && photos.length > 0 ? (
+          <div className="relative">
+            <div className="mx-4">
+              <ImageCarousel
+                images={photos}
+                className="h-80 rounded-2xl shadow-lg cursor-pointer"
+                showDots={photos.length > 1}
+                showArrows={photos.length > 1}
+                onImageClick={handleImageClick}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="relative mx-4">
+            <S3Image 
+              src={mainImage} 
+              alt={title} 
+              className="w-full h-80 object-cover rounded-2xl shadow-lg" 
+              fallbackSrc="/villa1.jpg"
+            />
+          </div>
+        )}
+        
+        {/* Property Details */}
+        <div>
+          <p className="text-gray-600 mt-1">{location}</p>
+          <div className="mt-1">
+            <RatingDisplay 
+              rating={rating} 
+              reviewCount={reviewCount} 
+              size="sm" 
+              showCount={true}
+            />
+          </div>
+        </div>
+
+        {/* Mobile Booking Widget */}
+        <div className="border rounded-2xl p-4 shadow-sm">
+          <h2 className="font-semibold text-lg mb-3">Réserver ce logement</h2>
+          {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
+          
+          {/* Reservation Widget - Horizontal Layout for Mobile */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4">
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              {/* Dates Section */}
+              <div className="flex-1 flex flex-col sm:flex-row gap-4 w-full">
+                {/* Check-in */}
+                <div className="flex-1">
+                  <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">ARRIVÉE</label>
+                  <input
+                    type="date"
+                    value={checkIn}
+                    onChange={(e) => setCheckIn(e.target.value)}
+                    className="w-full text-lg font-medium text-gray-900 border-none outline-none bg-transparent"
+                    min={new Date().toISOString().split('T')[0]}
+                  />
+                </div>
+                
+                {/* Divider */}
+                <div className="hidden sm:block w-px bg-gray-200"></div>
+                
+                {/* Check-out */}
+                <div className="flex-1">
+                  <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">DÉPART</label>
+                  <input
+                    type="date"
+                    value={checkOut}
+                    onChange={(e) => setCheckOut(e.target.value)}
+                    className="w-full text-lg font-medium text-gray-900 border-none outline-none bg-transparent"
+                    min={checkIn || new Date().toISOString().split('T')[0]}
+                  />
+                </div>
+                
+                {/* Divider */}
+                <div className="hidden sm:block w-px bg-gray-200"></div>
+                
+                {/* Guests */}
+                <div className="flex-1">
+                  <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">VOYAGEURS</label>
+                  <div className="flex items-center">
+                    <input
+                      type="number"
+                      min="1"
+                      value={guests}
+                      onChange={(e) => setGuests(Number(e.target.value))}
+                      className="w-full text-lg font-medium text-gray-900 border-none outline-none bg-transparent"
+                    />
+                    <span className="text-gray-500 ml-1">{guests > 1 ? 'voyageurs' : 'voyageur'}</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Reserve Button */}
+              <div className="w-full sm:w-auto">
+                <button
+                  onClick={handleBooking}
+                  disabled={!isLoggedIn || !checkIn || !checkOut || guests < 1}
+                  className={`w-full sm:w-auto px-8 py-4 rounded-xl text-white font-semibold text-lg transition-all ${
+                    !isLoggedIn || !checkIn || !checkOut || guests < 1
+                      ? 'bg-gray-400 cursor-not-allowed opacity-60'
+                      : 'bg-green-600 hover:bg-green-700 shadow-md hover:shadow-lg'
+                  }`}
+                >
+                  {!isLoggedIn 
+                    ? '🔒 Connectez-vous pour réserver'
+                    : 'Réserver'
+                  }
+                </button>
+              </div>
+            </div>
+            
+            {/* Disclaimer */}
+            <p className="text-gray-500 text-sm mt-3 text-center">Vous ne serez pas encore débité</p>
+          </div>
+        </div>
+
+        {/* Features */}
+        <div>
+          <h2 className="font-semibold text-lg mb-3">Ce que propose ce logement</h2>
+          <div className="grid grid-cols-2 gap-4 text-sm text-gray-700 font-medium">
+            {features.map((feature, index) => (
+              <div key={index} className="flex items-center space-x-2">
+                {feature.icon}
+                <span>{feature.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Associated Packages */}
+        <div>
+          <h2 className="font-semibold text-lg mb-3">Les packs associés</h2>
+          {associatedPacks && associatedPacks.length > 0 ? (
+          <div className="space-y-3">
+            {associatedPacks.map((pack, index) => (
+                <div key={pack._id || index} className="flex items-center space-x-4 p-4 rounded-xl shadow hover:shadow-lg transition-all cursor-pointer border border-secondary-200 hover:border-primary-300"
+                     onClick={() => navigate(`/packages/${pack._id}`)}>
+                  <S3Image
+                  src={pack.image || '/placeholder-image.jpg'}
+                  alt={pack.name || 'Pack image'}
+                  className="w-16 h-16 rounded-lg object-cover"
+                    fallbackSrc="/placeholder1.jpg"
+                  />
+                  <div className="flex-1">
+                    <p className="font-medium text-secondary-900">{pack.name || 'Unnamed Pack'}</p>
+                    <p className="text-sm text-secondary-500">{pack.description || 'Aucune description disponible'}</p>
+                    {pack.partnerName && (
+                      <p className="text-xs text-primary-600 mt-1">Par {pack.partnerName}</p>
+                    )}
+                  </div>
+                  <div className="text-primary-600">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </div>
+              ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 bg-gray-50 rounded-xl">
+            <div className="text-gray-400 mb-2">
+              <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              </svg>
+            </div>
+            <p className="text-gray-600 font-medium">Aucun pack associé</p>
+            <p className="text-sm text-gray-500">Ce logement n'a pas encore de packs associés</p>
+        </div>
+        )}
+        </div>
+
+        {/* Map */}
+        <div>
+          <SinglePropertyMap location={location} />
+        </div>
+
+        {/* Reviews */}
+        <div>
+          <h2 className="font-semibold text-lg mb-3">Avis des clients</h2>
+          {reviewsLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
+              <p className="text-gray-500 mt-2">Chargement des avis...</p>
+            </div>
+          ) : (
+            <ReviewList 
+              reviews={reviewsData}
+              propertyRating={rating}
+              reviewCount={reviewCount}
+            />
+          )}
+        </div>
+
+        {/* Host Information */}
+        {host && (
+          <div className="border rounded-2xl p-6 shadow-sm bg-white">
+            <h2 className="font-semibold text-lg mb-4">À propos de votre hôte</h2>
+            {host ? (
+              <div className="flex flex-col items-start justify-between gap-4">
+                <div className="flex items-center space-x-4">
+                  <InitialsAvatar
+                    name={host.name || 'Hôte'}
+                    size="w-16 h-16"
+                    textSize="text-lg"
+                    backgroundColor="bg-gradient-to-br from-green-500 to-blue-500"
+                    className="border-2 border-green-100"
+                  />
+                  <div>
+                    <h3 className="font-semibold text-lg text-gray-900">{host.name || 'Hôte'}</h3>
+                    <p className="text-sm text-gray-600">Propriétaire du logement</p>
+                    {host.email && (
+                      <p className="text-xs text-gray-500 mt-1">✉️ {host.email}</p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex flex-col gap-3 w-full">
+                  <button
+                    onClick={() => host?.id && navigate(`/owner/${host.id}`)}
+                    disabled={!host?.id}
+                    className={`px-4 py-2 rounded-xl text-white font-medium transition-all ${host?.id 
+                      ? 'bg-green-600 hover:bg-green-700 shadow-md hover:shadow-lg' 
+                      : 'bg-gray-300 cursor-not-allowed opacity-50'}`}
+                  >
+                    👤 Voir le profil
+          </button>
+        </div>
+          </div>
+        ) : (
+          <div className="text-center py-4">
+            <p className="text-gray-600">Informations sur l'hôte non disponibles</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Review Form Modal */}
       {showReviewForm && selectedBooking && (
@@ -706,7 +961,6 @@ export default function PropertyLayout({
         isOpen={imageViewerOpen}
         onClose={handleCloseImageViewer}
       />
-      </div>
     </div>
   );
 }

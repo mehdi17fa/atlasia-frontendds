@@ -35,7 +35,9 @@ export const uploadFileToS3 = async (file, folder = 'general', onProgress = null
       },
     };
 
+    console.log('📤 Making API call to /api/upload with config:', config);
     const response = await api.post('/api/upload', formData, config);
+    console.log('📥 API response received:', response.data);
     
     // Enhanced backend response handling for inconsistent API responses
     const data = response.data;
@@ -156,6 +158,19 @@ export const uploadFileToS3 = async (file, folder = 'general', onProgress = null
     
   } catch (error) {
     // Enhanced error handling to extract URLs from error responses
+    console.error('❌ S3 upload failed:', error);
+    console.error('❌ Error details:', {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      config: {
+        url: error.config?.url,
+        method: error.config?.method,
+        headers: error.config?.headers
+      }
+    });
+    
     const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || 'Unknown error';
     
     try {
