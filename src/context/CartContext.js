@@ -4,8 +4,8 @@ import { api } from '../api';
 
 const CartContext = createContext();
 
-// localStorage key for cart persistence
-const CART_STORAGE_KEY = 'atlasia_cart';
+// localStorage key for cart persistence - will be made user-specific
+const CART_STORAGE_KEY_PREFIX = 'atlasia_cart';
 
 export const CartProvider = ({ children }) => {
   const { isAuthenticated, user } = useAuth();
@@ -19,26 +19,36 @@ export const CartProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Helper function to get user-specific cart key
+  const getCartStorageKey = useCallback((userId = null) => {
+    if (userId) {
+      return `${CART_STORAGE_KEY_PREFIX}_user_${userId}`;
+    }
+    return `${CART_STORAGE_KEY_PREFIX}_guest`;
+  }, []);
+
   // Helper function to save cart to localStorage
-  const saveCartToStorage = useCallback((cartData) => {
+  const saveCartToStorage = useCallback((cartData, userId = null) => {
     try {
+      const storageKey = getCartStorageKey(userId);
       if (cartData && cartData.items && cartData.items.length > 0) {
-        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify({
+        localStorage.setItem(storageKey, JSON.stringify({
           ...cartData,
           savedAt: new Date().toISOString()
         }));
       } else {
-        localStorage.removeItem(CART_STORAGE_KEY);
+        localStorage.removeItem(storageKey);
       }
     } catch (error) {
       console.error('Error saving cart to localStorage:', error);
     }
-  }, []);
+  }, [getCartStorageKey]);
 
   // Helper function to load cart from localStorage
-  const loadCartFromStorage = useCallback(() => {
+  const loadCartFromStorage = useCallback((userId = null) => {
     try {
-      const savedCart = localStorage.getItem(CART_STORAGE_KEY);
+      const storageKey = getCartStorageKey(userId);
+      const savedCart = localStorage.getItem(storageKey);
       if (savedCart) {
         const cartData = JSON.parse(savedCart);
         // Check if cart is not expired (7 days)
@@ -50,15 +60,16 @@ export const CartProvider = ({ children }) => {
           return cartData;
         } else {
           // Cart expired, remove from storage
-          localStorage.removeItem(CART_STORAGE_KEY);
+          localStorage.removeItem(storageKey);
         }
       }
     } catch (error) {
       console.error('Error loading cart from localStorage:', error);
-      localStorage.removeItem(CART_STORAGE_KEY);
+      const storageKey = getCartStorageKey(userId);
+      localStorage.removeItem(storageKey);
     }
     return null;
-  }, []);
+  }, [getCartStorageKey]);
 
   // Fetch cart from backend
   const fetchCart = useCallback(async () => {
@@ -79,22 +90,22 @@ export const CartProvider = ({ children }) => {
       
       if (response.data.success) {
         setCart(response.data.cart);
-        // Save to localStorage for offline access
-        saveCartToStorage(response.data.cart);
+        // Save to localStorage for offline access with user ID
+        saveCartToStorage(response.data.cart, user?._id);
       }
     } catch (error) {
       console.error('Error fetching cart:', error);
       setError(error.response?.data?.message || 'Failed to fetch cart');
       
       // Fallback to localStorage
-      const localCart = loadCartFromStorage();
+      const localCart = loadCartFromStorage(user?._id);
       if (localCart) {
         setCart(localCart);
       }
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated, loadCartFromStorage, saveCartToStorage]);
+  }, [isAuthenticated, user?._id, loadCartFromStorage, saveCartToStorage]);
 
   // Add item to cart
   const addToCart = useCallback(async (itemData) => {
@@ -142,7 +153,7 @@ export const CartProvider = ({ children }) => {
       
       if (response.data.success) {
         setCart(response.data.cart);
-        saveCartToStorage(response.data.cart);
+        saveCartToStorage(response.data.cart, user?._id);
         return response.data;
       }
       
@@ -191,7 +202,7 @@ export const CartProvider = ({ children }) => {
       
       if (response.data.success) {
         setCart(response.data.cart);
-        saveCartToStorage(response.data.cart);
+        saveCartToStorage(response.data.cart, user?._id);
         return response.data;
       }
       
@@ -229,7 +240,7 @@ export const CartProvider = ({ children }) => {
       
       if (response.data.success) {
         setCart(response.data.cart);
-        saveCartToStorage(response.data.cart);
+        saveCartToStorage(response.data.cart, user?._id);
         return response.data;
       }
       
@@ -262,7 +273,7 @@ export const CartProvider = ({ children }) => {
       
       if (response.data.success) {
         setCart(response.data.cart);
-        saveCartToStorage(response.data.cart);
+        saveCartToStorage(response.data.cart, user?._id);
         return response.data;
       }
       
@@ -274,7 +285,28 @@ export const CartProvider = ({ children }) => {
       setError(errorMessage);
       throw new Error(errorMessage);
     }
-  }, [isAuthenticated, saveCartToStorage]);
+  }, [isAuthenticated, user?._id, saveCartToStorage]);
+
+  // Clear cart when user logs out (to prevent data leakage between users)
+  const clearCartOnLogout = useCallback(() => {
+    const emptyCart = { items: [], totalItems: 0, totalAmount: 0, expiresAt: null, lastUpdated: null };
+    setCart(emptyCart);
+    
+    // Clear all user-specific cart data from localStorage
+    try {
+      // Clear current user's cart
+      if (user?._id) {
+        const userCartKey = getCartStorageKey(user._id);
+        localStorage.removeItem(userCartKey);
+      }
+      
+      // Clear guest cart
+      const guestCartKey = getCartStorageKey();
+      localStorage.removeItem(guestCartKey);
+    } catch (error) {
+      console.error('Error clearing cart data on logout:', error);
+    }
+  }, [user?._id, getCartStorageKey]);
 
   // Checkout cart
   const checkoutCart = useCallback(async (guestMessage = '') => {
@@ -309,9 +341,9 @@ export const CartProvider = ({ children }) => {
 
   // Sync local cart with backend when user logs in
   const syncCartWithBackend = useCallback(async () => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || !user?._id) return;
     
-    const localCart = loadCartFromStorage();
+    const localCart = loadCartFromStorage(user._id);
     if (!localCart || localCart.items.length === 0) {
       // No local cart, just fetch from backend
       await fetchCart();
@@ -343,7 +375,7 @@ export const CartProvider = ({ children }) => {
       // Fallback to fetching from backend
       await fetchCart();
     }
-  }, [isAuthenticated, loadCartFromStorage, fetchCart]);
+  }, [isAuthenticated, user?._id, loadCartFromStorage, fetchCart]);
 
   // Initialize cart when component mounts or auth state changes
   useEffect(() => {
@@ -351,20 +383,30 @@ export const CartProvider = ({ children }) => {
       // User is logged in, sync cart
       syncCartWithBackend();
     } else {
-      // User is not logged in, load from localStorage
+      // User is not logged in, load from localStorage (guest cart)
       const localCart = loadCartFromStorage();
       if (localCart) {
         setCart(localCart);
+      } else {
+        // Clear cart if no local cart exists
+        setCart({ items: [], totalItems: 0, totalAmount: 0, expiresAt: null, lastUpdated: null });
       }
     }
   }, [isAuthenticated, user, syncCartWithBackend, loadCartFromStorage]);
 
+  // Clear cart when user logs out
+  useEffect(() => {
+    if (!isAuthenticated) {
+      clearCartOnLogout();
+    }
+  }, [isAuthenticated, clearCartOnLogout]);
+
   // Auto-save cart to localStorage whenever cart changes
   useEffect(() => {
     if (cart.items && cart.items.length > 0) {
-      saveCartToStorage(cart);
+      saveCartToStorage(cart, user?._id);
     }
-  }, [cart, saveCartToStorage]);
+  }, [cart, user?._id, saveCartToStorage]);
 
   const value = {
     // Cart state
@@ -380,6 +422,7 @@ export const CartProvider = ({ children }) => {
     clearCart,
     checkoutCart,
     syncCartWithBackend,
+    clearCartOnLogout,
     
     // Utility functions
     isCartEmpty: cart.items.length === 0,
