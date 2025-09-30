@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
-import S3Image from "../../components/S3Image";
+// import S3Image from "../../components/S3Image";
 import ImageCarousel from "../../components/ImageCarousel";
 import { FaArrowLeft, FaStar, FaCheck } from "react-icons/fa";
 
@@ -612,104 +612,7 @@ const BookingDetails = () => {
           </div>
         )}
 
-        {/* Review Section - Always visible for now */}
-        {!hasReviewed && (
-          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
-            <div className="mb-8">
-              <div className="flex items-center mb-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mr-4">
-                  <FaStar className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold text-gray-900">Rate Your Stay</h3>
-                  <p className="text-gray-600">
-                    Share your experience and help other travelers make informed decisions.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Inline Review Form */}
-            <div className="space-y-4">
-              {/* Rating Section */}
-              <div className="bg-gray-50 rounded-lg p-6">
-                <label className="block text-lg font-semibold text-gray-900 mb-4">
-                  Overall Rating *
-                </label>
-                <div className="flex space-x-2 mb-4">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      onClick={() => handleRatingChange(star)}
-                      className={`p-3 rounded-full transition-all duration-200 ${
-                        star <= reviewData.rating
-                          ? 'text-yellow-400 bg-yellow-50 shadow-md'
-                          : 'text-gray-300 hover:text-yellow-400 hover:bg-yellow-50'
-                      }`}
-                    >
-                      <FaStar className="w-8 h-8" />
-                    </button>
-                  ))}
-                </div>
-                {reviewData.rating > 0 && (
-                  <div className="bg-white rounded-lg p-4 border border-gray-200">
-                    <p className="text-lg font-semibold text-gray-900">
-                      {reviewData.rating} star{reviewData.rating !== 1 ? 's' : ''} - {
-                        reviewData.rating === 1 ? 'Poor' :
-                        reviewData.rating === 2 ? 'Fair' :
-                        reviewData.rating === 3 ? 'Good' :
-                        reviewData.rating === 4 ? 'Very Good' :
-                        reviewData.rating === 5 ? 'Excellent' : ''
-                      }
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Comment Section */}
-              <div className="bg-gray-50 rounded-lg p-6">
-                <label className="block text-lg font-semibold text-gray-900 mb-4">
-                  Your Review
-                </label>
-                <textarea
-                  value={reviewData.comment}
-                  onChange={handleCommentChange}
-                  placeholder="Tell us about your stay... What did you like? What could be improved?"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none text-gray-700 placeholder-gray-500"
-                  rows={5}
-                />
-                <p className="text-sm text-gray-600 mt-2 flex items-center">
-                  <svg className="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Your review will help other travelers and the property owner.
-                </p>
-              </div>
-
-
-              {/* Submit Button */}
-              <div className="flex justify-end pt-6 border-t border-gray-200">
-                <button
-                  onClick={submitReview}
-                  disabled={reviewLoading || reviewData.rating === 0}
-                  className="bg-gradient-to-r from-green-600 to-green-700 text-white px-8 py-3 rounded-lg hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-3 font-semibold text-lg shadow-lg hover:shadow-xl"
-                >
-                  {reviewLoading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      Submitting Review...
-                    </>
-                  ) : (
-                    <>
-                      <FaCheck className="w-5 h-5" />
-                      Submit Review
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Remove duplicate inline review panel; we'll use the styled section below */}
 
               {/* Review Section */}
               <div className="bg-gradient-to-br from-white to-blue-50 rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8">
@@ -717,15 +620,15 @@ const BookingDetails = () => {
                   <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full mb-4 shadow-lg">
                     <FaStar className="w-8 h-8 text-white" />
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Share Your Experience</h3>
-                  <p className="text-gray-600">Help other travelers by rating your stay</p>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Partagez votre expérience</h3>
+                  <p className="text-gray-600">Aidez d'autres voyageurs en évaluant votre séjour</p>
                 </div>
                 
                 <div className="max-w-2xl mx-auto space-y-6">
                   {/* Rating */}
                   <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                     <label className="block text-lg font-semibold text-gray-900 mb-4 text-center">
-                      How was your stay? *
+                      Comment s'est passé votre séjour ? *
                     </label>
                     <div className="flex justify-center space-x-2 mb-4">
                       {[1, 2, 3, 4, 5].map((star) => (
@@ -762,12 +665,12 @@ const BookingDetails = () => {
                   {/* Comment */}
                   <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                     <label className="block text-lg font-semibold text-gray-900 mb-4">
-                      Tell us more about your experience
+                      Parlez-nous davantage de votre expérience
                     </label>
                     <textarea
                       value={reviewData.comment}
                       onChange={handleCommentChange}
-                      placeholder="What did you like? What could be improved? Share your thoughts..."
+                      placeholder="Qu'avez-vous apprécié ? Que peut-on améliorer ? Partagez vos impressions..."
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none text-gray-700 placeholder-gray-500"
                       rows={4}
                     />
@@ -775,7 +678,7 @@ const BookingDetails = () => {
                       <svg className="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      Your review helps other travelers make informed decisions
+                      Votre avis aide les autres voyageurs à faire un choix éclairé
                     </p>
                   </div>
 
@@ -789,12 +692,12 @@ const BookingDetails = () => {
                       {reviewLoading ? (
                         <>
                           <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                          Submitting Review...
+                          Envoi de l'avis...
                         </>
                       ) : (
                         <>
                           <FaCheck className="w-5 h-5" />
-                          Submit Review
+                          Publier l'avis
                         </>
                       )}
                     </button>
