@@ -11,7 +11,7 @@ import OwnerBottomNavbar from "../../components/shared/NavbarPropriétaire";
 import { AuthContext } from "../../context/AuthContext";
 import { tokenStorage } from "../../utils/tokenStorage";
 import toast, { Toaster } from "react-hot-toast";
-import { FaArrowLeft, FaUser } from 'react-icons/fa';
+import { FaUser } from 'react-icons/fa';
 import { 
   PlusIcon, 
   HomeIcon, 
@@ -402,13 +402,8 @@ export default function WelcomeOwner() {
       <div className="sticky top-0 z-50 bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
-            {/* Left: Back Button */}
-            <button
-              onClick={() => navigate('/')}
-              className="flex items-center justify-center w-10 h-10 text-green-700 hover:text-green-800 hover:bg-green-50 rounded-full transition-colors"
-            >
-              <FaArrowLeft className="w-5 h-5" />
-            </button>
+            {/* Left: Empty space for balance */}
+            <div className="w-10"></div>
 
             {/* Center: Atlasia Branding */}
             <div className="text-center">
