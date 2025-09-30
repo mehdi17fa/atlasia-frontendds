@@ -20,7 +20,7 @@ import { ReactComponent as ParkingIcon } from '../../assets/icons/PropertyEquipm
 import { ReactComponent as PoolIcon } from '../../assets/icons/PropertyEquipment/poolBlack.svg';
 import { ReactComponent as PlaygroundIcon } from '../../assets/icons/PropertyEquipment/playgroundBlack.svg';
 
-const API_BASE = process.env.REACT_APP_API_URL;
+// const API_BASE = process.env.REACT_APP_API_URL; // unused
 
 export default function CoHostPropertyPreview() {
   const { propertyId } = useParams();
@@ -67,20 +67,22 @@ export default function CoHostPropertyPreview() {
     property.equipments?.includes("playground") && { icon: <PlaygroundIcon className="w-7 h-7 text-gray-600" />, label: "Aire de jeux" },
   ].filter(Boolean);
 
-  const associatedPacks = property.associatedPacks?.length
-    ? property.associatedPacks
-    : [
-        { name: "Quad Atlasia", location: "Ifrane - Farah Inn · 1h", image: "/placeholder1.jpg" },
-        { name: "Cheval Atlasia", location: "Ifrane - Farah Inn · 1h", image: "/placeholder2.jpg" },
-      ];
+  const associatedPacks = Array.isArray(property.associatedPacks) ? property.associatedPacks : [];
 
   const mapImage = "/map-placeholder.jpg";
 
+  const owner = property.owner || {};
+  const computedOwnerName = owner.displayName 
+    || owner.fullName 
+    || [owner.firstName, owner.lastName].filter(Boolean).join(' ')
+    || owner.name 
+    || owner.email 
+    || 'Hôte';
   const hostData = property.owner ? {
-    id: property.owner._id,
-    name: property.owner.displayName || property.owner.fullName || property.owner.name || 'Nom non disponible',
-    photo: property.owner.profilePic || property.owner.profileImage,
-    email: property.owner.email
+    id: owner._id,
+    name: computedOwnerName,
+    photo: owner.profilePic || owner.profileImage,
+    email: owner.email
   } : null;
 
   // ✅ Function to request co-hosting

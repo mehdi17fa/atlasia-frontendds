@@ -360,13 +360,22 @@ const PackageBookingDetails = () => {
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <h3 className="font-semibold text-gray-900 mb-4">Partenaire</h3>
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                    <span className="text-gray-600 font-medium">
-                      {partner.fullName?.charAt(0) || "P"}
-                    </span>
-                  </div>
+                  {partner.profilePic || partner.profileImage ? (
+                    <S3Image
+                      src={partner.profilePic || partner.profileImage}
+                      alt={partner.fullName || partner.displayName || 'Partenaire'}
+                      className="w-10 h-10 rounded-full object-cover"
+                      fallbackSrc="/profilepic.jpg"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                      <span className="text-gray-600 font-medium">
+                        {(partner.fullName || partner.displayName || 'P').charAt(0)}
+                      </span>
+                    </div>
+                  )}
                   <div>
-                    <p className="font-medium text-gray-900">{partner.fullName || "Partenaire"}</p>
+                    <p className="font-medium text-gray-900">{partner.fullName || partner.displayName || "Partenaire"}</p>
                     <p className="text-sm text-gray-500">{partner.email}</p>
                   </div>
                 </div>

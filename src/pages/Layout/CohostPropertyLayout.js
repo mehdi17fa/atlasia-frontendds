@@ -176,26 +176,7 @@ export default function CoHostPropertyLayout({
             </div>
           )}
 
-          {/* Associated Packs */}
-          {associatedPacks?.length > 0 && (
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold mb-4">Packs associés</h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {associatedPacks.map((pack, idx) => (
-                  <div key={idx} className="rounded-xl shadow p-3">
-                    <S3Image
-                      src={pack.image}
-                      alt={pack.name}
-                      className="w-full h-32 object-cover rounded-lg"
-                      fallbackSrc="/villa2.jpg"
-                    />
-                    <h3 className="mt-2 font-medium">{pack.name}</h3>
-                    <p className="text-sm text-gray-500">{pack.location}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Associated Packs removed per requirements */}
 
           {/* Host */}
           {host && (
@@ -208,7 +189,7 @@ export default function CoHostPropertyLayout({
               />
               <div>
                 <p className="font-semibold">{host.name}</p>
-                <p className="text-sm text-gray-500">Hôte</p>
+                <p className="text-sm text-gray-500">{host.email || host.name}</p>
               </div>
             </div>
           )}
