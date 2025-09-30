@@ -203,7 +203,7 @@ function App() {
         <Route path="/search" element={<PropertySearchFlow />} />
         <Route path="/search/results" element={<SearchResultsPage />} />
         
-        {/* Admin Dashboard - Public access */}
+        {/* Admin Dashboard - Public access (temporarily) */}
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         
         {/* General / Auth - Only accessible when NOT authenticated */}
