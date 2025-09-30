@@ -300,12 +300,12 @@ export default function PropertyLayout({
           <h1 className="text-3xl font-bold">{title}</h1>
           <button 
             onClick={handleToggleFavorite}
-            className="p-3 text-green-600 hover:text-green-700 transition-colors"
-            title={isFavorited(propertyId) ? "Remove from favorites" : "Add to favorites"}
+            className="p-3 transition-colors"
+            title={isFavorited(propertyId) ? "Retirer des favoris" : "Ajouter aux favoris"}
           >
             <FaHeart
               className={`w-6 h-6 transition-colors duration-300 ${
-                isFavorited(propertyId) ? "text-red-500" : "text-green-600 hover:text-red-500"
+                isFavorited(propertyId) ? "text-red-500" : "text-gray-300 hover:text-red-400"
               }`}
             />
           </button>
@@ -695,12 +695,12 @@ export default function PropertyLayout({
           <h1 className="text-3xl font-bold">{title}</h1>
           <button 
             onClick={handleToggleFavorite}
-            className="p-3 text-green-600 hover:text-green-700 transition-colors"
-            title={isFavorited(propertyId) ? "Remove from favorites" : "Add to favorites"}
+            className="p-3 transition-colors"
+            title={isFavorited(propertyId) ? "Retirer des favoris" : "Ajouter aux favoris"}
           >
             <FaHeart
               className={`w-6 h-6 transition-colors duration-300 ${
-                isFavorited(propertyId) ? "text-red-500" : "text-green-600 hover:text-red-500"
+                isFavorited(propertyId) ? "text-red-500" : "text-gray-300 hover:text-red-400"
               }`}
             />
           </button>
