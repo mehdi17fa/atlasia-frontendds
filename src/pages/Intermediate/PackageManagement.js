@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
-import { FaPlus, FaEdit, FaTrash, FaEye, FaCalendarAlt, FaDollarSign, FaMapMarkerAlt, FaUsers, FaArrowLeft, FaUser } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaEye, FaCalendarAlt, FaMapMarkerAlt, FaUsers, FaArrowLeft, FaUser } from 'react-icons/fa';
 import S3Image from '../../components/S3Image';
 import ConfirmationModal from '../../components/shared/ConfirmationModal';
 
@@ -295,9 +295,8 @@ export default function PackageManagement() {
                                 <span>{pkg.property.title || 'Propriété'}</span>
                               </div>
                             )}
-                            <div className="flex items-center space-x-1">
-                              <FaDollarSign className="w-4 h-4" />
-                              <span>{formatPrice(pkg.totalPrice)}</span>
+                          <div className="flex items-center space-x-1">
+                              <span className="font-medium">{formatPrice(pkg.totalPrice)}</span>
                             </div>
                             <div className="flex items-center space-x-1">
                               <FaCalendarAlt className="w-4 h-4" />

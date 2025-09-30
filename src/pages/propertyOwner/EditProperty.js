@@ -2,6 +2,7 @@ import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import { FaArrowLeft } from 'react-icons/fa';
+import { uploadFileToS3 } from '../../utilities/s3Service';
 
 // Icons for property types
 import { ReactComponent as AppartementIconBlack } from "../../assets/icons/Properties/appartementBlack.svg";
@@ -187,6 +188,70 @@ export default function EditProperty() {
         ? prev.equipments.filter(e => e !== equipment)
         : [...prev.equipments, equipment]
     }));
+  };
+
+  // Photos handling (Step 5)
+  const handlePhotosSelect = async (event) => {
+    try {
+      const files = Array.from(event.target.files || []);
+      if (files.length === 0) return;
+
+      setIsLoading(true);
+      setError('');
+
+      // Limit total photos to 4
+      const remainingSlots = Math.max(0, 4 - (formData.photos?.length || 0));
+      const filesToUpload = files.slice(0, remainingSlots);
+
+      const uploadedUrls = [];
+      for (const file of filesToUpload) {
+        const res = await uploadFileToS3(file, 'property-photos');
+        if (res?.url) {
+          uploadedUrls.push(res.url);
+        }
+      }
+
+      if (uploadedUrls.length > 0) {
+        setFormData(prev => ({
+          ...prev,
+          photos: [...(prev.photos || []), ...uploadedUrls].slice(0, 4)
+        }));
+      }
+    } catch (err) {
+      setError(err.message || 'Erreur lors du téléchargement des photos');
+    } finally {
+      setIsLoading(false);
+      // Reset input value so selecting the same file again re-triggers change
+      if (event?.target) event.target.value = '';
+    }
+  };
+
+  const handleReplacePhoto = async (index, file) => {
+    if (!file) return;
+    try {
+      setIsLoading(true);
+      setError('');
+      const res = await uploadFileToS3(file, 'property-photos');
+      if (res?.url) {
+        setFormData(prev => {
+          const next = [...(prev.photos || [])];
+          next[index] = res.url;
+          return { ...prev, photos: next };
+        });
+      }
+    } catch (err) {
+      setError(err.message || 'Erreur lors du remplacement de la photo');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRemovePhoto = (index) => {
+    setFormData(prev => {
+      const next = [...(prev.photos || [])];
+      next.splice(index, 1);
+      return { ...prev, photos: next };
+    });
   };
 
   // Step validation functions
@@ -552,6 +617,23 @@ export default function EditProperty() {
                   <h3 className="text-lg font-semibold text-gray-800">
                     Mes photos ({formData.photos.length}/4)
                   </h3>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handlePhotosSelect}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                      style={{ width: '100%', height: '100%' }}
+                    />
+                    <button
+                      type="button"
+                      className="px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50"
+                      disabled={isLoading || (formData.photos?.length || 0) >= 4}
+                    >
+                      {isLoading ? 'Téléchargement...' : 'Ajouter des photos'}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Photos grid */}
@@ -571,6 +653,27 @@ export default function EditProperty() {
                         </div>
                         <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
                           Photo {index + 1}
+                        </div>
+                        {/* Replace / Remove controls */}
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex space-x-2">
+                          {/* Replace */}
+                          <label className="px-2 py-1 text-xs bg-white rounded shadow cursor-pointer hover:bg-gray-50">
+                            Remplacer
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => handleReplacePhoto(index, e.target.files?.[0])}
+                              className="hidden"
+                            />
+                          </label>
+                          {/* Remove */}
+                          <button
+                            type="button"
+                            onClick={() => handleRemovePhoto(index)}
+                            className="px-2 py-1 text-xs bg-white rounded shadow hover:bg-gray-50"
+                          >
+                            Supprimer
+                          </button>
                         </div>
                       </div>
                     ))}

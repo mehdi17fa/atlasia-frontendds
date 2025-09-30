@@ -512,13 +512,22 @@ export default function PropertyLayout({
         <div className="border rounded-2xl p-6 shadow-sm bg-gradient-to-r from-blue-50 to-green-50 mx-4 md:mx-0">
           <h2 className="font-semibold text-xl mb-4 text-gray-800">👤 Propriétaire</h2>
           <div className="flex items-start space-x-4">
-            <InitialsAvatar
-              name={host.name || 'Hôte'}
-              size="w-20 h-20"
-              textSize="text-2xl"
-              backgroundColor="bg-gradient-to-br from-blue-500 to-green-500"
-              className="border-4 border-white shadow-lg"
-            />
+            {host.photo ? (
+              <S3Image
+                src={host.photo}
+                alt={host.name || 'Hôte'}
+                className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg"
+                fallbackSrc="/profilepic.jpg"
+              />
+            ) : (
+              <InitialsAvatar
+                name={host.name || 'Hôte'}
+                size="w-20 h-20"
+                textSize="text-2xl"
+                backgroundColor="bg-gradient-to-br from-blue-500 to-green-500"
+                className="border-4 border-white shadow-lg"
+              />
+            )}
             <div className="flex-1">
               <h3 className="font-bold text-xl text-gray-900 mb-1">{host.name || 'Hôte'}</h3>
               <p className="text-gray-600 mb-2">Propriétaire de ce logement</p>
@@ -561,13 +570,22 @@ export default function PropertyLayout({
         {host ? (
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex items-center space-x-4">
-              <InitialsAvatar
-                name={host.name || 'Hôte'}
-                size="w-16 h-16"
-                textSize="text-lg"
-                backgroundColor="bg-gradient-to-br from-green-500 to-blue-500"
-                className="border-2 border-green-100"
-              />
+              {host.photo ? (
+                <S3Image
+                  src={host.photo}
+                  alt={host.name || 'Hôte'}
+                  className="w-16 h-16 rounded-full object-cover border-2 border-green-100"
+                  fallbackSrc="/profilepic.jpg"
+                />
+              ) : (
+                <InitialsAvatar
+                  name={host.name || 'Hôte'}
+                  size="w-16 h-16"
+                  textSize="text-lg"
+                  backgroundColor="bg-gradient-to-br from-green-500 to-blue-500"
+                  className="border-2 border-green-100"
+                />
+              )}
               <div>
                 <h3 className="font-semibold text-lg text-gray-900">{host.name || 'Hôte'}</h3>
                 <p className="text-sm text-gray-600">Propriétaire du logement</p>

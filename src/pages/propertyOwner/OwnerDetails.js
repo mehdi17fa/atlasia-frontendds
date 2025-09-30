@@ -191,13 +191,22 @@ export default function OwnerDetails() {
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
           <div className="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-6">
-            <InitialsAvatar
-              name={owner.fullName || owner.displayName || owner.name || 'Hôte'}
-              size="w-24 h-24"
-              textSize="text-3xl"
-              backgroundColor="bg-gradient-to-br from-blue-500 to-green-500"
-              className="border-4 border-white shadow-lg"
-            />
+            {owner.profilePic || owner.profileImage ? (
+              <S3Image
+                src={owner.profilePic || owner.profileImage}
+                alt={owner.fullName || owner.displayName || owner.name || 'Hôte'}
+                className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
+                fallbackSrc="/profilepic.jpg"
+              />
+            ) : (
+              <InitialsAvatar
+                name={owner.fullName || owner.displayName || owner.name || 'Hôte'}
+                size="w-24 h-24"
+                textSize="text-3xl"
+                backgroundColor="bg-gradient-to-br from-blue-500 to-green-500"
+                className="border-4 border-white shadow-lg"
+              />
+            )}
             <div className="flex-1">
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
                 {owner.fullName || owner.displayName || owner.name || 'Hôte'}
