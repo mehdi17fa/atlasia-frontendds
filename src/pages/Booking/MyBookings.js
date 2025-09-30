@@ -692,7 +692,7 @@ const TouristBookings = () => {
                     {getStatusLabel(booking.status)}
                   </span>
                   <span className="font-semibold text-gray-900">
-                    ${booking.totalAmount}
+                    {booking.totalAmount} MAD
                   </span>
                 </div>
 

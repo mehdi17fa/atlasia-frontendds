@@ -75,12 +75,12 @@ const InteractiveMap = ({ properties = [], onPropertyClick, selectedProperty, cl
                       }`}>
                         {(() => {
                           if (!property.price) return '?';
-                          if (typeof property.price === 'number') return `${property.price}€`;
+                          if (typeof property.price === 'number') return `${property.price} MAD`;
                           if (typeof property.price === 'object') {
                             const priceValue = property.price.weekdays || property.price.weekend || property.price.price || property.price.pricePerNight;
-                            return priceValue ? `${priceValue}€` : '?';
+                            return priceValue ? `${priceValue} MAD` : '?';
                           }
-                          return `${property.price}€`;
+                          return `${property.price} MAD`;
                         })()}
                       </div>
                       <h4 className="font-semibold text-gray-900">{property.title}</h4>
@@ -95,13 +95,13 @@ const InteractiveMap = ({ properties = [], onPropertyClick, selectedProperty, cl
                       <span>👥 {property.guests || 0} invités</span>
                       <span className="font-semibold text-green-600">
                         {(() => {
-                          if (!property.price) return '?€/nuit';
-                          if (typeof property.price === 'number') return `${property.price}€/nuit`;
+                          if (!property.price) return '? MAD/nuit';
+                          if (typeof property.price === 'number') return `${property.price} MAD/nuit`;
                           if (typeof property.price === 'object') {
                             const priceValue = property.price.weekdays || property.price.weekend || property.price.price || property.price.pricePerNight;
-                            return priceValue ? `${priceValue}€/nuit` : '?€/nuit';
+                            return priceValue ? `${priceValue} MAD/nuit` : '? MAD/nuit';
                           }
-                          return `${property.price}€/nuit`;
+                          return `${property.price} MAD/nuit`;
                         })()}
                       </span>
                     </div>
@@ -157,13 +157,13 @@ const InteractiveMap = ({ properties = [], onPropertyClick, selectedProperty, cl
                 <span>👥 {selectedProperty.guests || 0} invités</span>
                 <span className="font-semibold text-green-600">
                   {(() => {
-                    if (!selectedProperty.price) return '?€/nuit';
-                    if (typeof selectedProperty.price === 'number') return `${selectedProperty.price}€/nuit`;
+                    if (!selectedProperty.price) return '? MAD/nuit';
+                    if (typeof selectedProperty.price === 'number') return `${selectedProperty.price} MAD/nuit`;
                     if (typeof selectedProperty.price === 'object') {
                       const priceValue = selectedProperty.price.weekdays || selectedProperty.price.weekend || selectedProperty.price.price || selectedProperty.price.pricePerNight;
-                      return priceValue ? `${priceValue}€/nuit` : '?€/nuit';
+                      return priceValue ? `${priceValue} MAD/nuit` : '? MAD/nuit';
                     }
-                    return `${selectedProperty.price}€/nuit`;
+                    return `${selectedProperty.price} MAD/nuit`;
                   })()}
                 </span>
               </div>

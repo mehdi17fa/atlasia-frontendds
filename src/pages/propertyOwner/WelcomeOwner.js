@@ -629,7 +629,7 @@ export default function WelcomeOwner() {
                         <div className="flex items-center text-sm text-gray-600 space-x-4">
                           <span>📅 {new Date(reservation.checkIn).toLocaleDateString()} - {new Date(reservation.checkOut).toLocaleDateString()}</span>
                           <span>👥 {reservation.guests} invité{reservation.guests > 1 ? 's' : ''}</span>
-                          <span>💰 {reservation.totalAmount}€</span>
+                          <span>💰 {reservation.totalAmount} MAD</span>
                         </div>
                         {reservation.guestMessage && (
                           <p className="text-sm text-gray-700 mt-2 italic">

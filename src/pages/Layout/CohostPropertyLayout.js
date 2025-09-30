@@ -335,7 +335,7 @@ export default function CoHostPropertyLayout({
 
                   <div className="mb-4">
                     <p className="text-sm text-gray-500">Montant total</p>
-                    <p className="text-xl font-bold text-green-600">{reservation.totalAmount}€</p>
+                    <p className="text-xl font-bold text-green-600">{reservation.totalAmount} MAD</p>
                   </div>
 
                   {reservation.guestMessage && (

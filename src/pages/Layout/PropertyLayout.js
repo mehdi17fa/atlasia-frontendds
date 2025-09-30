@@ -484,7 +484,7 @@ export default function PropertyLayout({
                     ? 'bg-gray-300 cursor-not-allowed opacity-50'
                     : (!checkIn || !checkOut || guests < 1)
                       ? 'bg-orange-500 hover:bg-orange-600 shadow-md hover:shadow-lg'
-                      : 'bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 shadow-md hover:shadow-lg'
+                      : 'bg-green-600 hover:bg-green-700 shadow-md hover:shadow-lg'
                 }`}
               >
                 {!isLoggedIn 
@@ -662,24 +662,6 @@ export default function PropertyLayout({
                   : 'bg-gray-300 cursor-not-allowed opacity-50'}`}
           >
                 👤 Voir le profil
-          </button>
-          <button
-            onClick={handleBooking}
-                disabled={!isLoggedIn || !checkIn || !checkOut || guests < 1}
-                className={`px-6 py-2 rounded-xl text-white font-semibold transition-all ${
-                  !isLoggedIn 
-                    ? 'bg-gray-300 cursor-not-allowed opacity-50'
-                    : (!checkIn || !checkOut || guests < 1)
-                      ? 'bg-orange-500 hover:bg-orange-600 shadow-md hover:shadow-lg'
-                      : 'bg-green-600 hover:bg-green-700 shadow-md hover:shadow-lg'
-                }`}
-              >
-                {!isLoggedIn 
-                  ? '🔒 Connectez-vous pour réserver'
-                  : (!checkIn || !checkOut || guests < 1)
-                    ? '📅 Sélectionnez vos dates et invités'
-                    : '🏠 Réserver maintenant'
-                }
           </button>
         </div>
           </div>
