@@ -5,6 +5,7 @@ import S3Image from '../../components/S3Image';
 import { CalendarDaysIcon, MapPinIcon, CurrencyDollarIcon, UserGroupIcon } from '@heroicons/react/24/outline';
 import { FaHeart } from 'react-icons/fa';
 import { useFavorites } from '../../hooks/useFavorites';
+import AddToCartButton from '../../components/AddToCartButton';
 
 const PackageCard = ({ package: pkg, onBook }) => {
   const navigate = useNavigate();
@@ -147,20 +148,38 @@ const PackageCard = ({ package: pkg, onBook }) => {
           </div>
         )}
 
-        {/* Price and Action */}
-        <div className="flex items-center justify-between pt-4 border-t border-secondary-200">
-          <div className="flex items-center">
-            <CurrencyDollarIcon className="h-5 w-5 text-primary-600 mr-1" />
-            <span className="text-lg font-bold text-secondary-900">
-              {pkg.totalPrice ? `${pkg.totalPrice} MAD` : 'Prix sur demande'}
-            </span>
+        {/* Price and Actions */}
+        <div className="pt-4 border-t border-secondary-200">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center">
+              <CurrencyDollarIcon className="h-5 w-5 text-primary-600 mr-1" />
+              <span className="text-lg font-bold text-secondary-900">
+                {pkg.totalPrice ? `${pkg.totalPrice} MAD` : 'Prix sur demande'}
+              </span>
+            </div>
           </div>
-          <button
-            onClick={() => onBook(pkg)}
-            className="bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition-colors font-medium shadow-atlasia"
-          >
-            Réserver
-          </button>
+          
+          {/* Action Buttons */}
+          <div className="flex space-x-2">
+            <button
+              onClick={() => onBook(pkg)}
+              className="flex-1 bg-primary-500 text-white px-3 py-2 rounded-lg hover:bg-primary-600 transition-colors font-medium text-sm"
+            >
+              Réserver
+            </button>
+            <AddToCartButton
+              itemType="package"
+              itemId={pkg._id}
+              itemData={pkg}
+              checkIn={pkg.startDate ? pkg.startDate.split('T')[0] : ''}
+              checkOut={pkg.endDate ? pkg.endDate.split('T')[0] : ''}
+              guests={1}
+              className="flex-1"
+              size="small"
+              showText={false}
+              disabled={!pkg.startDate || !pkg.endDate}
+            />
+          </div>
         </div>
       </div>
     </div>

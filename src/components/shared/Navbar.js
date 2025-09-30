@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import CartIcon from '../CartIcon';
+import CartModal from '../CartModal';
 
 const navItems = [
   {
@@ -52,40 +54,55 @@ const navItems = [
 export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   // ✅ Hide navbar on all routes like /chat/anything
   const isChatPage = /^\/chat\/[^/]+$/.test(location.pathname);
   if (isChatPage) return null;
 
   return (
-    <nav className="fixed bottom-0 w-full bg-white border-t border-gray-200 z-50">
-      <div className="flex justify-around items-center py-2">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          return (
-            <button
-              key={item.name}
-              onClick={() => navigate(item.path)}
-              className={`
-                flex flex-col items-center justify-center text-xs
-                transition-colors duration-200
-                focus:outline-none
-                ${isActive ? 'text-primary-700' : 'text-secondary-500 hover:text-primary-600'}
-              `}
-              aria-current={isActive ? 'page' : undefined}
-              aria-label={item.name}
-              type="button"
-            >
-              {React.cloneElement(item.icon, {
-                className: isActive
-                  ? 'w-5 h-5 mb-1 stroke-primary-700'
-                  : 'w-5 h-5 mb-1 stroke-secondary-500',
-              })}
-              {item.name}
-            </button>
-          );
-        })}
-      </div>
-    </nav>
+    <>
+      <nav className="fixed bottom-0 w-full bg-white border-t border-gray-200 z-50">
+        <div className="flex justify-around items-center py-2">
+          {navItems.map((item) => {
+            const isActive = location.pathname === item.path;
+            return (
+              <button
+                key={item.name}
+                onClick={() => navigate(item.path)}
+                className={`
+                  flex flex-col items-center justify-center text-xs
+                  transition-colors duration-200
+                  focus:outline-none
+                  ${isActive ? 'text-primary-700' : 'text-secondary-500 hover:text-primary-600'}
+                `}
+                aria-current={isActive ? 'page' : undefined}
+                aria-label={item.name}
+                type="button"
+              >
+                {React.cloneElement(item.icon, {
+                  className: isActive
+                    ? 'w-5 h-5 mb-1 stroke-primary-700'
+                    : 'w-5 h-5 mb-1 stroke-secondary-500',
+                })}
+                {item.name}
+              </button>
+            );
+          })}
+          
+          {/* Cart Icon */}
+          <CartIcon 
+            onClick={() => setIsCartOpen(true)}
+            className="flex flex-col items-center justify-center text-xs transition-colors duration-200 focus:outline-none text-secondary-500 hover:text-primary-600"
+          />
+        </div>
+      </nav>
+      
+      {/* Cart Modal */}
+      <CartModal 
+        isOpen={isCartOpen} 
+        onClose={() => setIsCartOpen(false)} 
+      />
+    </>
   );
 }

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { AuthContext } from '../../context/AuthContext';
 import S3Image from '../../components/S3Image';
+import AddToCartButton from '../../components/AddToCartButton';
 import { CalendarDaysIcon, MapPinIcon, CurrencyDollarIcon, UserGroupIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 const API_BASE_URL = `${process.env.REACT_APP_API_URL}/api`;
@@ -439,13 +440,28 @@ export default function PackageBooking() {
                 />
               </div>
 
-              <button
-                onClick={handleBooking}
-                disabled={bookingLoading}
-                className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {bookingLoading ? "Réservation en cours..." : "Réserver maintenant"}
-              </button>
+              {/* Action Buttons */}
+              <div className="space-y-3">
+                <button
+                  onClick={handleBooking}
+                  disabled={bookingLoading}
+                  className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {bookingLoading ? "Réservation en cours..." : "Réserver maintenant"}
+                </button>
+                
+                <AddToCartButton
+                  itemType="package"
+                  itemId={packageId}
+                  itemData={pkg}
+                  checkIn={checkIn}
+                  checkOut={checkOut}
+                  guests={guests}
+                  guestMessage={message}
+                  className="w-full"
+                  size="large"
+                />
+              </div>
             </div>
 
             <div className="mt-4 p-4 bg-green-50 rounded-lg">

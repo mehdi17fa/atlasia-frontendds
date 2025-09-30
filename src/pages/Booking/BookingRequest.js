@@ -406,10 +406,10 @@ export default function BookingRequest() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8 pb-20 lg:pb-16">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:items-end">
           
           {/* Left Section - Booking Form */}
-          <div className="space-y-6">
+          <div className="space-y-6 lg:sticky lg:bottom-4 lg:self-end">
             {error && (
               <div className="bg-red-100 text-red-700 p-4 rounded-lg">{error}</div>
             )}
@@ -732,7 +732,7 @@ export default function BookingRequest() {
           </div>
 
           {/* Right Section - Property Information */}
-          <div className="space-y-6">
+          <div className="space-y-6 lg:sticky lg:bottom-4 lg:self-end">
             {propertyLoading ? (
               <div className="bg-white p-6 rounded-lg shadow-sm">
                 <div className="animate-pulse">
@@ -908,8 +908,8 @@ export default function BookingRequest() {
             ) : (
               <div className="bg-white p-6 rounded-lg shadow-sm">
                 <p className="text-gray-500">Impossible de charger les détails de la propriété</p>
-          </div>
-        )}
+              </div>
+            )}
           </div>
         </div>
       </div>

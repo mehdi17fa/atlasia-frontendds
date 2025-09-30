@@ -10,6 +10,7 @@ import { setGlobalNavigate } from './api';
 
 // Import AuthContext and ProtectedRoute
 import { AuthContext } from './context/AuthContext';
+import { CartProvider } from './context/CartContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import SignUpScreen from './pages/SignUp/SignUpScreen';
@@ -55,6 +56,10 @@ import BookingConfirm from './pages/Booking/BookingConfirm';
 import BookingDetails from './pages/Booking/BookingDetails';
 import PackageBookingDetails from './pages/Booking/PackageBookingDetails';
 import MyBookings from './pages/Booking/MyBookings';
+
+// Cart
+import CartCheckout from './pages/Cart/CartCheckout';
+import CartCheckoutConfirmation from './pages/Cart/CartCheckoutConfirmation';
 
 
 // Intermédiaire
@@ -258,6 +263,10 @@ function App() {
         <Route path="/booking/:bookingId" element={<ProtectedRoute><BookingDetails /></ProtectedRoute>} />
         <Route path="/package-booking/:bookingId" element={<ProtectedRoute><PackageBookingDetails /></ProtectedRoute>} />
         <Route path="/my-bookings" element={<ProtectedRoute><MyBookings /></ProtectedRoute>} />
+
+        {/* Cart - Require authentication */}
+        <Route path="/cart/checkout" element={<ProtectedRoute><CartCheckout /></ProtectedRoute>} />
+        <Route path="/cart/checkout-confirmation" element={<ProtectedRoute><CartCheckoutConfirmation /></ProtectedRoute>} />
 
         {/* Intermediate - Require partner role */}
         <Route path="/create-package" element={<ProtectedRoute allowedRoles={['partner']}><PackageCreationFlow /></ProtectedRoute>} />
