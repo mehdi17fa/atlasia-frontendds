@@ -101,12 +101,13 @@ export default function PropertyCreationSinglePage() {
     title: '',
     description: '',
     price: '',
-    documents: {}
+    documents: {},
+    inventory: []
   });
 
   // Step navigation logic (following package creation pattern)
   const handleNext = () => {
-    if (currentStep < 9) {
+    if (currentStep < 10) {
       console.log('Previous step validation result:', validateStep(currentStep));
       if (!validateStep(currentStep)) {
         setError(getValidationErrorMessage(currentStep));
@@ -314,6 +315,53 @@ export default function PropertyCreationSinglePage() {
     }));
   };
 
+  // Inventory management functions
+  const addInventoryItem = () => {
+    const newItem = {
+      meuble: '',
+      nombre: 1,
+      etatEntree: 'B',
+      etatSortie: 'B',
+      commentaires: ''
+    };
+    
+    setFormData(prev => ({
+      ...prev,
+      inventory: [...prev.inventory, newItem]
+    }));
+  };
+
+  const updateInventoryItem = (index, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      inventory: prev.inventory.map((item, i) => 
+        i === index ? { ...item, [field]: value } : item
+      )
+    }));
+  };
+
+  const removeInventoryItem = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      inventory: prev.inventory.filter((_, i) => i !== index)
+    }));
+  };
+
+  const addQuickInventory = (items) => {
+    const newItems = items.map(item => ({
+      meuble: item,
+      nombre: 1,
+      etatEntree: 'B',
+      etatSortie: 'B',
+      commentaires: ''
+    }));
+    
+    setFormData(prev => ({
+      ...prev,
+      inventory: [...prev.inventory, ...newItems]
+    }));
+  };
+
   // Step validation functions
   const validateStep = (step) => {
     switch (step) {
@@ -333,6 +381,8 @@ export default function PropertyCreationSinglePage() {
         return formData.price && parseFloat(formData.price) > 0;
       case 8:
         return Object.values(formData.documents).some(docs => docs && docs.length > 0); // Check if any documents exist
+      case 9:
+        return true; // Inventory step is optional
       default:
         return true;
     }
@@ -356,6 +406,8 @@ export default function PropertyCreationSinglePage() {
         return 'Veuillez saisir un prix valide par nuit';
       case 8:
         return 'Veuillez télécharger au moins un document légal';
+      case 9:
+        return 'Inventaire optionnel - peut être complété plus tard';
       default:
         return 'Étape invalide';
     }
@@ -590,6 +642,7 @@ export default function PropertyCreationSinglePage() {
     'Titre & Description',
     'Prix',
     'Documents',
+    'Inventaire',
     'Confirmation'
   ];
 
@@ -1124,8 +1177,165 @@ export default function PropertyCreationSinglePage() {
             </div>
           )}
 
-          {/* Step 9: Confirmation */}
+          {/* Step 9: Inventory */}
           {currentStep === 9 && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Inventaire des Meubles</h2>
+                <p className="text-gray-600">Listez les meubles et équipements de votre propriété</p>
+              </div>
+              
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <div className="flex items-center space-x-2">
+                  <div className="bg-blue-100 rounded-full p-1">
+                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="text-sm">
+                    <p className="font-medium text-blue-900">Légende des états:</p>
+                    <p className="text-blue-700">TB = Très bon état • B = Bon état • M = État moyen • O = Mauvais état</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Inventory Table */}
+              <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-green-600 text-white">
+                      <tr>
+                        <th className="px-4 py-3 text-left font-semibold">Meuble</th>
+                        <th className="px-4 py-3 text-center font-semibold">Nombre</th>
+                        <th className="px-4 py-3 text-center font-semibold">État entrée</th>
+                        <th className="px-4 py-3 text-center font-semibold">État sortie</th>
+                        <th className="px-4 py-3 text-left font-semibold">Commentaires</th>
+                        <th className="px-4 py-3 text-center font-semibold">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {formData.inventory.map((item, index) => (
+                        <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">
+                          <td className="px-4 py-3">
+                            <input
+                              type="text"
+                              value={item.meuble}
+                              onChange={(e) => updateInventoryItem(index, 'meuble', e.target.value)}
+                              placeholder="Nom du meuble"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                            />
+                          </td>
+                          <td className="px-4 py-3">
+                            <input
+                              type="number"
+                              min="0"
+                              value={item.nombre}
+                              onChange={(e) => updateInventoryItem(index, 'nombre', parseInt(e.target.value) || 0)}
+                              className="w-20 px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-center"
+                            />
+                          </td>
+                          <td className="px-4 py-3">
+                            <select
+                              value={item.etatEntree}
+                              onChange={(e) => updateInventoryItem(index, 'etatEntree', e.target.value)}
+                              className="px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                            >
+                              <option value="TB">TB</option>
+                              <option value="B">B</option>
+                              <option value="M">M</option>
+                              <option value="O">O</option>
+                            </select>
+                          </td>
+                          <td className="px-4 py-3">
+                            <select
+                              value={item.etatSortie}
+                              onChange={(e) => updateInventoryItem(index, 'etatSortie', e.target.value)}
+                              className="px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                            >
+                              <option value="TB">TB</option>
+                              <option value="B">B</option>
+                              <option value="M">M</option>
+                              <option value="O">O</option>
+                            </select>
+                          </td>
+                          <td className="px-4 py-3">
+                            <input
+                              type="text"
+                              value={item.commentaires}
+                              onChange={(e) => updateInventoryItem(index, 'commentaires', e.target.value)}
+                              placeholder="Commentaires"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                            />
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <button
+                              onClick={() => removeInventoryItem(index)}
+                              className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Supprimer cet élément"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                      
+                      {formData.inventory.length === 0 && (
+                        <tr>
+                          <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
+                            <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                            </svg>
+                            <p>Aucun meuble ajouté</p>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                
+                {/* Add Item Button */}
+                <div className="p-4 border-t border-gray-200">
+                  <button
+                    onClick={addInventoryItem}
+                    className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors text-gray-600 hover:text-green-600"
+                  >
+                    <div className="flex items-center justify-center space-x-2">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                      <span>Ajouter un meuble</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Quick Add Templates */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Ajout rapide</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <button
+                    onClick={() => addQuickInventory(['Table', 'Chaise', 'Fauteuil', 'Canapé', 'Lit', 'Matelas'])}
+                    className="p-3 bg-white border border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors text-left"
+                  >
+                    <div className="font-medium text-gray-900 text-sm">Meubles essentiels</div>
+                    <div className="text-xs text-gray-500">Table, Chaise, Fauteuil, Canapé, Lit, Matelas</div>
+                  </button>
+                  <button
+                    onClick={() => addQuickInventory(['Armoire', 'Commode', 'Lampe', 'Bureau', 'Télévision'])}
+                    className="p-3 bg-white border border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors text-left"
+                  >
+                    <div className="font-medium text-gray-900 text-sm">Équipements supplémentaires</div>
+                    <div className="text-xs text-gray-500">Armoire, Commode, Lampe, Bureau, TV</div>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 10: Confirmation */}
+          {currentStep === 10 && (
             <div className="space-y-6">
               <div className="text-center">
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Confirmation</h2>
@@ -1218,6 +1428,34 @@ export default function PropertyCreationSinglePage() {
                   )}
                 </div>
 
+                {/* Inventory section preview */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">📋 Inventaire des Meubles</h3>
+                  {formData.inventory && formData.inventory.length > 0 ? (
+                    <div className="space-y-2">
+                      {formData.inventory.slice(0, 5).map((item, index) => (
+                        <div key={index} className="flex items-center justify-between bg-blue-50 p-3 rounded-lg">
+                          <span className="text-sm text-blue-700">
+                            {item.meuble} (x{item.nombre})
+                          </span>
+                          <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
+                            {item.etatEntree === 'TB' ? 'Très bon' :
+                             item.etatEntree === 'B' ? 'Bon' :
+                             item.etatEntree === 'M' ? 'Moyen' : 'Mauvais'}
+                          </span>
+                        </div>
+                      ))}
+                      {formData.inventory.length > 5 && (
+                        <div className="text-sm text-blue-600 text-center">
+                          ... et {formData.inventory.length - 5} autres meubles
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500">Aucun inventaire défini</p>
+                  )}
+                </div>
+
                 {/* Equipment section preview */}
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">⚙️ Équipements</h3>
@@ -1248,7 +1486,7 @@ export default function PropertyCreationSinglePage() {
         {/* Navigation */}
         <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 mt-6">
           <div className="flex flex-col items-center space-y-4">
-            {currentStep < 9 ? (
+            {currentStep < 10 ? (
               <>
                 {/* Main Action Button */}
                 <button
