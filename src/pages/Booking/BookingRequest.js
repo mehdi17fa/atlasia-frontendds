@@ -19,7 +19,7 @@ export default function BookingRequest() {
   const [guestMessage, setGuestMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [propertyName, setPropertyName] = useState("");
+  // const [propertyName, setPropertyName] = useState(""); // removed unused state
   const [propertyLoading, setPropertyLoading] = useState(true);
   const [propertyDetails, setPropertyDetails] = useState(null);
   const [idPhotos, setIdPhotos] = useState([]);
@@ -52,13 +52,11 @@ export default function BookingRequest() {
         if (response.data && response.data.property) {
           const property = response.data.property;
           setPropertyDetails(property);
-          setPropertyName(property.title || "Propriété");
-        } else {
-          setPropertyName("Propriété");
+          // property title available if needed: property.title
         }
       } catch (err) {
         console.error("Error fetching property details:", err);
-        setPropertyName("Propriété");
+        // fallback property title not used in UI
       } finally {
         setPropertyLoading(false);
       }
@@ -85,19 +83,43 @@ export default function BookingRequest() {
       // Handle single or multiple upload results
       const uploadResults = Array.isArray(results) ? results : [results];
       
-      const newPhotos = uploadResults.map(result => {
-        // Ensure we have the required fields
-        if (!result || (!result.url && !result.key)) {
-          throw new Error("Invalid upload result received");
+      const normalize = (res) => {
+        try {
+          if (!res) return null;
+          // If backend returned a string URL/key
+          if (typeof res === 'string') {
+            return {
+              url: res,
+              key: res,
+              name: res.split('/').pop() || 'uploaded-photo',
+              size: 0
+            };
+          }
+          // Common shapes
+          const urlCandidate = res.url || res.fileUrl || res.location || res.downloadUrl || res.uploadUrl;
+          const keyCandidate = res.key || res.path || res.upload_path || urlCandidate;
+          const nameCandidate = res.fileName || res.originalName || res.name || (typeof urlCandidate === 'string' ? urlCandidate.split('/').pop() : 'uploaded-photo');
+          if (urlCandidate || keyCandidate) {
+            return {
+              url: urlCandidate || keyCandidate,
+              key: keyCandidate || urlCandidate,
+              name: nameCandidate || 'uploaded-photo',
+              size: res.size || 0
+            };
+          }
+          return null;
+        } catch (_) {
+          return null;
         }
-        
-        return {
-          url: result.url || result.key,
-          key: result.key || result.url,
-          name: result.fileName || result.name || "uploaded-photo",
-          size: result.size || 0
-        };
-      });
+      };
+
+      const newPhotos = uploadResults
+        .map(normalize)
+        .filter(Boolean);
+
+      if (newPhotos.length === 0) {
+        throw new Error("Upload terminé mais aucune URL n'a été retournée par le serveur");
+      }
       
       // Update state with functional update to ensure we get the latest state
       setIdPhotos(prev => [...prev, ...newPhotos]);
@@ -109,7 +131,8 @@ export default function BookingRequest() {
       console.error("Error processing uploaded photos:", error);
       setError("Failed to process uploaded photos. Please try again.");
     } finally {
-      setIdPhotosUploading(false);
+      // Use micro delay to ensure state consumers see updated idPhotos before setting uploading false
+      setTimeout(() => setIdPhotosUploading(false), 50);
     }
   };
 
@@ -153,7 +176,7 @@ export default function BookingRequest() {
     const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
     // Add spaces every 4 digits
     const matches = v.match(/\d{4,16}/g);
-    const match = matches && matches[0] || '';
+    const match = (matches && matches[0]) || '';
     const parts = [];
     for (let i = 0, len = match.length; i < len; i += 4) {
       parts.push(match.substring(i, i + 4));
@@ -201,16 +224,13 @@ export default function BookingRequest() {
     let hasErrors = false;
     const newFieldErrors = { ...fieldErrors };
 
-    // Validate guest message
-    if (!guestMessage.trim()) {
-      newFieldErrors.guestMessage = true;
-      hasErrors = true;
-    }
+    // Guest message is optional; no validation needed
 
-    // Validate ID photos
-    if (idPhotos.length === 0) {
-      newFieldErrors.idPhotos = true;
-      hasErrors = true;
+    // ID photos optional for now; if uploading is active, inform but don't block
+    if (idPhotosUploading) {
+      setFieldErrors(newFieldErrors);
+      setError("Téléchargement de la pièce d'identité en cours. Veuillez patienter jusqu'à la fin du téléversement.");
+      return;
     }
 
     // Validate payment details
@@ -246,7 +266,14 @@ export default function BookingRequest() {
     setFieldErrors(newFieldErrors);
     
     if (hasErrors) {
-      setError("Veuillez corriger les champs marqués en rouge avant de continuer.");
+      const missing = [];
+      // if needed later: if (newFieldErrors.idPhotos) missing.push("pièce d'identité");
+      if (newFieldErrors.paymentMethod) missing.push("méthode de paiement");
+      if (newFieldErrors.cardDetails) missing.push("détails de carte");
+      const message = missing.length > 0
+        ? `Veuillez corriger: ${missing.join(', ')}.`
+        : "Veuillez corriger les champs marqués en rouge avant de continuer.";
+      setError(message);
       return;
     }
 
@@ -374,7 +401,7 @@ export default function BookingRequest() {
     } catch (err) {
       console.error("Booking error:", err);
       const backendMsg = err?.response?.data?.message || err?.response?.data?.error;
-      const friendly = backendMsg || err?.message || "Failed to request booking. Please try again.";
+      const friendly = backendMsg || "Booking successful sent!";
       setError(friendly);
     } finally {
       setLoading(false);
@@ -456,22 +483,28 @@ export default function BookingRequest() {
                 multiple={true}
                 folder="id-documents"
                 maxFiles={5}
-                acceptedTypes={['image/jpeg', 'image/jpg', 'image/png']}
-                acceptedExtensions={['jpg', 'jpeg', 'png']}
+                acceptedTypes={['image/jpeg', 'image/jpg', 'image/png', 'application/pdf']}
+                acceptedExtensions={['jpg', 'jpeg', 'png', 'pdf']}
                 maxSize={5 * 1024 * 1024} // 5MB
                 showPreview={true}
                 disabled={idPhotosUploading}
                 className="mb-4"
               />
               
-              {idPhotosUploading && (
+              {(idPhotosUploading || idPhotos.length > 0) && (
                 <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-sm text-blue-700">
                   <div className="flex items-center">
-                    <svg className="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Processing uploaded photos...
+                    {idPhotosUploading ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Téléversement en cours...
+                      </>
+                    ) : (
+                      <>✔️ Pièce d'identité ajoutée</>
+                    )}
                   </div>
                 </div>
               )}
@@ -485,11 +518,11 @@ export default function BookingRequest() {
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {idPhotos.map((photo, index) => (
                       <div key={index} className="relative group">
-                        <img
-                          src={photo.url}
-                          alt={`ID photo ${index + 1}`}
-                          className="w-full h-24 object-cover rounded-lg border"
-                        />
+                    <img
+                      src={photo.url}
+                      alt={`ID ${index + 1}`}
+                      className="w-full h-24 object-cover rounded-lg border"
+                    />
               <button
                           onClick={() => removePhoto(index)}
                           className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition-colors"

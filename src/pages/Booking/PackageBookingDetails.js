@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import S3Image from "../../components/S3Image";
-import ImageCarousel from "../../components/ImageCarousel";
+import { getPartnerDisplayName, getPartnerInitials, getBookingPartnerName } from "../../utils/nameUtils";
 
 const PackageBookingDetails = () => {
   const { user, token, logout } = useContext(AuthContext);
@@ -115,6 +115,7 @@ const PackageBookingDetails = () => {
 
   useEffect(() => {
     fetchBookingDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, token, bookingId]);
 
   const handleCancel = async () => {
@@ -221,6 +222,8 @@ const PackageBookingDetails = () => {
 
   const packageData = booking.package;
   const partner = packageData?.partner;
+  // Prefer package-level partnerName when partner object is incomplete/missing
+  const partnerDisplayName = getBookingPartnerName(booking);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -396,23 +399,25 @@ const PackageBookingDetails = () => {
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <h3 className="font-semibold text-gray-900 mb-4">Partenaire</h3>
                 <div className="flex items-center space-x-3">
-                  {partner.profilePic || partner.profileImage ? (
+                  {partner?.profilePic || partner?.profileImage ? (
                     <S3Image
                       src={partner.profilePic || partner.profileImage}
-                      alt={partner.fullName || partner.displayName || 'Partenaire'}
+                      alt={getPartnerDisplayName(partner)}
                       className="w-10 h-10 rounded-full object-cover"
                       fallbackSrc="/profilepic.jpg"
                     />
                   ) : (
                     <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
                       <span className="text-gray-600 font-medium">
-                        {(partner.fullName || partner.displayName || 'P').charAt(0)}
+                        {getPartnerInitials({ fullName: partnerDisplayName })}
                       </span>
                     </div>
                   )}
                   <div>
-                    <p className="font-medium text-gray-900">{partner.fullName || partner.displayName || "Partenaire"}</p>
-                    <p className="text-sm text-gray-500">{partner.email}</p>
+                    <p className="font-medium text-gray-900">{partnerDisplayName}</p>
+                    {partner?.email && (
+                      <p className="text-sm text-gray-500">{partner.email}</p>
+                    )}
                   </div>
                 </div>
               </div>

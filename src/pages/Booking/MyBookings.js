@@ -328,7 +328,7 @@ const TouristBookings = () => {
               {booking.package?.name || 'Package Experience'}
             </h3>
             <p className="text-sm text-gray-600 mb-2">
-              Par {booking.package?.partner?.fullName || 'Partenaire'}
+              Par {booking.package?.partner?.fullName || booking.package?.partner?.displayName || booking.package?.partner?.companyName || booking.package?.partner?.organizationName || booking.package?.partnerName || (booking.package?.partner?.email ? booking.package.partner.email.split('@')[0] : 'Partenaire')}
             </p>
             <p className="text-sm text-gray-500 line-clamp-2">
               {booking.package?.description || 'Découvrez une expérience unique avec ce package personnalisé.'}

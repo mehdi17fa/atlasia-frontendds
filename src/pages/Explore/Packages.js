@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { getPackagePartnerName } from '../../utils/nameUtils';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import S3Image from '../../components/S3Image';
@@ -62,7 +63,7 @@ const PackageCard = ({ package: pkg, onBook }) => {
         
         <div className="text-white text-center">
           <h3 className="text-xl font-bold mb-2">{pkg.name || 'Package Expérience'}</h3>
-          <p className="text-sm opacity-90">Par {pkg.partner?.fullName || 'Partenaire'}</p>
+          <p className="text-sm opacity-90">Par {getPackagePartnerName(pkg)}</p>
         </div>
       </div>
 
