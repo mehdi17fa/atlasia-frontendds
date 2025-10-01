@@ -226,9 +226,19 @@ export default function BookingRequest() {
     let hasErrors = false;
     const newFieldErrors = { ...fieldErrors };
 
-    // Guest message is optional; no validation needed
+    // Validate guest message (now mandatory)
+    if (!guestMessage || guestMessage.trim().length === 0) {
+      newFieldErrors.guestMessage = true;
+      hasErrors = true;
+    }
 
-    // ID photos optional for now; if uploading is active, inform but don't block
+    // Validate ID photos (now mandatory)
+    if (idPhotos.length === 0) {
+      newFieldErrors.idPhotos = true;
+      hasErrors = true;
+    }
+
+    // If uploading is active, inform but don't block
     if (idPhotosUploading) {
       setFieldErrors(newFieldErrors);
       setError("Téléchargement de la pièce d'identité en cours. Veuillez patienter jusqu'à la fin du téléversement.");
@@ -269,7 +279,8 @@ export default function BookingRequest() {
     
     if (hasErrors) {
       const missing = [];
-      // if needed later: if (newFieldErrors.idPhotos) missing.push("pièce d'identité");
+      if (newFieldErrors.guestMessage) missing.push("message à l'hôte");
+      if (newFieldErrors.idPhotos) missing.push("pièce d'identité");
       if (newFieldErrors.paymentMethod) missing.push("méthode de paiement");
       if (newFieldErrors.cardDetails) missing.push("détails de carte");
       const message = missing.length > 0
@@ -475,7 +486,7 @@ export default function BookingRequest() {
             {/* ID Photos Upload */}
             <div className={`bg-white p-6 rounded-lg shadow-sm ${fieldErrors.idPhotos ? 'border-2 border-red-500' : ''}`}>
               <h2 className={`text-xl font-semibold mb-4 ${fieldErrors.idPhotos ? 'text-red-600' : 'text-gray-800'}`}>
-                Pièce d'identité {fieldErrors.idPhotos && <span className="text-red-500">*</span>}
+                Pièce d'identité <span className="text-red-500">*</span>
               </h2>
               <p className="text-sm text-gray-600 mb-4">
                 Veuillez télécharger une photo de votre pièce d'identité (carte d'identité, passeport, etc.)
@@ -545,7 +556,7 @@ export default function BookingRequest() {
             {/* Guest Message */}
             <div className={`bg-white p-6 rounded-lg shadow-sm ${fieldErrors.guestMessage ? 'border-2 border-red-500' : ''}`}>
               <h2 className={`text-xl font-semibold mb-4 ${fieldErrors.guestMessage ? 'text-red-600' : 'text-gray-800'}`}>
-                Message à l'hôte {fieldErrors.guestMessage && <span className="text-red-500">*</span>}
+                Message à l'hôte <span className="text-red-500">*</span>
               </h2>
               <textarea
                 value={guestMessage}
