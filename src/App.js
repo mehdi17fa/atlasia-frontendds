@@ -96,6 +96,9 @@ import DocumentUpload from './utilities/DocumentUpload';
 // Admin Dashboard
 import AdminDashboard from './pages/AdminDashboard';
 
+// Test Components
+import CalendarTest from './components/CalendarTest';
+
 // Explore affiché en fond avec modal devant
 function ModalLayout({ children }) {
   return (
@@ -208,6 +211,9 @@ function App() {
         
         {/* Admin Dashboard - Public access (temporarily) */}
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
+        
+        {/* Test Routes */}
+        <Route path="/test-calendar" element={<CalendarTest />} />
         
         {/* General / Auth - Only accessible when NOT authenticated */}
         <Route path="/login" element={<ProtectedRoute requireAuth={false}><LoginScreen /></ProtectedRoute>} />
