@@ -217,6 +217,17 @@ const AdminDashboard = () => {
               <FaClock className="w-4 h-4 inline mr-2" />
               Activités Récentes
             </button>
+            <button
+              onClick={() => setActiveTab('tourists-with-id')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'tourists-with-id'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <FaUser className="w-4 h-4 inline mr-2" />
+              Touristes avec ID
+            </button>
           </nav>
         </div>
       </div>
@@ -226,7 +237,7 @@ const AdminDashboard = () => {
         {activeTab === 'overview' && (
           <div className="space-y-8">
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
               <div className="bg-white rounded-lg shadow p-6">
                 <div className="flex items-center">
                   <div className="p-3 rounded-full bg-blue-100 text-blue-600">
@@ -237,8 +248,21 @@ const AdminDashboard = () => {
                     <p className="text-2xl font-semibold text-gray-900">{stats?.users?.total || 0}</p>
                     <p className="text-sm text-green-600">+{stats?.users?.newThisMonth || 0} ce mois</p>
                   </div>
-        </div>
-            </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow p-6">
+                <div className="flex items-center">
+                  <div className="p-3 rounded-full bg-cyan-100 text-cyan-600">
+                    <FaUser className="w-6 h-6" />
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Touristes avec ID</p>
+                    <p className="text-2xl font-semibold text-gray-900">{stats?.users?.touristsWithIdentityDocs || 0}</p>
+                    <p className="text-sm text-cyan-600">{stats?.users?.identityVerificationRate || 0}% vérifiés</p>
+                  </div>
+                </div>
+              </div>
 
               <div className="bg-white rounded-lg shadow p-6">
                 <div className="flex items-center">
@@ -345,6 +369,61 @@ const AdminDashboard = () => {
                     </div>
                   </div>
 
+            {/* Tourists with Identity Documents */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Touristes avec Documents d'Identité</h3>
+              <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                <div className="flex items-center space-x-2">
+                  <FaUser className="w-5 h-5 text-blue-600" />
+                  <p className="text-sm font-medium text-blue-800">
+                    Les touristes peuvent uploader des documents d'identité (carte nationale, passeport, permis de conduire) pour vérification lors des réservations.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="text-center p-4 bg-cyan-50 rounded-lg">
+                  <div className="text-3xl font-bold text-cyan-600">{stats?.users?.touristsWithIdentityDocs || 0}</div>
+                  <div className="text-sm text-cyan-800">Touristes avec ID</div>
+                  <div className="text-xs text-cyan-600 mt-1">Documents d'identité uploadés</div>
+                </div>
+                
+                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                  <div className="text-3xl font-bold text-blue-600">{stats?.users?.totalTourists || 0}</div>
+                  <div className="text-sm text-blue-800">Total Touristes</div>
+                  <div className="text-xs text-blue-600 mt-1">Tous les utilisateurs touristes</div>
+                </div>
+                
+                <div className="text-center p-4 bg-green-50 rounded-lg">
+                  <div className="text-3xl font-bold text-green-600">{stats?.users?.identityVerificationRate || 0}%</div>
+                  <div className="text-sm text-green-800">Taux de Vérification</div>
+                  <div className="text-xs text-green-600 mt-1">Pourcentage avec documents</div>
+                </div>
+              </div>
+              
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-medium text-gray-900 mb-2">Statut de Vérification</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Touristes vérifiés</span>
+                    <span className="text-sm font-medium text-green-600">{stats?.users?.touristsWithIdentityDocs || 0}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">En attente de vérification</span>
+                    <span className="text-sm font-medium text-yellow-600">{(stats?.users?.totalTourists || 0) - (stats?.users?.touristsWithIdentityDocs || 0)}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                    <div 
+                      className="bg-green-500 h-2 rounded-full transition-all duration-300" 
+                      style={{ 
+                        width: `${stats?.users?.identityVerificationRate || 0}%` 
+                      }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Revenue Chart Placeholder */}
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Revenus dans le Temps</h3>
@@ -361,7 +440,18 @@ const AdminDashboard = () => {
         {activeTab === 'activities' && (
           <div className="bg-white rounded-lg shadow">
             <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Toutes les Activités Récentes</h3>
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-medium text-gray-900">Toutes les Activités Récentes</h3>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => setActiveTab('tourists-with-id')}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 text-sm"
+                  >
+                    <FaUser className="w-4 h-4" />
+                    Touristes avec ID
+                  </button>
+                </div>
+              </div>
             </div>
             <div className="divide-y divide-gray-200">
               {activities.map((activity, index) => (
@@ -399,6 +489,125 @@ const AdminDashboard = () => {
                     </div>
                   </div>
                 ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'tourists-with-id' && (
+          <div className="space-y-8">
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-cyan-50 p-6 rounded-lg border border-cyan-200">
+                <div className="flex items-center">
+                  <div className="p-3 rounded-full bg-cyan-100 text-cyan-600">
+                    <FaUser className="w-6 h-6" />
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-cyan-600">Touristes avec ID</p>
+                    <p className="text-2xl font-semibold text-cyan-900">{stats?.users?.touristsWithIdentityDocs || 0}</p>
+                    <p className="text-sm text-cyan-700">Documents d'identité uploadés</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
+                <div className="flex items-center">
+                  <div className="p-3 rounded-full bg-blue-100 text-blue-600">
+                    <FaUsers className="w-6 h-6" />
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-blue-600">Total Touristes</p>
+                    <p className="text-2xl font-semibold text-blue-900">{stats?.users?.totalTourists || 0}</p>
+                    <p className="text-sm text-blue-700">Tous les utilisateurs touristes</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-green-50 p-6 rounded-lg border border-green-200">
+                <div className="flex items-center">
+                  <div className="p-3 rounded-full bg-green-100 text-green-600">
+                    <FaChartLine className="w-6 h-6" />
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-green-600">Taux de Vérification</p>
+                    <p className="text-2xl font-semibold text-green-900">{stats?.users?.identityVerificationRate || 0}%</p>
+                    <p className="text-sm text-green-700">Pourcentage vérifié</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Information Panel */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Informations sur les Documents d'Identité</h3>
+              <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                <div className="flex items-start space-x-3">
+                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <FaUser className="w-3 h-3 text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-blue-900 mb-2">Documents d'Identité Acceptés</h4>
+                    <ul className="text-sm text-blue-800 space-y-1">
+                      <li>• Carte nationale d'identité</li>
+                      <li>• Passeport</li>
+                      <li>• Permis de conduire</li>
+                    </ul>
+                    <p className="text-sm text-blue-700 mt-2">
+                      Les touristes peuvent uploader ces documents pour vérification lors des réservations.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-2">Avantages de la Vérification</h4>
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    <li>• Processus de réservation plus rapide</li>
+                    <li>• Confiance accrue des propriétaires</li>
+                    <li>• Sécurité renforcée</li>
+                    <li>• Conformité réglementaire</li>
+                  </ul>
+                </div>
+                
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-2">Statut Actuel</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Vérifiés:</span>
+                      <span className="text-sm font-medium text-green-600">{stats?.users?.touristsWithIdentityDocs || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">En attente:</span>
+                      <span className="text-sm font-medium text-yellow-600">{(stats?.users?.totalTourists || 0) - (stats?.users?.touristsWithIdentityDocs || 0)}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                      <div 
+                        className="bg-green-500 h-2 rounded-full transition-all duration-300" 
+                        style={{ 
+                          width: `${stats?.users?.identityVerificationRate || 0}%` 
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Note about accessing individual tourist details */}
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div className="flex items-start space-x-3">
+                <div className="w-6 h-6 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <FaEye className="w-3 h-3 text-yellow-600" />
+                </div>
+                <div>
+                  <h4 className="font-medium text-yellow-900 mb-1">Accès aux Détails des Touristes</h4>
+                  <p className="text-sm text-yellow-800">
+                    Pour voir les documents d'identité spécifiques d'un touriste, cliquez sur son nom dans la section "Activités Récentes" 
+                    ou utilisez la recherche d'utilisateurs. Les documents d'identité seront mis en évidence avec un style spécial.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -440,7 +649,7 @@ const AdminDashboard = () => {
           </div>
 
               {/* Statistics Cards */}
-              <div className={`grid grid-cols-1 gap-4 ${userDetails.user.role === 'owner' ? 'md:grid-cols-5' : 'md:grid-cols-4'}`}>
+              <div className={`grid grid-cols-1 gap-4 ${userDetails.user.role === 'owner' ? 'md:grid-cols-5' : userDetails.user.role === 'tourist' ? 'md:grid-cols-3' : 'md:grid-cols-4'}`}>
                 <div className="bg-blue-50 p-4 rounded-lg">
                   <div className="text-2xl font-bold text-blue-600">{formatCurrency(userDetails.stats?.totalRevenue || 0)}</div>
                   <div className="text-sm text-blue-800">Revenus Totaux</div>
@@ -449,13 +658,24 @@ const AdminDashboard = () => {
                   <div className="text-2xl font-bold text-green-600">{userDetails.stats?.totalBookings || 0}</div>
                   <div className="text-sm text-green-800">Réservations</div>
                 </div>
-                <div className="bg-purple-50 p-4 rounded-lg">
-                  <div className="text-2xl font-bold text-purple-600">{userDetails.stats?.propertyCount || 0}</div>
-                  <div className="text-sm text-purple-800">Propriétés</div>
-                </div>
-                <div className="bg-orange-50 p-4 rounded-lg">
-                  <div className="text-2xl font-bold text-orange-600">{userDetails.stats?.documentCount || 0}</div>
-                  <div className="text-sm text-orange-800">Documents Personnels</div>
+                {userDetails.user.role === 'owner' && (
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <div className="text-2xl font-bold text-purple-600">{userDetails.stats?.propertyCount || 0}</div>
+                    <div className="text-sm text-purple-800">Propriétés</div>
+                  </div>
+                )}
+                <div className={`p-4 rounded-lg ${userDetails.user.role === 'tourist' ? 'bg-blue-50' : 'bg-orange-50'}`}>
+                  <div className={`text-2xl font-bold ${userDetails.user.role === 'tourist' ? 'text-blue-600' : 'text-orange-600'}`}>
+                    {userDetails.stats?.documentCount || 0}
+                  </div>
+                  <div className={`text-sm ${userDetails.user.role === 'tourist' ? 'text-blue-800' : 'text-orange-800'}`}>
+                    {userDetails.user.role === 'tourist' ? 'Documents d\'Identité' : 'Documents Personnels'}
+                  </div>
+                  {userDetails.user.role === 'tourist' && userDetails.stats?.documentCount > 0 && (
+                    <div className="text-xs text-blue-600 font-medium mt-1">
+                      ✓ Identité vérifiée
+                    </div>
+                  )}
                 </div>
                 {userDetails.user.role === 'owner' && (
                   <div className="bg-indigo-50 p-4 rounded-lg">
@@ -678,45 +898,110 @@ const AdminDashboard = () => {
               {/* User Documents Section */}
               {userDetails.documents && userDetails.documents.length > 0 && (
                 <div className="border-t pt-6">
-                  <h5 className="text-xl font-semibold text-gray-900 mb-4">Documents Personnels ({userDetails.documents.length})</h5>
+                  <h5 className="text-xl font-semibold text-gray-900 mb-4">
+                    {userDetails.user.role === 'tourist' ? 'Documents d\'Identité' : 'Documents Personnels'} ({userDetails.documents.length})
+                  </h5>
+                  
+                  {/* Special highlighting for tourist identity documents */}
+                  {userDetails.user.role === 'tourist' && (
+                    <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                          <FaUser className="w-3 h-3 text-blue-600" />
+                        </div>
+                        <p className="text-sm font-medium text-blue-800">
+                          Documents d'identité du touriste - Carte nationale, passeport ou permis de conduire
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className="space-y-3">
-                    {userDetails.documents.map((document) => (
-                      <div key={document._id} className="bg-gray-50 p-4 rounded-lg border">
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-3">
-                              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <FaFileAlt className="w-5 h-5 text-blue-600" />
-                              </div>
-                              <div>
-                                <p className="font-medium text-gray-900">{document.filename}</p>
-                                <p className="text-sm text-gray-600">Type: {document.type}</p>
-                                <p className="text-sm text-gray-500">Uploadé: {formatDate(document.uploadedAt)}</p>
+                    {userDetails.documents.map((document) => {
+                      const isIdentityDoc = document.type === 'identity';
+                      const isTourist = userDetails.user.role === 'tourist';
+                      
+                      return (
+                        <div key={document._id} className={`p-4 rounded-lg border ${
+                          isIdentityDoc && isTourist 
+                            ? 'bg-blue-50 border-blue-200' 
+                            : 'bg-gray-50 border-gray-200'
+                        }`}>
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-3">
+                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                  isIdentityDoc && isTourist 
+                                    ? 'bg-blue-100' 
+                                    : 'bg-gray-100'
+                                }`}>
+                                  <FaFileAlt className={`w-5 h-5 ${
+                                    isIdentityDoc && isTourist 
+                                      ? 'text-blue-600' 
+                                      : 'text-gray-600'
+                                  }`} />
+                                </div>
+                                <div>
+                                  <p className={`font-medium ${
+                                    isIdentityDoc && isTourist 
+                                      ? 'text-blue-900' 
+                                      : 'text-gray-900'
+                                  }`}>
+                                    {document.filename}
+                                  </p>
+                                  <p className={`text-sm ${
+                                    isIdentityDoc && isTourist 
+                                      ? 'text-blue-700' 
+                                      : 'text-gray-600'
+                                  }`}>
+                                    Type: {document.type === 'identity' ? 'Pièce d\'identité' : document.type}
+                                  </p>
+                                  <p className={`text-sm ${
+                                    isIdentityDoc && isTourist 
+                                      ? 'text-blue-600' 
+                                      : 'text-gray-500'
+                                  }`}>
+                                    Uploadé: {formatDate(document.uploadedAt)}
+                                  </p>
+                                  {isIdentityDoc && isTourist && (
+                                    <p className="text-xs text-blue-600 font-medium mt-1">
+                                      ✓ Document d'identité du touriste
+                                    </p>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                          <div className="flex flex-col items-end space-y-2">
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              document.status === 'verified' ? 'bg-green-100 text-green-800' :
-                              document.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-gray-100 text-gray-800'
-                            }`}>
-                              {document.status}
-                            </span>
-                            {document.url && (
-                              <a 
-                                href={document.url} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                              >
-                                Voir le document
-                              </a>
-                            )}
+                            <div className="flex flex-col items-end space-y-2">
+                              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                document.status === 'verified' ? 'bg-green-100 text-green-800' :
+                                document.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                isIdentityDoc && isTourist ? 'bg-blue-100 text-blue-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {document.status === 'verified' ? 'Vérifié' :
+                                 document.status === 'pending' ? 'En attente' :
+                                 isIdentityDoc && isTourist ? 'Identité' :
+                                 document.status}
+                              </span>
+                              {document.url && (
+                                <a 
+                                  href={document.url} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className={`text-sm font-medium ${
+                                    isIdentityDoc && isTourist 
+                                      ? 'text-blue-600 hover:text-blue-800' 
+                                      : 'text-gray-600 hover:text-gray-800'
+                                  }`}
+                                >
+                                  Voir le document
+                                </a>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
