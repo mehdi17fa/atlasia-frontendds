@@ -144,7 +144,7 @@ export default function SignUpWizard() {
       tokenStorage.setTokens(response.data.user, response.data.accessToken, response.data.refreshToken);
 
       if (profileType === 'owner') navigate('/owner-welcome', { replace: true });
-      else if (profileType === 'partner') navigate('/partner-welcome', { replace: true });
+      else if (profileType === 'partner' || profileType === 'intermediate') navigate('/partner-welcome', { replace: true });
       else navigate('/', { replace: true });
     } catch (err) {
       const message = err.response?.data?.message || 'Failed to complete profile. Please try again.';
@@ -172,7 +172,7 @@ export default function SignUpWizard() {
           <div className="flex flex-col items-center justify-start px-6 py-8">
             <div className="w-full mb-4 relative">
               <button onClick={() => navigate(-1)} className="text-2xl hover:opacity-70 absolute -top-2 -right-2 text-gray-600">✕</button>
-              <h1 className="text-2xl font-bold text-black text-center">Sign up</h1>
+              <h1 className="text-2xl font-bold text-black text-center">S'inscrire</h1>
             </div>
 
             <div className="h-1 w-full bg-gray-300 relative mb-6">
@@ -187,24 +187,24 @@ export default function SignUpWizard() {
 
             {step === 0 && (
               <div className="w-full">
-                <h2 className="text-3xl font-bold text-green-800 text-center mb-6">Welcome</h2>
+                <h2 className="text-3xl font-bold text-green-800 text-center mb-6">Bienvenue</h2>
                 <div className="w-full space-y-4 border border-gray-200 rounded-xl p-4 mb-4 bg-gray-50">
                   <input
                     type="email"
-                    placeholder="Email address"
+                    placeholder="Adresse e-mail"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full border-b border-gray-200 pb-2 h-12 text-lg focus:outline-none focus:border-green-600 bg-transparent placeholder-gray-500"
                   />
                   <PasswordInput
-                    placeholder="Password"
+                    placeholder="Mot de passe"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="border-b border-gray-200 pb-2 h-12 text-lg focus:outline-none bg-transparent placeholder-gray-500"
                     showStrengthIndicator={true}
                   />
                   <PasswordInput
-                    placeholder="Confirm Password"
+                    placeholder="Confirmer le mot de passe"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     className="pb-1 h-12 text-lg focus:outline-none bg-transparent placeholder-gray-500"
@@ -240,7 +240,7 @@ export default function SignUpWizard() {
                   ))}
                 </div>
                 <button onClick={handleVerifyStep} className="bg-green-800 hover:bg-green-700 text-white text-lg font-semibold rounded-full py-3 px-8 w-full transition">
-                  Verify
+                  Vérifier
                 </button>
               </div>
             )}
@@ -249,19 +249,23 @@ export default function SignUpWizard() {
               <div className="w-full">
                 <div className="flex flex-col items-center mb-8">
                   <h2 className="text-3xl font-bold text-green-800 text-center mb-4">Identification</h2>
-                  <p className="text-gray-700 text-lg text-center px-4">Please select your profile type:</p>
+                  <p className="text-gray-700 text-lg text-center px-4">Veuillez sélectionner votre type de profil :</p>
                 </div>
                 <div className="flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-6 mt-4 w-full">
-                  {['tourist', 'owner', 'partner'].map((type) => (
+                  {[
+                    { value: 'tourist', label: 'Touriste' },
+                    { value: 'owner', label: 'Propriétaire' },
+                    { value: 'intermediate', label: 'Intermédiaire' }
+                  ].map((type) => (
                     <button
-                      key={type}
-                      onClick={() => handleSelectRole(type)}
+                      key={type.value}
+                      onClick={() => handleSelectRole(type.value)}
                       className={`border-2 rounded-lg py-6 px-6 w-full sm:w-32 lg:w-36 h-32 sm:h-36 lg:h-40 flex flex-col items-center justify-center transition-colors group focus:outline-none focus:ring-2 focus:ring-green-800 focus:ring-opacity-50 ${
-                        profileType === type ? 'border-green-800 bg-green-800 text-white' : 'border-green-800 hover:bg-green-800 hover:text-white'
+                        profileType === type.value ? 'border-green-800 bg-green-800 text-white' : 'border-green-800 hover:bg-green-800 hover:text-white'
                       }`}
                     >
-                      <span className="text-lg font-semibold text-center capitalize">
-                        {type}
+                      <span className="text-lg font-semibold text-center">
+                        {type.label}
                       </span>
                     </button>
                   ))}
@@ -271,7 +275,7 @@ export default function SignUpWizard() {
 
             {step === 3 && (
               <div className="w-full">
-                <h2 className="text-2xl font-semibold text-black text-center mb-6">Profile</h2>
+                <h2 className="text-2xl font-semibold text-black text-center mb-6">Profil</h2>
                 <div className="flex justify-center mb-8">
                   <div className="relative w-36 h-36 bg-gray-300 rounded-full flex items-center justify-center overflow-hidden">
                     <img src={profileImage ? URL.createObjectURL(profileImage) : DefaultAvatar} alt="Profile" className="w-full h-full object-cover" />
@@ -280,14 +284,14 @@ export default function SignUpWizard() {
                 <div className="flex justify-center mb-8">
                   <button onClick={() => fileInputRef.current?.click()} className="flex items-center px-6 py-3 bg-gray-400 hover:bg-gray-500 text-white rounded-full transition-colors">
                     <span className="mr-2 text-lg">📷</span>
-                    Add photo
+                    Ajouter une photo
                   </button>
                   <input ref={fileInputRef} type="file" accept="image/*" onChange={(e) => setProfileImage(e.target.files?.[0] || null)} className="hidden" />
                 </div>
 
                 <div className="space-y-4 border border-gray-300 rounded-xl p-4">
                   <div className="mb-6 flex justify-center gap-4">
-                    {['Male', 'Female', 'Other'].map((g) => (
+                    {['Homme', 'Femme'].map((g) => (
                       <button
                         key={g}
                         onClick={() => setGender(g)}
@@ -320,7 +324,7 @@ export default function SignUpWizard() {
                       </div>
                       <input
                         type="tel"
-                        placeholder="Phone Number"
+                        placeholder="Numéro de téléphone"
                         value={phoneNumber}
                         onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
                         className="flex-1 px-3 py-3 bg-transparent border-none outline-none placeholder-gray-500"
@@ -331,7 +335,7 @@ export default function SignUpWizard() {
                   <div>
                     <input
                       type="text"
-                      placeholder="Full name"
+                      placeholder="Nom complet"
                       value={fullName}
                       onChange={(e) => { const v = e.target.value; if (!/\d/.test(v)) setFullName(v); }}
                       className="w-full px-4 py-3 border border-gray-200 rounded-lg outline-none focus:border-green-500 placeholder-gray-500"
@@ -341,7 +345,7 @@ export default function SignUpWizard() {
 
                 <div className="flex justify-center mt-6">
                   <button onClick={handleFinishProfile} disabled={!isProfileFormValid} className={`text-white text-lg font-semibold rounded-full py-3 px-8 w-full max-w-xs transition ${!isProfileFormValid ? 'bg-gray-300 cursor-not-allowed' : 'bg-green-700 hover:bg-green-800'}`}>
-                    Finish
+                    Terminer
                   </button>
                 </div>
               </div>

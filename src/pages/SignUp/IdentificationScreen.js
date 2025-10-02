@@ -9,7 +9,7 @@ export default function IdentificationModal({ onClose }) {
     try {
       const email = localStorage.getItem("signupEmail"); // store email from first step
       if (!email) {
-        alert("Email not found. Please go back and restart signup.");
+        alert("E-mail non trouvé. Veuillez revenir en arrière et recommencer l'inscription.");
         return;
       }
 
@@ -23,7 +23,7 @@ export default function IdentificationModal({ onClose }) {
       navigate(`/complete-profile?type=${profileType.toLowerCase()}`);
     } catch (err) {
       console.error(err.response?.data || err.message);
-      alert("Failed to save role. Please try again.");
+      alert("Échec de la sauvegarde du rôle. Veuillez réessayer.");
     }
   };
 
@@ -43,7 +43,7 @@ export default function IdentificationModal({ onClose }) {
               <button onClick={handleClose} className="text-2xl hover:opacity-70 absolute -top-2 -right-2 text-gray-600">
                 ✕
               </button>
-              <h1 className="text-2xl font-bold text-black text-center">Sign up</h1>
+              <h1 className="text-2xl font-bold text-black text-center">S'inscrire</h1>
             </div>
 
             <div className="h-1 w-full bg-gray-300 relative mb-6">
@@ -52,18 +52,22 @@ export default function IdentificationModal({ onClose }) {
 
             <div className="flex flex-col items-center mb-8">
               <h2 className="text-3xl font-bold text-green-800 text-center mb-4">Identification</h2>
-              <p className="text-gray-700 text-lg text-center px-4">Please select your profile type:</p>
+              <p className="text-gray-700 text-lg text-center px-4">Veuillez sélectionner votre type de profil :</p>
             </div>
 
             <div className="flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-6 mt-4 w-full">
-              {["tourist", "owner", "partner"].map((type) => (
+              {[
+                { value: "tourist", label: "Touriste" },
+                { value: "owner", label: "Propriétaire" },
+                { value: "intermediate", label: "Intermédiaire" }
+              ].map((type) => (
                 <button
-                  key={type}
-                  onClick={() => handleProfileSelect(type)}
+                  key={type.value}
+                  onClick={() => handleProfileSelect(type.value)}
                   className="border-2 border-green-800 rounded-lg py-6 px-6 w-full sm:w-32 lg:w-36 h-32 sm:h-36 lg:h-40 flex flex-col items-center justify-center hover:bg-green-800 hover:text-white transition-colors group focus:outline-none focus:ring-2 focus:ring-green-800 focus:ring-opacity-50"
                 >
-                  <span className="text-green-800 text-lg font-semibold group-hover:text-white text-center capitalize">
-                    {type}
+                  <span className="text-green-800 text-lg font-semibold group-hover:text-white text-center">
+                    {type.label}
                   </span>
                 </button>
               ))}

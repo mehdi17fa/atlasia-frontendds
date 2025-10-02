@@ -106,7 +106,7 @@ const handleFinish = async () => {
 
     // Navigate safely with replace: true to prevent back navigation
     if (profileType === 'owner') navigate('/owner-welcome', { replace: true });
-    else if (profileType === 'partner') navigate('/partner-welcome', { replace: true });
+    else if (profileType === 'partner' || profileType === 'intermediate') navigate('/partner-welcome', { replace: true });
     else navigate('/', { replace: true }); // default dashboard
 
   } catch (error) {
@@ -125,12 +125,12 @@ const handleFinish = async () => {
         >
           ✕
         </button>
-        <h1 className="text-3xl font-bold text-black text-center mb-8">Sign up</h1>
+        <h1 className="text-3xl font-bold text-black text-center mb-8">S'inscrire</h1>
       </div>
 
       <div className="md:flex md:justify-center md:items-start">
         <div className="bg-white px-4 py-6 w-full max-w-md">
-          <h2 className="text-2xl font-semibold text-black text-center mb-6">Profile</h2>
+          <h2 className="text-2xl font-semibold text-black text-center mb-6">Profil</h2>
 
           <div className="flex justify-center mb-8">
             <div className="relative w-36 h-36 bg-gray-300 rounded-full flex items-center justify-center overflow-hidden">
@@ -148,12 +148,12 @@ const handleFinish = async () => {
               className="flex items-center px-6 py-3 bg-gray-400 hover:bg-gray-500 text-white rounded-full transition-colors"
             >
               <span className="mr-2 text-lg">📷</span>
-              Add photo
+              Ajouter une photo
             </button>
           </div>
 
           <div className="mb-6 flex justify-center gap-4">
-            {['Male', 'Female', 'Other'].map((g) => (
+            {['Homme', 'Femme'].map((g) => (
               <button
                 key={g}
                 onClick={() => setGender(g)}
@@ -198,7 +198,7 @@ const handleFinish = async () => {
 
                 <input
                   type="tel"
-                  placeholder="Phone Number"
+                  placeholder="Numéro de téléphone"
                   value={phoneNumber}
                   onChange={handlePhoneNumberChange}
                   className="flex-1 px-3 py-3 bg-transparent border-none outline-none placeholder-gray-500"
@@ -209,7 +209,7 @@ const handleFinish = async () => {
             <div>
               <input
                 type="text"
-                placeholder="Full name"
+                placeholder="Nom complet"
                 value={fullName}
                 onChange={handleFullNameChange}
                 className="w-full px-4 py-3 border border-gray-200 rounded-lg outline-none focus:border-green-500 placeholder-gray-500"
@@ -235,7 +235,7 @@ const handleFinish = async () => {
                   : 'bg-green-700 hover:bg-green-800'
               }`}
             >
-              Finish
+              Terminer
             </button>
           </div>
         </div>

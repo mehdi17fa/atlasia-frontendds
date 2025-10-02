@@ -222,11 +222,11 @@ function App() {
         <Route path="/welcomescreen" element={<ProtectedRoute requireAuth={false}><WelcomeScreen /></ProtectedRoute>} />
 
         {/* User sections - Require authentication */}
-        <Route path="/profile" element={<ProtectedRoute allowedRoles={['owner', 'partner', 'tourist', 'user']}><Profile /></ProtectedRoute>} />
-        <Route path="/edit-profile" element={<ProtectedRoute allowedRoles={['owner', 'partner', 'tourist', 'user']}><EditProfileScreen /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute allowedRoles={['owner', 'partner', 'intermediate', 'tourist', 'user']}><Profile /></ProtectedRoute>} />
+        <Route path="/edit-profile" element={<ProtectedRoute allowedRoles={['owner', 'partner', 'intermediate', 'tourist', 'user']}><EditProfileScreen /></ProtectedRoute>} />
         <Route path="/favorites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
         <Route path="/test-upload" element={<ProtectedRoute><TestDocumentUpload /></ProtectedRoute>} />
-        <Route path="/partner-welcome" element={<ProtectedRoute allowedRoles={['partner']}><HomeIntermédiaire /></ProtectedRoute>} />
+        <Route path="/partner-welcome" element={<ProtectedRoute allowedRoles={['partner', 'intermediate']}><HomeIntermédiaire /></ProtectedRoute>} />
         <Route path="/VillaMakarska" element={<ProtectedRoute><VillaMakarska /></ProtectedRoute>} />
         <Route path="/property/:id" element={<PropertyPreview />} />
         <Route path="/owner/:id" element={<ProtectedRoute><OwnerDetails /></ProtectedRoute>} />
@@ -235,7 +235,7 @@ function App() {
         {/* Co-hosting routes - Require authentication */}
         <Route path="/cohosting-explore" element={<ProtectedRoute><CohostingExplore /></ProtectedRoute>} />
         <Route path="/cohosting-preview/:propertyId" element={<ProtectedRoute><CoHostPropertyPreview /></ProtectedRoute>} />
-        <Route path="/partner/cohosting-management" element={<ProtectedRoute allowedRoles={['partner']}><PartnerCohostingManagement /></ProtectedRoute>} />
+        <Route path="/partner/cohosting-management" element={<ProtectedRoute allowedRoles={['partner', 'intermediate']}><PartnerCohostingManagement /></ProtectedRoute>} />
         
 
         {/* Messages - Require authentication */}
@@ -269,16 +269,16 @@ function App() {
         <Route path="/cart/checkout-confirmation" element={<ProtectedRoute><CartCheckoutConfirmation /></ProtectedRoute>} />
 
         {/* Intermediate - Require partner role */}
-        <Route path="/create-package" element={<ProtectedRoute allowedRoles={['partner']}><PackageCreationFlow /></ProtectedRoute>} />
-        <Route path="/select-property" element={<ProtectedRoute allowedRoles={['partner']}><SelectPropertyStep /></ProtectedRoute>} />
+        <Route path="/create-package" element={<ProtectedRoute allowedRoles={['partner', 'intermediate']}><PackageCreationFlow /></ProtectedRoute>} />
+        <Route path="/select-property" element={<ProtectedRoute allowedRoles={['partner', 'intermediate']}><SelectPropertyStep /></ProtectedRoute>} />
         <Route path="/packages/:packageId/book" element={<ProtectedRoute><PackageBooking /></ProtectedRoute>} />
-        <Route path='/performance' element={<ProtectedRoute allowedRoles={['partner']}><Performance /></ProtectedRoute>} />
+        <Route path='/performance' element={<ProtectedRoute allowedRoles={['partner', 'intermediate']}><Performance /></ProtectedRoute>} />
         <Route path="/data" element={<ProtectedRoute><DocumentUpload /></ProtectedRoute>} />
-        <Route path="/acceuill" element={<ProtectedRoute allowedRoles={['partner']}><HomeIntermédiaire /></ProtectedRoute>} />
+        <Route path="/acceuill" element={<ProtectedRoute allowedRoles={['partner', 'intermediate']}><HomeIntermédiaire /></ProtectedRoute>} />
         
         {/* Package Management - Require partner role */}
-        <Route path="/package-management" element={<ProtectedRoute allowedRoles={['partner']}><PackageManagement /></ProtectedRoute>} />
-        <Route path="/edit-package/:packageId" element={<ProtectedRoute allowedRoles={['partner']}><EditPackage /></ProtectedRoute>} />
+        <Route path="/package-management" element={<ProtectedRoute allowedRoles={['partner', 'intermediate']}><PackageManagement /></ProtectedRoute>} />
+        <Route path="/edit-package/:packageId" element={<ProtectedRoute allowedRoles={['partner', 'intermediate']}><EditPackage /></ProtectedRoute>} />
 
       </Routes>
 

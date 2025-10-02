@@ -65,7 +65,9 @@ function CoHostRequestCard({ request, onAccept, onReject, loading, isHighlighted
               <h4 className="font-semibold text-gray-900 leading-snug">
                 {request.partner?.fullName || request.partner?.displayName || "Utilisateur"}
               </h4>
-              <p className="text-sm text-gray-600 truncate">{request.partner?.email}</p>
+              <p className="text-sm text-gray-600 truncate max-w-[200px]" title={request.partner?.email}>
+                {request.partner?.email}
+              </p>
               
               {/* Property info moved below to span full card width */}
             </div>
