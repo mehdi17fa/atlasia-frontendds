@@ -1,3 +1,6 @@
+// Modified PartnerDashboard.jsx
+// Changes: Added a new button for blocking explore, adjusted first button text for clarity
+
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import S3Image from '../../components/S3Image';
@@ -526,13 +529,19 @@ export default function PartnerDashboard() {
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Tableau de bord partenaire</h1>
           <p className="text-gray-600">Gérez vos propriétés co-hôtes et vos packages</p>
           
-          {/* Action Buttons */}
+          {/* Action Buttons - Modified to add blocking button */}
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 mt-4">
             <button
               onClick={() => navigate('/cohosting-explore')}
               className="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors text-center"
             >
-              Explorer les propriétés
+              Explorer les propriétés pour co-hébergement
+            </button>
+            <button
+              onClick={() => navigate('/blocking-explore')}
+              className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors text-center"
+            >
+              Explorer les propriétés pour blocage
             </button>
             <button
               onClick={() => navigate('/create-package')}

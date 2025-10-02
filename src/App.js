@@ -75,6 +75,8 @@ import PackageCreationFlow from './pages/Intermediate/PackageCreationFlow';
 import PackageManagement from './pages/Intermediate/PackageManagement';
 import EditPackage from './pages/Intermediate/EditPackage';
 import PackageBooking from './pages/Booking/PackageBooking';
+import BlockingExplore from './pages/Explore/BlockingPropertyExplore';
+import BlockingPropertyPreview from './pages/Intermediate/BlockingPropertyPreview';
 
 // Inbox / Chat
 import Inbox from './pages/Inbox/Inbox';
@@ -237,6 +239,14 @@ function App() {
         <Route path="/cohosting-explore" element={<ProtectedRoute><CohostingExplore /></ProtectedRoute>} />
         <Route path="/cohosting-preview/:propertyId" element={<ProtectedRoute><CoHostPropertyPreview /></ProtectedRoute>} />
         <Route path="/partner/cohosting-management" element={<ProtectedRoute allowedRoles={['partner']}><PartnerCohostingManagement /></ProtectedRoute>} />
+        <Route path="/blocking-explore" element={<ProtectedRoute><BlockingExplore /></ProtectedRoute>} />
+        <Route
+          path="/blocking-preview/:propertyId"
+          element={
+              <BlockingPropertyPreview />
+            
+          }
+        />
         
 
         {/* Messages - Require authentication */}
