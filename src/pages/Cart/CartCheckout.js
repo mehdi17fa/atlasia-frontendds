@@ -9,7 +9,7 @@ export default function CartCheckout() {
   const { cart, isLoading, removeFromCart, updateCartItem, checkoutCart, getCartTotal, isCartEmpty } = useCart();
   const { isAuthenticated } = useAuth();
   
-  const [paymentMethod, setPaymentMethod] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('card');
   const [cardDetails, setCardDetails] = useState({
     cardNumber: '',
     expiryDate: '',
@@ -235,33 +235,6 @@ export default function CartCheckout() {
               <div className="space-y-3 mb-6">
                 <div 
                   className={`flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                    paymentMethod === 'cash' 
-                      ? 'border-green-500 bg-green-50' 
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`} 
-                  onClick={() => handlePaymentMethodChange('cash')}
-                >
-                  <input
-                    type="radio"
-                    id="cash"
-                    name="paymentMethod"
-                    value="cash"
-                    checked={paymentMethod === 'cash'}
-                    onChange={(e) => handlePaymentMethodChange(e.target.value)}
-                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
-                  />
-                  <label htmlFor="cash" className="ml-3 flex items-center cursor-pointer">
-                    <svg className={`w-5 h-5 mr-2 ${paymentMethod === 'cash' ? 'text-green-600' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    <span className={`font-medium ${paymentMethod === 'cash' ? 'text-green-800' : 'text-gray-700'}`}>
-                      Paiement en espèces
-                    </span>
-                  </label>
-                </div>
-
-                <div 
-                  className={`flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all ${
                     paymentMethod === 'card' 
                       ? 'border-green-500 bg-green-50' 
                       : 'border-gray-200 hover:border-gray-300'
@@ -411,8 +384,7 @@ export default function CartCheckout() {
                   <div className="flex justify-between">
                     <span className="text-gray-600">Paiement:</span>
                     <span className="font-medium text-sm">
-                      {paymentMethod === 'cash' ? 'En espèces' : 
-                       paymentMethod === 'card' ? 'Par carte' : 'Non sélectionné'}
+                      {paymentMethod === 'card' ? 'Par carte' : 'Non sélectionné'}
                       {paymentMethod === 'card' && cardDetails.cardNumber && (
                         <span className="ml-2 text-xs text-gray-500">
                           (****{cardDetails.cardNumber.replace(/\s/g, '').slice(-4)})

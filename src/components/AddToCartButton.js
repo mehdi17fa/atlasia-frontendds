@@ -85,7 +85,11 @@ const AddToCartButton = ({
 
     } catch (error) {
       console.error('Error adding to cart:', error);
-      setError(error.message || 'Erreur lors de l\'ajout au panier');
+      if (error.code === 'DUPLICATE_SAME_DATES') {
+        setError("Cet article est déjà dans votre panier pour ces dates. Veuillez modifier la date d'arrivée ou de départ.");
+      } else {
+        setError(error.message || 'Erreur lors de l\'ajout au panier');
+      }
     } finally {
       setIsAdding(false);
     }

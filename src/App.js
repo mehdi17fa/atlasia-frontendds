@@ -60,6 +60,7 @@ import MyBookings from './pages/Booking/MyBookings';
 // Cart
 import CartCheckout from './pages/Cart/CartCheckout';
 import CartCheckoutConfirmation from './pages/Cart/CartCheckoutConfirmation';
+import CartAddSuccess from './pages/Cart/CartAddSuccess';
 
 
 // Intermédiaire
@@ -267,6 +268,7 @@ function App() {
         {/* Cart - Require authentication */}
         <Route path="/cart/checkout" element={<ProtectedRoute><CartCheckout /></ProtectedRoute>} />
         <Route path="/cart/checkout-confirmation" element={<ProtectedRoute><CartCheckoutConfirmation /></ProtectedRoute>} />
+        <Route path="/cart/add-success" element={<ProtectedRoute><CartAddSuccess /></ProtectedRoute>} />
 
         {/* Intermediate - Require partner role */}
         <Route path="/create-package" element={<ProtectedRoute allowedRoles={['partner', 'intermediate']}><PackageCreationFlow /></ProtectedRoute>} />
