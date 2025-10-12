@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import { api } from '../../api';
 import { useAuth } from '../../hooks/useAuth';
 import S3Image from '../../components/S3Image';
 
@@ -170,10 +171,29 @@ export default function CartCheckout() {
     setError('');
 
     try {
-      const result = await checkoutCart(guestMessage);
-      
+      // Build payload from current cart items so backend can create bookings
+      const payload = {
+        guestMessage,
+        paymentMethod,
+        items: (cart.items || []).map(it => ({
+          itemType: it.itemType,
+          itemId: it.itemId,
+          checkIn: it.checkIn,
+          checkOut: it.checkOut,
+          guests: it.guests
+        }))
+      };
+
+      const response = await api.post('/api/cart/checkout', payload);
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Checkout failed');
+      }
+
+      // Clear via CartContext after successful server checkout
+      await checkoutCart(guestMessage);
+
       navigate('/cart/checkout-confirmation', {
-        state: { checkoutResult: result }
+        state: { checkoutResult: response.data }
       });
     } catch (error) {
       console.error('Checkout error:', error);

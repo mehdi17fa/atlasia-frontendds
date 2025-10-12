@@ -3,6 +3,8 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingCartIcon } from '@heroicons/react/24/outline';
+import DateRangeCalendar from './DateRangeCalendar';
+import { api } from '../api';
 
 const AddToCartButton = ({ 
   itemType, // 'property' or 'package'
@@ -22,6 +24,7 @@ const AddToCartButton = ({
   const navigate = useNavigate();
   const [isAdding, setIsAdding] = useState(false);
   const [error, setError] = useState('');
+  const [showCalendar, setShowCalendar] = useState(false);
 
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
@@ -86,10 +89,48 @@ const AddToCartButton = ({
     } catch (error) {
       console.error('Error adding to cart:', error);
       if (error.code === 'DUPLICATE_SAME_DATES') {
-        setError("Cet article est déjà dans votre panier pour ces dates. Veuillez modifier la date d'arrivée ou de départ.");
+        setShowCalendar(true);
+        setError("Ces dates sont déjà dans votre panier. Choisissez une autre période.");
       } else {
         setError(error.message || 'Erreur lors de l\'ajout au panier');
       }
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  const fetchAvailability = async () => {
+    try {
+      if (itemType !== 'property') return [];
+      const res = await api.get(`/api/property/${itemId}/availability`);
+      return (res?.data?.unavailableDates || []).map(d => new Date(d).toISOString());
+    } catch (e) {
+      return [];
+    }
+  };
+
+  const onApplyDates = async (startIso, endIso) => {
+    setShowCalendar(false);
+    setError('');
+    // retry add with new dates
+    setIsAdding(true);
+    try {
+      await addToCart({
+        itemType,
+        itemId,
+        checkIn: startIso,
+        checkOut: endIso,
+        guests: parseInt(guests),
+        guestMessage,
+        itemSnapshot: itemData ? {
+          name: itemData?.title || itemData?.name || 'Article',
+          description: itemData?.description || '',
+          thumbnail: itemData?.photos?.[0] || itemData?.restaurants?.[0]?.thumbnail || '',
+          location: itemData?.localisation?.city || itemData?.property?.localisation?.city || 'Localisation',
+        } : {}
+      });
+    } catch (e) {
+      setError(e.message || 'Erreur lors de l\'ajout au panier');
     } finally {
       setIsAdding(false);
     }
@@ -157,6 +198,19 @@ const AddToCartButton = ({
         <p className="absolute left-0 top-full mt-1 text-xs text-gray-500 whitespace-nowrap z-10 bg-white px-2 py-1 rounded shadow-sm">
           Connexion requise pour ajouter au panier
         </p>
+      )}
+
+      {showCalendar && (
+        <div className="absolute z-20 mt-2">
+          <DateRangeCalendar
+            title="Choisir de nouvelles dates"
+            initialCheckIn={checkIn}
+            initialCheckOut={checkOut}
+            fetchAvailability={fetchAvailability}
+            onApply={onApplyDates}
+            onClose={() => setShowCalendar(false)}
+          />
+        </div>
       )}
     </div>
   );

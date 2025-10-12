@@ -5,6 +5,7 @@ import axios from "axios";
 import { api } from "../../api";
 import S3ImageUpload from "../../components/S3ImageUpload";
 import ReservationCalendar from "../../components/ReservationCalendar";
+import DateRangeCalendar from "../../components/DateRangeCalendar";
 import { useCart } from "../../context/CartContext";
 
 // Use relative paths with centralized api client
@@ -593,13 +594,25 @@ export default function BookingRequest() {
 
       {/* Calendar Modal */}
       {showCalendar && (
-        <ReservationCalendar
-          propertyId={propertyId}
-          onDateSelect={handleDateSelection}
-          onClose={() => setShowCalendar(false)}
-          initialCheckIn={localCheckIn}
-          initialCheckOut={localCheckOut}
-        />
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-center justify-center p-4">
+          <div className="max-w-lg w-full">
+            <DateRangeCalendar
+              title="Sélectionner les dates"
+              initialCheckIn={localCheckIn}
+              initialCheckOut={localCheckOut}
+              fetchAvailability={async () => {
+                try {
+                  const res = await api.get(`/api/property/${propertyId}/availability`);
+                  return res?.data?.unavailableDates || [];
+                } catch (_) {
+                  return [];
+                }
+              }}
+              onApply={(startIso, endIso) => handleDateSelection(startIso, endIso)}
+              onClose={() => setShowCalendar(false)}
+            />
+          </div>
+        </div>
       )}
     </div>
   );
