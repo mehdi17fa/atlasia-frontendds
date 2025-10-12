@@ -7,7 +7,7 @@ import S3Image from '../../components/S3Image';
 
 export default function CartCheckout() {
   const navigate = useNavigate();
-  const { cart, isLoading, removeFromCart, updateCartItem, checkoutCart, getCartTotal, isCartEmpty } = useCart();
+  const { cart, isLoading, removeFromCart, updateCartItem, checkoutCart, clearCart, getCartTotal, isCartEmpty } = useCart();
   const { isAuthenticated } = useAuth();
   
   const [paymentMethod, setPaymentMethod] = useState('card');
@@ -189,15 +189,15 @@ export default function CartCheckout() {
         throw new Error(response.data?.message || 'Checkout failed');
       }
 
-      // Clear via CartContext after successful server checkout
-      await checkoutCart(guestMessage);
+      // Clear cart locally after successful server checkout
+      await clearCart();
 
       navigate('/cart/checkout-confirmation', {
         state: { checkoutResult: response.data }
       });
     } catch (error) {
       console.error('Checkout error:', error);
-      setError(error.message || 'Erreur lors de la commande');
+      setError(error?.response?.data?.message || error.message || 'Erreur lors de la commande');
     } finally {
       setIsSubmitting(false);
     }
