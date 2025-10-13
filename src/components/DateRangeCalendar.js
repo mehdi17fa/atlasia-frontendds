@@ -16,6 +16,12 @@ const startOfDay = (d) => {
 
 const toDate = (v) => v instanceof Date ? startOfDay(v) : startOfDay(new Date(v));
 
+// Normalize to UTC midnight to avoid timezone overlap issues when serializing
+const toUtcStartIso = (d) => {
+  const x = new Date(d);
+  return new Date(Date.UTC(x.getFullYear(), x.getMonth(), x.getDate())).toISOString();
+};
+
 export default function DateRangeCalendar({
   title = 'Sélectionner les dates',
   initialCheckIn,
@@ -36,6 +42,8 @@ export default function DateRangeCalendar({
   const [selectedStart, setSelectedStart] = useState(initialCheckIn ? toDate(initialCheckIn) : null);
   const [selectedEnd, setSelectedEnd] = useState(initialCheckOut ? toDate(initialCheckOut) : null);
   const [blockedDates, setBlockedDates] = useState([]);
+  const [boundaryCheckIns, setBoundaryCheckIns] = useState([]);
+  const [hardBoundaryDays, setHardBoundaryDays] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -60,8 +68,18 @@ export default function DateRangeCalendar({
       try {
         setLoading(true);
         setError('');
-        const dates = await fetchAvailability();
-        if (mounted) setBlockedDates(dates || []);
+        const result = await fetchAvailability();
+        if (mounted) {
+          if (Array.isArray(result)) {
+            setBlockedDates(result || []);
+            setBoundaryCheckIns([]);
+            setHardBoundaryDays([]);
+          } else if (result && typeof result === 'object') {
+            setBlockedDates(result.blockedDates || []);
+            setBoundaryCheckIns(result.boundaryCheckIns || []);
+            setHardBoundaryDays(result.fullyBlockedBoundaries || []);
+          }
+        }
       } catch (_) {
         if (mounted) setError("Impossible de charger les disponibilités.");
       } finally {
@@ -99,6 +117,27 @@ export default function DateRangeCalendar({
     return false;
   };
 
+  // End-exclusive aware disabled check used for rendering and clicks
+  const isEffectivelyDisabled = (date) => {
+    if (!date) return true;
+    const ts = startOfDay(date).getTime();
+    const hardSet = new Set((hardBoundaryDays || []).map(d => toDate(d).getTime()));
+    if (hardSet.has(ts)) return true; // always unavailable
+    if (!isDisabled(date)) return false;
+    // Allow selecting a blocked day as END boundary when start chosen and no blocked nights inside
+    if (blockedSet.has(ts) && selectedStart && !selectedEnd) {
+      const startTs = selectedStart.getTime();
+      if (ts > startTs) {
+        for (let t = startTs; t < ts; t += 24*60*60*1000) {
+          if (blockedSet.has(t)) return true; // inner blocked -> still disabled
+        }
+        return false; // allowed as end boundary
+      }
+    }
+    // Boundary check-in dates remain available (selectable) as start or end
+    return true;
+  };
+
   const inRange = (date) => {
     if (!date || !selectedStart || !selectedEnd) return false;
     const ts = startOfDay(date).getTime();
@@ -106,7 +145,26 @@ export default function DateRangeCalendar({
   };
 
   const handleSelect = (date) => {
-    if (!date || isDisabled(date)) return;
+    if (!date) return;
+    const ts = startOfDay(date).getTime();
+    let disabled = isEffectivelyDisabled(date);
+
+    // Allow a blocked day to serve as the END boundary when a start is chosen,
+    // provided there are no blocked nights strictly inside the range
+    if (disabled && blockedSet.has(ts) && selectedStart && !selectedEnd) {
+      const startTs = selectedStart.getTime();
+      if (ts > startTs) {
+        let hasInnerBlocked = false;
+        for (let t = startTs; t < ts; t += 24*60*60*1000) {
+          if (blockedSet.has(t)) { hasInnerBlocked = true; break; }
+        }
+        if (!hasInnerBlocked) {
+          disabled = false;
+        }
+      }
+    }
+
+    if (disabled) return;
     if (!selectedStart || (selectedStart && selectedEnd)) {
       setSelectedStart(toDate(date));
       setSelectedEnd(null);
@@ -120,8 +178,8 @@ export default function DateRangeCalendar({
       setSelectedEnd(null);
       return;
     }
-    // Validate that no blocked dates inside range
-    for (let t = startTs; t <= endTs; t += 24*60*60*1000) {
+    // Validate that no blocked nights inside range (end-exclusive)
+    for (let t = startTs; t < endTs; t += 24*60*60*1000) {
       if (blockedSet.has(t)) {
         setError('La plage sélectionnée contient des dates indisponibles.');
         return;
@@ -133,7 +191,8 @@ export default function DateRangeCalendar({
 
   const apply = () => {
     if (!selectedStart || !selectedEnd) return;
-    onApply && onApply(selectedStart.toISOString(), selectedEnd.toISOString());
+    // Use UTC midnight ISO strings so adjacent bookings (checkout==next checkin) don't overlap by timezone
+    onApply && onApply(toUtcStartIso(selectedStart), toUtcStartIso(selectedEnd));
     onClose && onClose();
   };
 
@@ -185,7 +244,9 @@ export default function DateRangeCalendar({
           <div className="grid grid-cols-7 gap-1">
             {daysInMonth.map((date, idx) => {
               if (!date) return <div key={`empty-${idx}`} />;
-              const disabled = isDisabled(date);
+              const ts = startOfDay(date).getTime();
+              const effectiveDisabled = isEffectivelyDisabled(date);
+
               const isStart = selectedStart && isSameDay(date, selectedStart);
               const isEnd = selectedEnd && isSameDay(date, selectedEnd);
               const between = inRange(date);
@@ -193,9 +254,9 @@ export default function DateRangeCalendar({
                 <button
                   key={date.toISOString()}
                   onClick={() => handleSelect(date)}
-                  disabled={disabled}
+                  disabled={effectiveDisabled}
                   className={`h-10 rounded-md text-sm flex items-center justify-center select-none border 
-                    ${disabled ? 'bg-gray-100 text-gray-400 line-through cursor-not-allowed border-gray-200' : 'hover:bg-green-50 border-gray-200'}
+                    ${effectiveDisabled ? 'bg-gray-100 text-gray-400 line-through cursor-not-allowed border-gray-200' : 'hover:bg-green-50 border-gray-200'}
                     ${between ? 'bg-green-100 text-green-900' : ''}
                     ${isStart || isEnd ? 'bg-green-600 text-white font-semibold' : ''}
                   `}

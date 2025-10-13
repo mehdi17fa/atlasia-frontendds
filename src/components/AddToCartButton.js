@@ -26,6 +26,12 @@ const AddToCartButton = ({
   const [error, setError] = useState('');
   const [showCalendar, setShowCalendar] = useState(false);
 
+  // Normalize any date-like value to UTC midnight ISO string
+  const toUtcStartIso = (d) => {
+    const x = new Date(d);
+    return new Date(Date.UTC(x.getFullYear(), x.getMonth(), x.getDate())).toISOString();
+  };
+
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
       // Redirect to login with return URL
@@ -70,8 +76,8 @@ const AddToCartButton = ({
       await addToCart({
         itemType,
         itemId,
-        checkIn: new Date(checkIn).toISOString(),
-        checkOut: new Date(checkOut).toISOString(),
+        checkIn: toUtcStartIso(checkIn),
+        checkOut: toUtcStartIso(checkOut),
         guests: parseInt(guests),
         guestMessage,
         itemSnapshot
@@ -102,8 +108,30 @@ const AddToCartButton = ({
   const fetchAvailability = async () => {
     try {
       if (itemType !== 'property') return [];
-      const res = await api.get(`/api/property/${itemId}/availability`);
-      return (res?.data?.unavailableDates || []).map(d => new Date(d).toISOString());
+      // Use booking status endpoint to get active bookings ranges
+      const res = await api.get(`/api/booking/status/${itemId}`);
+      const ranges = res?.data?.unavailableDates || [];
+      const blocked = [];
+      const boundaryCheckIns = [];
+      const fullyBlockedBoundaries = [];
+      // Expand each booking range into individual ISO date strings (start-of-day)
+      for (const r of ranges) {
+        const start = new Date(r.checkIn);
+        const end = new Date(r.checkOut);
+        // Mark the check-in date as a boundary that should appear available
+        boundaryCheckIns.push(new Date(Date.UTC(start.getFullYear(), start.getMonth(), start.getDate())).toISOString());
+        for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
+          blocked.push(new Date(d).toISOString());
+        }
+      }
+      // If two ranges abut (A.checkOut === B.checkIn), mark that day fully blocked
+      const starts = new Set(boundaryCheckIns);
+      for (const r of ranges) {
+        const out = new Date(r.checkOut);
+        const outIso = new Date(Date.UTC(out.getFullYear(), out.getMonth(), out.getDate())).toISOString();
+        if (starts.has(outIso)) fullyBlockedBoundaries.push(outIso);
+      }
+      return { blockedDates: blocked, boundaryCheckIns, fullyBlockedBoundaries };
     } catch (e) {
       return [];
     }

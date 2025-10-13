@@ -68,6 +68,7 @@ export default function BookingRequest() {
   };
 
   const handleDateSelection = (checkInDate, checkOutDate) => {
+    // Already normalized to UTC ISO from calendar
     setLocalCheckIn(checkInDate);
     setLocalCheckOut(checkOutDate);
     setShowCalendar(false);
@@ -188,8 +189,8 @@ export default function BookingRequest() {
       await addToCart({
         itemType: 'property',
         itemId: propertyId,
-        checkIn: new Date(localCheckIn).toISOString(),
-        checkOut: new Date(localCheckOut).toISOString(),
+        checkIn: localCheckIn,
+        checkOut: localCheckOut,
         guests: Number(guests),
         guestMessage,
         subtotal: total,
@@ -602,8 +603,27 @@ export default function BookingRequest() {
               initialCheckOut={localCheckOut}
               fetchAvailability={async () => {
                 try {
-                  const res = await api.get(`/api/property/${propertyId}/availability`);
-                  return res?.data?.unavailableDates || [];
+                  // Use booking status endpoint to get active booking ranges
+                  const res = await api.get(`/api/booking/status/${propertyId}`);
+                  const ranges = res?.data?.unavailableDates || [];
+                  const blocked = [];
+                  const boundaryCheckIns = [];
+                  const fullyBlockedBoundaries = [];
+                  for (const r of ranges) {
+                    const start = new Date(r.checkIn);
+                    const end = new Date(r.checkOut);
+                    boundaryCheckIns.push(new Date(Date.UTC(start.getFullYear(), start.getMonth(), start.getDate())).toISOString());
+                    for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
+                      blocked.push(new Date(d).toISOString());
+                    }
+                  }
+                  const starts = new Set(boundaryCheckIns);
+                  for (const r of ranges) {
+                    const out = new Date(r.checkOut);
+                    const outIso = new Date(Date.UTC(out.getFullYear(), out.getMonth(), out.getDate())).toISOString();
+                    if (starts.has(outIso)) fullyBlockedBoundaries.push(outIso);
+                  }
+                  return { blockedDates: blocked, boundaryCheckIns, fullyBlockedBoundaries };
                 } catch (_) {
                   return [];
                 }
