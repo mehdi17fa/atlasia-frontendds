@@ -13,3 +13,10 @@
 .animate-shake {
   animation: shake 0.7s cubic-bezier(.36,.07,.19,.97) both;
 }
+
+/* Navbar shift - adds padding to account for fixed sidebar */
+@media (min-width: 768px) {
+  body:has(.navbar-shift) {
+    padding-left: 8rem; /* 128px - matches md:w-32 */
+  }
+}

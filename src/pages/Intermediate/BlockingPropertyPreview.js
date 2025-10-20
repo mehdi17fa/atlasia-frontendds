@@ -27,7 +27,7 @@ export default function BlockingPropertyPreview() {
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [blocked, setBlocked] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -84,6 +84,27 @@ export default function BlockingPropertyPreview() {
 
     fetchProperty();
   }, [propertyId, navigate, token]);
+
+  // Check if this property is currently blocked by this user
+  useEffect(() => {
+    const checkIfBlocked = async () => {
+      try {
+        const res = await api.get('/api/partner/blocked-properties', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.data.success && Array.isArray(res.data.properties)) {
+          const blocked = res.data.properties.some(p => p._id === propertyId);
+          setIsBlocked(blocked);
+        }
+      } catch (err) {
+        console.error("Error checking if property is blocked:", err);
+      }
+    };
+
+    if (token && propertyId) {
+      checkIfBlocked();
+    }
+  }, [propertyId, token]);
 
   if (loading) {
     return <p className="text-center mt-20">Chargement...</p>;
@@ -162,7 +183,7 @@ export default function BlockingPropertyPreview() {
       return;
     }
 
-    if (blocked) {
+    if (isBlocked) {
       toast("Blocage déjà effectué", { icon: "ℹ️" });
       return;
     }
@@ -172,7 +193,7 @@ export default function BlockingPropertyPreview() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.data.success) {
-        setBlocked(true);
+        setIsBlocked(true);
         toast.success("Propriété bloquée pour 15 minutes !");
       }
     } catch (err) {
@@ -185,6 +206,77 @@ export default function BlockingPropertyPreview() {
         ? "Propriété introuvable ou non publiée"
         : err.response?.data?.message || err.message || "Erreur lors du blocage";
       toast.error(msg);
+    }
+  };
+
+  const handleBookClick = async () => {
+    console.log("🎯 Book button clicked!");
+    console.log("User:", user);
+    console.log("PropertyId:", propertyId);
+    console.log("Token:", token ? "Present" : "Missing");
+    
+    if (!user) {
+      toast.error("Vous devez être connecté pour réserver");
+      navigate("/login");
+      return;
+    }
+
+    try {
+      // First, unblock the property if it's currently blocked
+      console.log("📤 Sending unblock request...");
+      toast.loading("Déblocage de la propriété...");
+      
+      const unblockRes = await api.delete(`/api/partner/unblock-property/${propertyId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      console.log("✅ Unblock response:", unblockRes.data);
+
+      if (unblockRes.data.success) {
+        toast.dismiss();
+        toast.success("Propriété débloquée ! Redirection vers la réservation...");
+        
+        console.log("🚀 Navigating to property page...");
+        // Wait a moment for the backend to process
+        setTimeout(() => {
+          // Navigate to booking flow - same as regular property booking
+          console.log("🔄 Executing navigation...");
+          navigate(`/property/${propertyId}`, {
+            state: {
+              fromBlocked: true,
+              propertyData: property
+            }
+          });
+        }, 500);
+      } else {
+        console.warn("⚠️ Unblock was not successful:", unblockRes.data);
+        toast.dismiss();
+        toast.error("Erreur lors du déblocage");
+      }
+    } catch (err) {
+      toast.dismiss();
+      console.error("❌ Error unblocking property:", {
+        message: err.message,
+        status: err.response?.status,
+        data: err.response?.data,
+      });
+      
+      // If the property is not blocked (404), we can still proceed with booking
+      if (err.response?.status === 404) {
+        console.log("ℹ️ Property not blocked (404), proceeding with booking anyway");
+        toast.success("Redirection vers la réservation...");
+        setTimeout(() => {
+          navigate(`/property/${propertyId}`, {
+            state: {
+              fromBlocked: true,
+              propertyData: property
+            }
+          });
+        }, 300);
+      } else {
+        const msg = err.response?.data?.message || err.message || "Erreur lors du déblocage";
+        toast.error(msg);
+      }
     }
   };
 
@@ -204,9 +296,9 @@ export default function BlockingPropertyPreview() {
         mapImage={mapImage}
         reviews={property.reviews || []}
         user={user}
-        onCoHostClick={handleBlockClick}
-        requestSent={blocked}
-        mode="block"
+        onCoHostClick={isBlocked ? handleBookClick : handleBlockClick}
+        requestSent={isBlocked}
+        mode={isBlocked ? "booking" : "block"}
       />
     </>
   );

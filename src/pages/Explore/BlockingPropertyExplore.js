@@ -44,12 +44,12 @@ export default function BlockingPropertyExplore() {
     fetchProperties();
   }, [token, navigate]);
 
-  // Refresh properties every 30 seconds to reflect expired blocks
+  // Refresh properties every 10 seconds to reflect bookings and expired blocks
   useEffect(() => {
     const interval = setInterval(() => {
-      console.log("Refreshing properties...");
+      console.log("Refreshing properties to check for bookings...");
       fetchProperties();
-    }, 30000); // 30 seconds
+    }, 10000); // 10 seconds - faster refresh to show booking changes
     return () => clearInterval(interval);
   }, []);
 

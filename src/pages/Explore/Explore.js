@@ -105,11 +105,11 @@ export default function Explore() {
 
   useEffect(() => {
     fetchProperties();
-    // Refresh properties every 30 seconds to reflect expired blocks
+    // Refresh properties every 10 seconds to reflect bookings and expired blocks
     const interval = setInterval(() => {
-      console.log("Refreshing properties...");
+      console.log("Refreshing properties to check for bookings...");
       fetchProperties();
-    }, 30000);
+    }, 10000); // 10 seconds - faster refresh to show booking changes
     return () => clearInterval(interval);
   }, [authLoading, isAuthenticated, user?.role]);
 

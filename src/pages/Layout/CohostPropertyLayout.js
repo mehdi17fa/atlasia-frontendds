@@ -30,12 +30,26 @@ const CoHostPropertyLayout = ({
             <span className="ml-2 text-gray-500">({reviewCount || 0} avis)</span>
           </div>
         </div>
-        {user && (
+        {user && mode !== "blocked" && (
           <button
-            onClick={onCoHostClick}
-            disabled={requestSent}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log("🔘 Button clicked in CohostPropertyLayout");
+              console.log("Mode:", mode);
+              console.log("onCoHostClick function:", onCoHostClick);
+              if (onCoHostClick) {
+                console.log("🚀 Calling onCoHostClick...");
+                onCoHostClick();
+              } else {
+                console.error("❌ onCoHostClick is not defined!");
+              }
+            }}
+            disabled={requestSent && mode !== "booking"}
             className={`px-6 py-2 rounded-full text-white ${
-              mode === "block"
+              mode === "booking"
+                ? "bg-green-600 hover:bg-green-700"
+                : mode === "block"
                 ? requestSent
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-red-700 hover:bg-red-800"
@@ -44,7 +58,9 @@ const CoHostPropertyLayout = ({
                 : "bg-blue-700 hover:bg-blue-800"
             }`}
           >
-            {mode === "block"
+            {mode === "booking"
+              ? "Réserver maintenant"
+              : mode === "block"
               ? requestSent
                 ? "Bloqué"
                 : "Bloquer pour 15min"
@@ -173,7 +189,7 @@ CoHostPropertyLayout.propTypes = {
   user: PropTypes.object,
   onCoHostClick: PropTypes.func,
   requestSent: PropTypes.bool,
-  mode: PropTypes.oneOf(["cohost", "block"]),
+  mode: PropTypes.oneOf(["cohost", "block", "booking", "blocked"]),
 };
 
 export default CoHostPropertyLayout;

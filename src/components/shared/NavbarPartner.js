@@ -1,4 +1,4 @@
-import React from 'react';
+ import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const navItems = [
@@ -58,8 +58,8 @@ export default function Navbar() {
   if (isChatPage) return null;
 
   return (
-    <nav className="fixed bottom-0 w-full bg-white border-t border-gray-200 z-50">
-      <div className="flex justify-around items-center py-2">
+    <nav className="navbar-shift fixed md:top-0 md:left-0 md:min-h-screen md:w-32 md:bg-white md:border-r md:border-gray-200 bottom-0 w-full bg-white border-t border-gray-200 z-50">
+      <div className="flex md:flex-col flex justify-around md:h-full md:py-4 py-2">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
@@ -67,7 +67,7 @@ export default function Navbar() {
               key={item.name}
               onClick={() => navigate(item.path)}
               className={`
-                flex flex-col items-center justify-center text-xs
+                flex md:flex-row flex-col items-center justify-center md:justify-start md:px-4 ${isActive ? 'text-base' : 'text-sm'}
                 transition-colors duration-200
                 focus:outline-none
                 ${isActive ? 'text-green-700' : 'text-gray-500 hover:text-green-600'}
@@ -78,7 +78,7 @@ export default function Navbar() {
             >
               {React.cloneElement(item.icon, {
                 className: isActive
-                  ? 'w-5 h-5 mb-1 stroke-green-700'
+                  ? 'w-8 h-8 md:mr-2 mb-1 md:mb-0 stroke-green-700'
                   : 'w-5 h-5 mb-1 stroke-gray-500',
               })}
               {item.name}
