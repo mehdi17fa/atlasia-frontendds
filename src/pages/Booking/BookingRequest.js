@@ -21,6 +21,17 @@ export default function BookingRequest() {
   const [localCheckOut, setLocalCheckOut] = useState(bookingData?.checkOut || "");
   const { addToCart } = useCart();
 
+  const formatIsoDate = (iso) => {
+    try {
+      if (!iso) return "";
+      const d = new Date(iso);
+      // Render as UTC date to avoid timezone shifting the displayed day
+      return d.toLocaleDateString('fr-FR', { timeZone: 'UTC', day: '2-digit', month: '2-digit', year: 'numeric' });
+    } catch (_) {
+      return iso;
+    }
+  };
+
   const [guestMessage, setGuestMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -257,11 +268,11 @@ export default function BookingRequest() {
               <div className="space-y-3">
                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
                   <span className="text-gray-600">Check-in:</span>
-                  <span className="font-medium text-gray-800">{localCheckIn || "N/A"}</span>
+                  <span className="font-medium text-gray-800">{localCheckIn ? formatIsoDate(localCheckIn) : "N/A"}</span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
                   <span className="text-gray-600">Check-out:</span>
-                  <span className="font-medium text-gray-800">{localCheckOut || "N/A"}</span>
+                  <span className="font-medium text-gray-800">{localCheckOut ? formatIsoDate(localCheckOut) : "N/A"}</span>
                 </div>
                 <div className="flex justify-between items-center py-2">
                   <span className="text-gray-600">Invités:</span>
@@ -365,11 +376,11 @@ export default function BookingRequest() {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Check-in:</span>
-                  <span className="font-medium">{localCheckIn || "N/A"}</span>
+                  <span className="font-medium">{localCheckIn ? formatIsoDate(localCheckIn) : "N/A"}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Check-out:</span>
-                  <span className="font-medium">{localCheckOut || "N/A"}</span>
+                  <span className="font-medium">{localCheckOut ? formatIsoDate(localCheckOut) : "N/A"}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Invités:</span>
@@ -516,11 +527,11 @@ export default function BookingRequest() {
                   <div className="space-y-3">
                     <div className="flex justify-between items-center py-2 border-b border-gray-100">
                       <span className="text-gray-600">Check-in:</span>
-                      <span className="font-medium text-gray-800">{localCheckIn || "N/A"}</span>
+                      <span className="font-medium text-gray-800">{localCheckIn ? formatIsoDate(localCheckIn) : "N/A"}</span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-gray-100">
                       <span className="text-gray-600">Check-out:</span>
-                      <span className="font-medium text-gray-800">{localCheckOut || "N/A"}</span>
+                      <span className="font-medium text-gray-800">{localCheckOut ? formatIsoDate(localCheckOut) : "N/A"}</span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-gray-100">
                       <span className="text-gray-600">Invités:</span>
