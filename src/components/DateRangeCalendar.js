@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 const dayNames = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
@@ -45,6 +45,52 @@ export default function DateRangeCalendar({
   const [hardBoundaryDays, setHardBoundaryDays] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [cellPx, setCellPx] = useState(48); // responsive day cell size in px
+  const [gridGapPx, setGridGapPx] = useState(8);
+  const monthRef = useRef(null);
+
+  useEffect(() => {
+    const el = monthRef.current;
+    if (!el) return;
+    const compute = () => {
+      const width = el.clientWidth || 0;
+      const minGap = 4;
+      const maxGap = 12;
+      const maxPx = 72;
+      // Try to fill the row exactly by solving for cell and gap
+      // Start with generous cell, then compute gap that makes 7*cell + 6*gap = width
+      let cell = Math.min(maxPx, Math.floor(width / 7));
+      let gap = (width - 7 * cell) / 6;
+      if (gap < minGap) {
+        gap = minGap;
+        cell = Math.floor((width - 6 * gap) / 7);
+      } else if (gap > maxGap) {
+        gap = maxGap;
+        cell = Math.floor((width - 6 * gap) / 7);
+      }
+      setGridGapPx(gap);
+      setCellPx(cell);
+    };
+    compute();
+    let resizeObserver;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(compute);
+      resizeObserver.observe(el);
+    } else {
+      window.addEventListener('resize', compute);
+    }
+    return () => {
+      if (resizeObserver) resizeObserver.disconnect();
+      else window.removeEventListener('resize', compute);
+    };
+  }, []);
+
+  const dayFontPx = useMemo(() => {
+    if (cellPx >= 68) return 20;
+    if (cellPx >= 60) return 18;
+    if (cellPx >= 52) return 16;
+    return 14;
+  }, [cellPx]);
 
   // Normalize blocked dates set for fast lookup
   const blockedSet = useMemo(() => {
@@ -257,13 +303,13 @@ export default function DateRangeCalendar({
           {/* One-month layout */}
           <div className="grid grid-cols-1 gap-10">
             {/* First month */}
-            <div className="min-w-[24rem] mx-auto">
-              <div className="grid gap-2 justify-center text-xs text-gray-600 mb-3" style={{ gridTemplateColumns: 'repeat(7, 3rem)' }}>
+            <div className="w-full mx-auto" ref={monthRef}>
+              <div className="grid text-xs text-gray-600 mb-3" style={{ gridTemplateColumns: 'repeat(7, 1fr)', gap: `${gridGapPx}px` }}>
                 {dayNames.map(d => (
                   <div key={`h1-${d}`} className="text-center py-1">{d}</div>
                 ))}
               </div>
-              <div className="grid gap-2 justify-center" style={{ gridTemplateColumns: 'repeat(7, 3rem)', justifyItems: 'center' }}>
+              <div className="grid" style={{ gridTemplateColumns: 'repeat(7, 1fr)', gap: `${gridGapPx}px` }}>
                 {daysInCurrentMonth.map((date, idx) => {
                   if (!date) return <div key={`empty-1-${idx}`} />;
                   const ts = startOfDay(date).getTime();
@@ -280,7 +326,7 @@ export default function DateRangeCalendar({
                       onClick={() => handleSelect(date)}
                       disabled={effectiveDisabled}
                       title={effectiveDisabled && isBoundary && !isHardBoundary ? 'Disponible comme date de départ' : undefined}
-                      className={`w-12 h-12 leading-none rounded-full text-sm flex items-center justify-center select-none border mx-auto 
+                      className={`leading-none rounded-full flex items-center justify-center select-none border mx-auto 
                         ${effectiveDisabled 
                           ? (isBoundary && !isHardBoundary 
                               ? 'bg-white text-gray-800 cursor-not-allowed border-gray-200' 
@@ -289,6 +335,7 @@ export default function DateRangeCalendar({
                         ${between ? 'bg-green-100 text-green-900' : ''}
                         ${isStart || isEnd ? 'bg-green-600 text-white font-semibold' : ''}
                       `}
+                      style={{ width: '100%', aspectRatio: '1 / 1', fontSize: `${dayFontPx}px` }}
                     >
                       {date.getDate()}
                     </button>
