@@ -183,6 +183,20 @@ export default function BookingRequest() {
       return;
     }
 
+    // Require at least one CIN/ID photo
+    if (!idPhotos || idPhotos.length === 0) {
+      setFieldErrors(prev => ({ ...prev, idPhotos: true }));
+      setError("Veuillez télécharger une photo de votre CIN pour continuer.");
+      return;
+    }
+
+    // Require a message to the host
+    if (!guestMessage || guestMessage.trim().length === 0) {
+      setFieldErrors(prev => ({ ...prev, guestMessage: true }));
+      setError("Veuillez ajouter un message à l'hôte pour continuer.");
+      return;
+    }
+
     const { nights, pricePerNight, total } = calculateTotal();
 
     try {
@@ -409,10 +423,26 @@ export default function BookingRequest() {
               </button>
               <button
                 onClick={handleAddToCart}
-                disabled={loading}
-                className={`flex-1 py-3 px-6 rounded-lg text-white font-semibold ${
-                  loading ? "bg-gray-400" : "bg-green-800 hover:bg-green-900"
-                } transition`}
+                disabled={
+                  loading ||
+                  !localCheckIn ||
+                  !localCheckOut ||
+                  !guests ||
+                  idPhotosUploading ||
+                  !idPhotos || idPhotos.length === 0 ||
+                  !guestMessage || guestMessage.trim().length === 0
+                }
+                className={`flex-1 py-3 px-6 rounded-lg text-white font-semibold transition ${
+                  loading ||
+                  !localCheckIn ||
+                  !localCheckOut ||
+                  !guests ||
+                  idPhotosUploading ||
+                  !idPhotos || idPhotos.length === 0 ||
+                  !guestMessage || guestMessage.trim().length === 0
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-green-800 hover:bg-green-900'
+                }`}
               >
                 {loading ? "Ajout..." : "Ajouter au panier"}
               </button>
