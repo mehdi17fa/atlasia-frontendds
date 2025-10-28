@@ -203,27 +203,27 @@ const ChatbotWidget = () => {
       />
       
       {isOpen && (
-        <div className="fixed bottom-24 right-6 w-80 h-96 bg-white rounded-lg shadow-2xl border z-40 flex flex-col">
+        <div className="fixed bottom-24 right-6 w-80 h-96 bg-white rounded-xl shadow-atlasia-lg border border-secondary-200 z-40 flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b bg-gray-50 rounded-t-lg">
+          <div className="flex items-center justify-between p-4 border-b border-secondary-200 bg-secondary-50 rounded-t-xl">
             <div className="flex items-center space-x-2">
-              <FaRobot className="text-blue-600" />
-              <h3 className="font-semibold text-gray-900">AI Assistant</h3>
+              <FaRobot className="text-primary-600" />
+              <h3 className="font-semibold text-secondary-900">AI Assistant</h3>
               {user && (
-                <span className="text-xs text-gray-500">({user.role})</span>
+                <span className="text-xs text-secondary-500">({user.role})</span>
               )}
             </div>
             <div className="flex items-center space-x-2">
               <button
                 onClick={handleClearConversation}
-                className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                className="p-1 text-secondary-400 hover:text-secondary-600 transition-colors"
                 title="Clear conversation"
               >
                 <FaTrash size={14} />
               </button>
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                className="p-1 text-secondary-400 hover:text-secondary-600 transition-colors"
                 title="Close chat"
               >
                 <FaTimes size={16} />
@@ -232,7 +232,7 @@ const ChatbotWidget = () => {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-secondary-50">
             {messages.map((message, index) => (
               <div
                 key={index}
@@ -241,10 +241,10 @@ const ChatbotWidget = () => {
                 <div
                   className={`max-w-xs px-3 py-2 rounded-lg ${
                     message.role === 'user'
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-primary-600 text-white'
                       : message.isError
-                      ? 'bg-red-100 text-red-800'
-                      : 'bg-gray-100 text-gray-900'
+                      ? 'bg-error-100 text-error-800'
+                      : 'bg-white text-secondary-900 border border-secondary-200'
                   }`}
                 >
                   <div 
@@ -265,9 +265,9 @@ const ChatbotWidget = () => {
             
             {isLoading && (
               <div className="flex justify-start">
-                <div className="bg-gray-100 text-gray-900 px-3 py-2 rounded-lg">
+                <div className="bg-white text-secondary-900 px-3 py-2 rounded-lg border border-secondary-200">
                   <div className="flex items-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600"></div>
                     <span>Thinking...</span>
                   </div>
                 </div>
@@ -278,9 +278,9 @@ const ChatbotWidget = () => {
           </div>
 
           {/* Input */}
-          <div className="p-4 border-t bg-gray-50 rounded-b-lg">
+          <div className="p-4 border-t border-secondary-200 bg-secondary-50 rounded-b-xl">
             {error && (
-              <div className="text-red-600 text-sm mb-2">{error}</div>
+              <div className="text-error-600 text-sm mb-2">{error}</div>
             )}
             <div className="flex space-x-2">
               <input
@@ -290,13 +290,13 @@ const ChatbotWidget = () => {
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Type your message..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="flex-1 px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-secondary-900 placeholder-secondary-500"
                 disabled={isLoading}
               />
               <button
                 onClick={handleSendMessage}
                 disabled={!inputMessage.trim() || isLoading}
-                className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <FaPaperPlane />
               </button>

@@ -7,13 +7,13 @@ const ChatbotIcon = ({ onClick, isOpen, hasUnreadMessages = false }) => {
       <button
         onClick={onClick}
         className={`
-          relative w-14 h-14 rounded-full shadow-lg transition-all duration-300 ease-in-out
+          relative w-14 h-14 rounded-full shadow-atlasia transition-all duration-300 ease-in-out
           ${isOpen 
-            ? 'bg-gray-600 hover:bg-gray-700 transform scale-95' 
-            : 'bg-blue-600 hover:bg-blue-700 hover:scale-110'
+            ? 'bg-secondary-600 hover:bg-secondary-700 transform scale-95' 
+            : 'bg-primary-500 hover:bg-primary-600 hover:scale-110'
           }
           flex items-center justify-center text-white
-          hover:shadow-xl
+          hover:shadow-atlasia-lg
         `}
         aria-label="Open AI Assistant"
       >
@@ -26,14 +26,14 @@ const ChatbotIcon = ({ onClick, isOpen, hasUnreadMessages = false }) => {
         
         {/* Notification badge */}
         {hasUnreadMessages && !isOpen && (
-          <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+          <div className="absolute -top-1 -right-1 w-4 h-4 bg-error-500 rounded-full flex items-center justify-center">
             <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
           </div>
         )}
         
         {/* Pulse animation when closed */}
         {!isOpen && (
-          <div className="absolute inset-0 rounded-full bg-blue-400 animate-ping opacity-20"></div>
+          <div className="absolute inset-0 rounded-full bg-primary-300 animate-ping opacity-20"></div>
         )}
       </button>
     </div>
