@@ -35,6 +35,7 @@ import { PropertyCreationProvider } from './context/PropertyCreationContext';
 import WelcomeScreen from './pages/WelcomeScreen';
 import ResetPasswordScreen from './pages/LogIn/ResetPasswordScreen';
 import TestDocumentUpload from './pages/TestDocumentUpload';
+import ChatbotWidget from './components/ChatbotWidget';
 
 import SearchResults from './pages/UserSearch/SearchResults';
 import SearchResultsPage from './pages/UserSearch/SearchResultsPage';
@@ -46,7 +47,7 @@ import PropertyCreationSinglePage from './pages/propertyOwner/PropertyCreationSi
 import EditProperty from './pages/propertyOwner/EditProperty';
 import MyProperties from './pages/propertyOwner/MyProperties';
 import ReservationPage from './pages/propertyOwner/ReservationPage';
-import PropertyPreview from './pages/Propriétés/PropertyPreview';
+import PropertyPreview from './pages/Propriétés 3/PropertyPreview';
 import OwnerDetails from './pages/propertyOwner/OwnerDetails';
 import OwnerIncomePage from './pages/propertyOwner/OwnerIncomePage';
 
@@ -86,7 +87,7 @@ import GuestsSelectionScreen from './pages/UserSearch/Invités';
 
 import ExploreLayout from './pages/Layout/Layout';
 import CohostPropertyLayout from './pages/Layout/CohostPropertyLayout';
-import VillaMakarska from './pages/Propriétés/VillaMakarska';
+import VillaMakarska from './pages/Propriétés 3/VillaMakarska';
 import EditProfileScreen from './pages/Profile/EditProfile';
 import DocumentUpload from './utilities/DocumentUpload';
 
@@ -283,6 +284,7 @@ function App() {
       </Routes>
 
       <ConditionalNavbar />
+      <ChatbotWidget />
     </PropertyCreationProvider>
   );
 }
