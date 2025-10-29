@@ -77,6 +77,34 @@ export const clearConversation = async (token = null) => {
 };
 
 /**
+ * Delete conversation on user logout
+ * @param {string} token - JWT token (required for authenticated users)
+ * @returns {Promise<Object>} - Delete response
+ */
+export const deleteConversationOnLogout = async (token) => {
+  try {
+    if (!token) {
+      throw new Error('Token is required for logout conversation deletion');
+    }
+
+    const response = await axios.delete(
+      `${API_BASE_URL}/api/chatbot/logout`,
+      { 
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting conversation on logout:', error);
+    throw new Error(error.response?.data?.message || 'Failed to delete conversation on logout');
+  }
+};
+
+/**
  * Get conversation statistics
  * @param {string} token - JWT token (optional for anonymous users)
  * @returns {Promise<Object>} - Conversation stats

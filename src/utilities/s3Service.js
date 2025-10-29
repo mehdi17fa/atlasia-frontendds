@@ -346,6 +346,12 @@ export const uploadPropertyDocuments = async (propertyId, files, onProgress = nu
  */
 export const uploadProfilePicture = async (file, onProgress = null) => {
   try {
+    console.log('📸 Starting profile picture upload:', {
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type
+    });
+
     const formData = new FormData();
     formData.append('profilePic', file);
 
@@ -363,15 +369,21 @@ export const uploadProfilePicture = async (file, onProgress = null) => {
       },
     };
 
-    const response = await api.put('/api/auth/update-profile', formData, config);
+    const response = await api.put(`${process.env.REACT_APP_API_URL}/api/auth/update-profile`, formData, config);
 
-    if (response.data.success) {
+    console.log('📸 Profile picture upload response:', response.data);
+
+    if (response.data.user) {
+      console.log('✅ Profile picture uploaded successfully:', {
+        userId: response.data.user._id,
+        profilePic: response.data.user.profilePic
+      });
       return response.data.user;
     } else {
       throw new Error(response.data.message || 'Profile picture upload failed');
     }
   } catch (error) {
-    console.error('Error uploading profile picture:', error);
+    console.error('❌ Error uploading profile picture:', error);
     throw new Error(
       error.response?.data?.message || 
       error.message || 

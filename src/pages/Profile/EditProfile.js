@@ -30,7 +30,17 @@ export default function EditProfileScreen() {
         phoneNumber: user.phoneNumber || '',
         gender: user.gender || '',
       });
-      setProfileImage(user.profilePic || defaultProfilePic);
+      
+      // Use profilePic (S3 key) or profileImage (legacy URL) as fallback
+      const imageSrc = user.profilePic || user.profileImage;
+      setProfileImage(imageSrc || defaultProfilePic);
+      
+      console.log('🖼️ EditProfile loaded user data:', {
+        userId: user._id,
+        profilePic: user.profilePic,
+        profileImage: user.profileImage,
+        imageSrc: imageSrc
+      });
     }
   }, [user]);
 
@@ -51,44 +61,75 @@ export default function EditProfileScreen() {
   };
 
   const handleSave = async () => {
-    // Basic validation
-    if (!profile.fullName.trim()) return alert("Full name cannot be empty.");
-    if (profile.fullName.length > 50) return alert("Full name is too long.");
-    if (!/^[a-zA-Z\s'-]+$/.test(profile.fullName)) return alert("Full name contains invalid characters.");
-
-    if (profile.phoneNumber && !/^[0-9+\s-]{6,20}$/.test(profile.phoneNumber)) {
-      return alert("Phone number format is invalid.");
-    }
-
-    if (profile.gender && !['Male','Female','Other'].includes(profile.gender)) {
-      return alert("Gender must be Male, Female or Other.");
-    }
-
     setLoading(true);
+    
     try {
-      const formData = new FormData();
-      formData.append('email', user.email);
-      formData.append('fullName', profile.fullName.trim());
-      formData.append('phoneNumber', profile.phoneNumber.trim());
-      formData.append('gender', profile.gender);
+      // Basic validation
+      if (!profile.fullName.trim()) {
+        alert('Please enter your full name');
+        return;
+      }
 
-      if (selectedFile) formData.append('profilePic', selectedFile);
+      console.log('💾 Saving profile:', {
+        fullName: profile.fullName,
+        email: profile.email,
+        phoneNumber: profile.phoneNumber,
+        gender: profile.gender,
+        hasSelectedFile: !!selectedFile,
+        apiUrl: process.env.REACT_APP_API_URL,
+        fullUrl: `${process.env.REACT_APP_API_URL}/api/auth/update-profile`
+      });
 
-      const response = await axios.post(
-        `${process.env.REACT_APP_API_URL}/api/auth/complete-profile`,
-        formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
-      );
+      // If a new profile picture was selected, upload it first
+      if (selectedFile) {
+        console.log('📸 Uploading new profile picture...');
+        
+        const formData = new FormData();
+        formData.append('profilePic', selectedFile);
+        formData.append('firstName', profile.fullName.split(' ')[0] || '');
+        formData.append('lastName', profile.fullName.split(' ').slice(1).join(' ') || '');
+        formData.append('phone', profile.phoneNumber || '');
+        formData.append('email', profile.email || '');
 
-      console.log('Profile update response:', response.data);
-      console.log('Updated user profilePic:', response.data.user?.profilePic);
-      
-      setUser(response.data.user);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-      navigate('/profile');
-    } catch (err) {
-      console.error('Error updating profile:', err.response?.data || err.message);
-      alert(err.response?.data?.message || 'Failed to update profile');
+        const response = await axios.put(`${process.env.REACT_APP_API_URL}/api/auth/update-profile`, formData, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('atlasia_access_token')}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+
+        console.log('✅ Profile updated with new picture:', response.data);
+        
+        if (response.data.user) {
+          setUser(response.data.user);
+          alert('Profile updated successfully!');
+          navigate('/profile');
+        }
+      } else {
+        // Update profile without changing picture
+        const response = await axios.put(`${process.env.REACT_APP_API_URL}/api/auth/update-profile`, {
+          firstName: profile.fullName.split(' ')[0] || '',
+          lastName: profile.fullName.split(' ').slice(1).join(' ') || '',
+          phone: profile.phoneNumber || '',
+          email: profile.email || '',
+        }, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('atlasia_access_token')}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        console.log('✅ Profile updated:', response.data);
+        
+        if (response.data.user) {
+          setUser(response.data.user);
+          alert('Profile updated successfully!');
+          navigate('/profile');
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error updating profile:', error);
+      alert('Failed to update profile. Please try again.');
     } finally {
       setLoading(false);
     }

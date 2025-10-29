@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { isTokenExpired, isTokenExpiringSoon } from '../utils/tokenUtils';
+import { deleteConversationOnLogout } from '../services/chatbotApi';
 
 export const AuthContext = createContext();
 
@@ -259,15 +260,43 @@ export const AuthProvider = ({ children }) => {
   window.authContextToken = token;
 
   // Logout function - clears both state and all storage
-  const logout = () => {
-    console.log("🚪 Logout called - clearing all auth data");
+  const logout = async () => {
+    console.log("🚪 Logout called - clearing all auth data", {
+      hasUser: !!user,
+      hasToken: !!token,
+      userId: user?._id
+    });
+    
+    try {
+      // Delete chatbot conversation before clearing auth data
+      if (token) {
+        try {
+          console.log("🗑️ Attempting to delete chatbot conversation...");
+          if (typeof deleteConversationOnLogout === 'function') {
+            await deleteConversationOnLogout(token);
+            console.log("🗑️ Chatbot conversation deleted successfully");
+          } else {
+            console.warn("⚠️ deleteConversationOnLogout function not available");
+          }
+        } catch (error) {
+          console.warn("⚠️ Error deleting chatbot conversation:", error.message);
+          // Don't throw error - continue with logout even if chatbot cleanup fails
+        }
+      } else {
+        console.log("ℹ️ No token available, skipping chatbot conversation deletion");
+      }
+    } catch (error) {
+      console.warn("⚠️ Error during chatbot cleanup:", error.message);
+    }
     
     // Clear state
+    console.log("🧹 Clearing user state...");
     setUser(null);
     setToken(null);
     setRefreshToken(null);
     
     // Clear localStorage and sessionStorage
+    console.log("🧹 Clearing stored tokens...");
     clearStoredTokens();
     
     console.log("✅ Logout completed - state and all storage cleared");

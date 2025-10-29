@@ -510,9 +510,16 @@ export default function PropertyLayout({
         <div className="border rounded-2xl p-6 shadow-sm bg-gradient-to-r from-blue-50 to-green-50 mx-4 md:mx-0">
           <h2 className="font-semibold text-xl mb-4 text-gray-800">👤 Propriétaire</h2>
           <div className="flex items-start space-x-4">
-            {host.photo ? (
+            {console.log('🏠 Host data in PropertyLayout:', {
+              hostName: host.name,
+              profilePic: host.profilePic,
+              profileImage: host.profileImage,
+              photo: host.photo,
+              hasAnyImage: !!(host.profilePic || host.profileImage || host.photo)
+            })}
+            {host.profilePic || host.profileImage || host.photo ? (
               <S3Image
-                src={host.photo}
+                src={host.profilePic || host.profileImage || host.photo}
                 alt={host.name || 'Hôte'}
                 className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg"
                 fallbackSrc="/profilepic.jpg"

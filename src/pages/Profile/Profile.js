@@ -38,7 +38,18 @@ const getInitials = (user) => {
 const ProfileAvatar = ({ user }) => {
   const [imageError, setImageError] = useState(false);
   
-  if (!user?.profilePic || imageError) {
+  console.log('🖼️ ProfileAvatar rendering:', {
+    userId: user?._id,
+    profilePic: user?.profilePic,
+    profileImage: user?.profileImage,
+    hasProfilePic: !!user?.profilePic,
+    hasProfileImage: !!user?.profileImage
+  });
+  
+  // Use profilePic (S3 key) or profileImage (legacy URL) as fallback
+  const imageSrc = user?.profilePic || user?.profileImage;
+  
+  if (!imageSrc || imageError) {
     return (
       <div className="w-full h-full bg-green-600 flex items-center justify-center rounded-full border-4 border-green-600">
         <span className="text-white text-4xl font-bold">
@@ -51,12 +62,16 @@ const ProfileAvatar = ({ user }) => {
   return (
     <div className="w-full h-full rounded-full overflow-hidden border-4 border-green-600">
       <S3Image
-        src={user.profilePic}
+        src={imageSrc}
         alt="Profile"
         className="w-full h-full object-cover"
         fallbackSrc={null}
         onError={() => {
+          console.log('❌ Profile image failed to load:', imageSrc);
           setImageError(true);
+        }}
+        onLoad={() => {
+          console.log('✅ Profile image loaded successfully:', imageSrc);
         }}
       />
     </div>
@@ -113,12 +128,22 @@ export default function Profile() {
     refreshProfileData();
   };
   
-  const handleLogoutClick = () => {
-    // Clear user data and tokens
-    logout();
-    
-    // Use window.location.replace for immediate redirect without React Router interference
-    window.location.replace('/');
+  const handleLogoutClick = async () => {
+    try {
+      console.log('🚪 Logout button clicked');
+      
+      // Clear user data and tokens
+      await logout();
+      
+      console.log('✅ Logout completed, redirecting...');
+      
+      // Use window.location.replace for immediate redirect without React Router interference
+      window.location.replace('/');
+    } catch (error) {
+      console.error('❌ Error during logout:', error);
+      // Even if logout fails, still redirect to home
+      window.location.replace('/');
+    }
   };
   
   
