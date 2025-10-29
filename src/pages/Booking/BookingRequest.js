@@ -128,11 +128,29 @@ export default function BookingRequest() {
         .filter(Boolean);
 
       if (newPhotos.length === 0) {
+        console.error("❌ Upload failed: No valid photos after normalization", uploadResults);
         throw new Error("Upload terminé mais aucune URL n'a été retournée par le serveur");
       }
+
+      // Validate that all photos have valid keys/URLs
+      const invalidPhotos = newPhotos.filter(photo => {
+        const key = photo?.key || photo?.url;
+        return !key || typeof key !== 'string' || key.trim().length === 0;
+      });
+
+      if (invalidPhotos.length > 0) {
+        console.error("❌ Some photos are missing valid keys/URLs:", invalidPhotos);
+        throw new Error("Certaines photos n'ont pas de clé ou URL valide. Veuillez réessayer.");
+      }
+
+      console.log("✅ Valid photos to add:", newPhotos.map(p => ({ key: p.key, url: p.url, name: p.name })));
       
       // Update state with functional update to ensure we get the latest state
-      setIdPhotos(prev => [...prev, ...newPhotos]);
+      setIdPhotos(prev => {
+        const updated = [...prev, ...newPhotos];
+        console.log("📸 Total photos after update:", updated.length, updated.map(p => ({ key: p.key, url: p.url })));
+        return updated;
+      });
       
       // Clear field errors when photos are uploaded
       setFieldErrors(prev => ({ ...prev, idPhotos: false }));
@@ -241,7 +259,13 @@ export default function BookingRequest() {
     }
 
     // Validate ID photos (now mandatory)
-    if (idPhotos.length === 0) {
+    // Check both that photos exist AND that they have valid keys/URLs
+    const validIdPhotos = idPhotos.filter(photo => {
+      const key = photo?.key || photo?.url;
+      return key && typeof key === 'string' && key.trim().length > 0;
+    });
+    
+    if (idPhotos.length === 0 || validIdPhotos.length === 0) {
       newFieldErrors.idPhotos = true;
       hasErrors = true;
     }
@@ -321,13 +345,25 @@ export default function BookingRequest() {
 
     try {
       // Step 1: Create booking (critical path)
+      // Filter and validate idPhotos before sending
+      const validIdPhotoValues = idPhotos
+        .map(photo => photo.key || photo.url)
+        .filter(key => key && typeof key === 'string' && key.trim().length > 0);
+      
+      if (validIdPhotoValues.length === 0) {
+        setFieldErrors(prev => ({ ...prev, idPhotos: true }));
+        setError("Veuillez télécharger une pièce d'identité valide avant de confirmer la réservation.");
+        setLoading(false);
+        return;
+      }
+
       const bookingPayload = {
         propertyId,
         checkIn: new Date(localCheckIn).toISOString(),
         checkOut: new Date(localCheckOut).toISOString(),
         guests: Number(guests),
         guestMessage,
-        idPhotos: idPhotos.map(photo => photo.key || photo.url),
+        idPhotos: validIdPhotoValues,
         paymentMethod,
         ...(paymentMethod === "card" && {
           cardDetails: {
