@@ -154,7 +154,11 @@ export default function CartAddSuccess() {
               ) : (
                 <div className="flex gap-4 overflow-x-auto pb-2">
                   {restaurants.map((r, idx) => (
-                    <div key={`${r._pkgId}-r-${idx}`} className="w-[240px] bg-white border rounded-xl shadow-sm overflow-hidden flex-shrink-0">
+                    <div
+                      key={`${r._pkgId}-r-${idx}`}
+                      className="w-[240px] bg-white border rounded-xl shadow-sm overflow-hidden flex-shrink-0 cursor-pointer hover:shadow-md transition"
+                      onClick={() => navigate(`/packages/${r._pkgId}/book`)}
+                    >
                       {r.thumbnail ? (
                         <S3Image src={r.thumbnail} alt={r.name} className="h-36 w-full object-cover" fallbackSrc="/placeholder.jpg" />
                       ) : (
@@ -162,7 +166,7 @@ export default function CartAddSuccess() {
                       }
                       <div className="p-3">
                         <h4 className="font-semibold text-gray-900 mb-1 line-clamp-1">{r.name || 'Restaurant'}</h4>
-                        <button onClick={() => navigate('/restauration')} className="mt-2 w-full bg-white border text-gray-800 px-3 py-1.5 rounded-lg hover:bg-gray-50 text-sm font-medium">Découvrir</button>
+                        <button onClick={(e) => { e.stopPropagation(); navigate(`/packages/${r._pkgId}`); }} className="mt-2 w-full bg-white border text-gray-800 px-3 py-1.5 rounded-lg hover:bg-gray-50 text-sm font-medium">Découvrir</button>
                       </div>
                     </div>
                   ))}
@@ -181,7 +185,11 @@ export default function CartAddSuccess() {
               ) : (
                 <div className="flex gap-4 overflow-x-auto pb-2">
                   {activities.map((a, idx) => (
-                    <div key={`${a._pkgId}-a-${idx}`} className="w-[240px] bg-white border rounded-xl shadow-sm overflow-hidden flex-shrink-0">
+                    <div
+                      key={`${a._pkgId}-a-${idx}`}
+                      className="w-[240px] bg-white border rounded-xl shadow-sm overflow-hidden flex-shrink-0 cursor-pointer hover:shadow-md transition"
+                      onClick={() => navigate(`/packages/${a._pkgId}/book`)}
+                    >
                       {a.thumbnail ? (
                         <S3Image src={a.thumbnail} alt={a.name} className="h-36 w-full object-cover" fallbackSrc="/placeholder.jpg" />
                       ) : (
@@ -189,7 +197,7 @@ export default function CartAddSuccess() {
                       }
                       <div className="p-3">
                         <h4 className="font-semibold text-gray-900 mb-1 line-clamp-1">{a.name || 'Activité'}</h4>
-                        <button onClick={() => navigate('/activites')} className="mt-2 w-full bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 text-sm font-medium">+ Ajouter</button>
+                        <button onClick={(e) => { e.stopPropagation(); navigate(`/packages/${a._pkgId}`); }} className="mt-2 w-full bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 text-sm font-medium">+ Ajouter</button>
                       </div>
                     </div>
                   ))}
@@ -208,7 +216,11 @@ export default function CartAddSuccess() {
               ) : (
                 <div className="flex gap-4 overflow-x-auto pb-2">
                   {offers.map((pkg) => (
-                    <div key={pkg._id} className="w-[260px] bg-white border rounded-xl shadow-sm overflow-hidden flex-shrink-0">
+                    <div
+                      key={pkg._id}
+                      className="w-[260px] bg-white border rounded-xl shadow-sm overflow-hidden flex-shrink-0 cursor-pointer hover:shadow-md transition"
+                      onClick={() => navigate(`/packages/${pkg._id}/book`)}
+                    >
                       <div className="h-36 w-full bg-gradient-to-r from-primary-400 to-primary-600 flex items-center justify-center">
                         <div className="text-white text-center">
                           <h4 className="font-semibold text-lg mb-1 line-clamp-1">{pkg.name || 'Package'}</h4>
@@ -218,8 +230,8 @@ export default function CartAddSuccess() {
                       <div className="p-3">
                         <p className="text-sm text-gray-600 line-clamp-2 mb-2">{pkg.description || 'Une combinaison parfaite pour votre séjour.'}</p>
                         <div className="flex gap-2">
-                          <button onClick={() => navigate(`/packages/${pkg._id}`)} className="flex-1 bg-white border text-gray-800 px-3 py-1.5 rounded-lg hover:bg-gray-50 text-sm font-medium">Découvrir</button>
-                          <button onClick={() => navigate(`/packages/${pkg._id}/book`)} className="flex-1 bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 text-sm font-medium">+ Ajouter</button>
+                          <button onClick={(e) => { e.stopPropagation(); navigate(`/packages/${pkg._id}`); }} className="flex-1 bg-white border text-gray-800 px-3 py-1.5 rounded-lg hover:bg-gray-50 text-sm font-medium">Découvrir</button>
+                          <button onClick={(e) => { e.stopPropagation(); navigate(`/packages/${pkg._id}/book`); }} className="flex-1 bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 text-sm font-medium">+ Ajouter</button>
                         </div>
                       </div>
                     </div>
