@@ -1,3 +1,6 @@
+// Modified PartnerDashboard.jsx
+// Changes: Added a new button for blocking explore, adjusted first button text for clarity
+
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import S3Image from '../../components/S3Image';
@@ -14,6 +17,7 @@ import {
   ClockIcon,
   ExclamationTriangleIcon,
   XMarkIcon,
+  LockClosedIcon,
 } from '@heroicons/react/24/outline';
 
 import { FaArrowLeft, FaUser } from 'react-icons/fa';
@@ -351,9 +355,12 @@ export default function PartnerDashboard() {
   const [properties, setProperties] = useState([]);
   const [packages, setPackages] = useState([]);
   const [packageBookings, setPackageBookings] = useState([]);
+  const [blockedProperties, setBlockedProperties] = useState([]);
+  const [showBlockedModal, setShowBlockedModal] = useState(false);
   const [isLoadingProperties, setIsLoadingProperties] = useState(true);
   const [isLoadingPackages, setIsLoadingPackages] = useState(true);
   const [isLoadingBookings, setIsLoadingBookings] = useState(true);
+  const [isLoadingBlocked, setIsLoadingBlocked] = useState(false);
   const [error, setError] = useState(null);
 
   // API helper utilisant token
@@ -475,6 +482,28 @@ export default function PartnerDashboard() {
     }
   };
 
+  const fetchBlockedProperties = async () => {
+    try {
+      setIsLoadingBlocked(true);
+      const response = await apiCall('/partner/blocked-properties');
+      if (response.success && Array.isArray(response.properties)) {
+        setBlockedProperties(response.properties);
+      } else {
+        setBlockedProperties([]);
+      }
+    } catch (error) {
+      console.error('Error fetching blocked properties:', error);
+      setBlockedProperties([]);
+    } finally {
+      setIsLoadingBlocked(false);
+    }
+  };
+
+  const handleShowBlockedProperties = async () => {
+    setShowBlockedModal(true);
+    await fetchBlockedProperties();
+  };
+
   const stats = {
     totalProperties: properties.length,
     publishedProperties: properties.filter(p => p && p.status === 'published').length,
@@ -526,13 +555,26 @@ export default function PartnerDashboard() {
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Tableau de bord partenaire</h1>
           <p className="text-gray-600">Gérez vos propriétés co-hôtes et vos packages</p>
           
-          {/* Action Buttons */}
+          {/* Action Buttons - Modified to add blocking button */}
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 mt-4">
             <button
               onClick={() => navigate('/cohosting-explore')}
               className="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors text-center"
             >
-              Explorer les propriétés
+              Explorer les propriétés pour co-hébergement
+            </button>
+            <button
+              onClick={() => navigate('/blocking-explore')}
+              className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors text-center"
+            >
+              Explorer les propriétés pour blocage
+            </button>
+            <button
+              onClick={handleShowBlockedProperties}
+              className="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors text-center flex items-center justify-center"
+            >
+              <LockClosedIcon className="h-5 w-5 mr-2" />
+              Mes propriétés bloquées
             </button>
             <button
               onClick={() => navigate('/create-package')}
@@ -760,6 +802,154 @@ export default function PartnerDashboard() {
         </div>
       )}
       </div>
+
+      {/* Blocked Properties Modal */}
+      {showBlockedModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[80vh] overflow-hidden">
+            <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                <LockClosedIcon className="h-6 w-6 mr-2 text-orange-600" />
+                Propriétés bloquées ({blockedProperties.length})
+              </h2>
+              <button
+                onClick={() => setShowBlockedModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto max-h-[calc(80vh-80px)]">
+              {isLoadingBlocked ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+                </div>
+              ) : blockedProperties.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {blockedProperties.map((property) => (
+                    <div key={property._id} className="bg-white rounded-lg shadow-md border border-orange-200 overflow-hidden">
+                      <div className="relative">
+                        {property.photos && property.photos.length > 0 ? (
+                          <S3Image
+                            src={property.photos[0]}
+                            alt={property.title}
+                            className="w-full h-40 object-cover"
+                            fallbackSrc="https://via.placeholder.com/400x200?text=Pas+d'image"
+                          />
+                        ) : (
+                          <div className="w-full h-40 bg-gray-200 flex items-center justify-center">
+                            <HomeIcon className="h-12 w-12 text-gray-400" />
+                          </div>
+                        )}
+                        <div className="absolute top-2 right-2 bg-orange-600 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center">
+                          <LockClosedIcon className="h-3 w-3 mr-1" />
+                          Bloquée
+                        </div>
+                      </div>
+
+                      <div className="p-4">
+                        <h3 className="font-semibold text-gray-900 mb-2">
+                          {property.title || 'Propriété sans titre'}
+                        </h3>
+
+                        <div className="text-sm text-gray-600 mb-2">
+                          <div className="flex items-center mb-1">
+                            <MapPinIcon className="h-4 w-4 mr-1 text-gray-500" />
+                            <span>
+                              {property.localisation?.city || 'Ville non définie'}
+                              {property.localisation?.address && `, ${property.localisation.address}`}
+                            </span>
+                          </div>
+
+                          {property.info && (
+                            <div className="flex items-center space-x-4 text-xs">
+                              <span>{property.info.guests || 0} invités</span>
+                              <span>{property.info.bedrooms || 0} chambres</span>
+                              <span>{property.info.bathrooms || 0} salles de bain</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="border-t pt-2 mt-2">
+                          <div className="flex items-center text-xs text-orange-600 font-medium mb-1">
+                            <ClockIcon className="h-4 w-4 mr-1" />
+                            Expire dans {property.blockingInfo?.timeRemaining || 0} minutes
+                          </div>
+                          {property.owner && (
+                            <div className="text-xs text-gray-500">
+                              Propriétaire: {property.owner.fullName}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between pt-2 border-t border-gray-100 mt-2">
+                          {property.price && (
+                            <div className="text-sm font-medium text-gray-900">
+                              {(() => {
+                                if (typeof property.price === 'number') return `${property.price} MAD/nuit`;
+                                if (typeof property.price === 'object') {
+                                  const priceValue = property.price.weekdays || property.price.weekend || property.price.price || property.price.pricePerNight;
+                                  return priceValue ? `${priceValue} MAD/nuit` : 'Prix sur demande';
+                                }
+                                return `${property.price} MAD/nuit`;
+                              })()}
+                            </div>
+                          )}
+
+                          <button
+                            onClick={() => {
+                              setShowBlockedModal(false);
+                              navigate(`/blocking-preview/${property._id}`);
+                            }}
+                            className="text-orange-600 hover:text-orange-700 text-sm font-medium"
+                          >
+                            Voir détails
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="mb-4 flex justify-center">
+                    <LockClosedIcon className="h-16 w-16 text-gray-300" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Aucune propriété bloquée</h3>
+                  <p className="text-gray-600 mb-6">
+                    Vous n'avez actuellement aucune propriété bloquée. Les propriétés bloquées apparaîtront ici.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setShowBlockedModal(false);
+                      navigate('/blocking-explore');
+                    }}
+                    className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors"
+                  >
+                    Explorer les propriétés à bloquer
+                  </button>
+                </div>
+              )}
+
+              {blockedProperties.length > 0 && (
+                <div className="mt-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                  <p className="text-sm text-orange-800">
+                    <strong>Note:</strong> Les propriétés bloquées expirent automatiquement après 15 minutes. 
+                    Rafraîchissez cette page pour voir les mises à jour.
+                  </p>
+                  <button
+                    onClick={fetchBlockedProperties}
+                    className="mt-2 text-sm text-orange-600 hover:text-orange-700 font-medium"
+                  >
+                    Actualiser
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -40,13 +40,15 @@ const S3Image = ({
       }
       
       // Debug logging
-      console.log('S3Image Debug:', {
+      console.log('🔍 S3Image Debug:', {
         originalSrc: src,
         cleanedUrl: cleanedUrl,
         finalUrl: finalUrl,
-        isFullUrl: src.startsWith('http'),
-        isLocalPath: src.startsWith('/'),
-        containsS3Bucket: src.includes('atlasia-bucket-1.s3.us-east-2.amazonaws.com')
+        isFullUrl: src?.startsWith('http'),
+        isLocalPath: src?.startsWith('/'),
+        containsS3Bucket: src?.includes('atlasia-bucket-1.s3.us-east-2.amazonaws.com'),
+        srcType: typeof src,
+        srcLength: src?.length
       });
       
       setCurrentSrc(finalUrl);

@@ -5,6 +5,7 @@ import axios from "axios";
 import { api } from "../../api";
 import S3ImageUpload from "../../components/S3ImageUpload";
 import ReservationCalendar from "../../components/ReservationCalendar";
+import { formatDateForDisplay } from "../../utils/dateUtils";
 
 // Use relative paths with centralized api client
 const API_BASE_URL = `/api`;
@@ -73,10 +74,17 @@ export default function BookingRequest() {
   };
 
   const handleDateSelection = (checkInDate, checkOutDate) => {
+    console.log('Date selection received:', { checkInDate, checkOutDate });
+    console.log('Formatted dates:', { 
+      checkIn: formatDateForDisplay(checkInDate), 
+      checkOut: formatDateForDisplay(checkOutDate) 
+    });
     setLocalCheckIn(checkInDate);
     setLocalCheckOut(checkOutDate);
     setShowCalendar(false);
   };
+
+  // Note: formatDateForDisplay is now imported from utils/dateUtils
 
   const handleIdPhotoUpload = (results) => {
     try {
@@ -459,27 +467,41 @@ export default function BookingRequest() {
             <div className="bg-white p-6 rounded-lg shadow-sm">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-800">Dates de séjour</h3>
-              <button
+                <button
                   onClick={() => setShowCalendar(true)}
                   className="px-3 py-1 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-              >
-                  Modifier
-              </button>
+                >
+                  {localCheckIn && localCheckOut ? 'Modifier' : 'Sélectionner'}
+                </button>
               </div>
               
               <div className="space-y-3">
-                <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-gray-600">Check-in:</span>
-                  <span className="font-medium text-gray-800">{localCheckIn || "N/A"}</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-gray-600">Check-out:</span>
-                  <span className="font-medium text-gray-800">{localCheckOut || "N/A"}</span>
-                </div>
-                <div className="flex justify-between items-center py-2">
-                  <span className="text-gray-600">Invités:</span>
-                  <span className="font-medium text-gray-800">{guests || "N/A"}</span>
-                </div>
+                {localCheckIn && localCheckOut ? (
+                  <>
+                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                      <span className="text-gray-600">Check-in:</span>
+                      <span className="font-medium text-gray-800">{formatDateForDisplay(localCheckIn)}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                      <span className="text-gray-600">Check-out:</span>
+                      <span className="font-medium text-gray-800">{formatDateForDisplay(localCheckOut)}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-gray-600">Invités:</span>
+                      <span className="font-medium text-gray-800">{guests || "N/A"}</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-4">
+                    <div className="text-gray-400 mb-2">
+                      <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <p className="text-gray-500 text-sm">Aucune date sélectionnée</p>
+                    <p className="text-gray-400 text-xs mt-1">Cliquez sur "Sélectionner" pour choisir vos dates</p>
+                  </div>
+                )}
               </div>
             </div>
 

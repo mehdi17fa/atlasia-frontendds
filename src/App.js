@@ -28,6 +28,7 @@ import Activites from './pages/Explore/Activites';
 import Profile from './pages/Profile/Profile';
 import Favorites from './pages/Favorite/Favorite';
 import Navbar from './components/shared/Navbar';
+import PropertyCreationTestSuite from './components/PropertyCreationTestSuite';
 import NavbarProperty from './components/shared/NavbarProperty';
 import NavbarPartner from './components/shared/NavbarPartner';
 
@@ -74,6 +75,8 @@ import PackageCreationFlow from './pages/Intermediate/PackageCreationFlow';
 import PackageManagement from './pages/Intermediate/PackageManagement';
 import EditPackage from './pages/Intermediate/EditPackage';
 import PackageBooking from './pages/Booking/PackageBooking';
+import BlockingExplore from './pages/Explore/BlockingPropertyExplore';
+import BlockingPropertyPreview from './pages/Intermediate/BlockingPropertyPreview';
 
 // Inbox / Chat
 import Inbox from './pages/Inbox/Inbox';
@@ -92,6 +95,9 @@ import DocumentUpload from './utilities/DocumentUpload';
 
 // Admin Dashboard
 import AdminDashboard from './pages/AdminDashboard';
+
+// Test Components
+import CalendarTest from './components/CalendarTest';
 
 // Explore affiché en fond avec modal devant
 function ModalLayout({ children }) {
@@ -206,6 +212,9 @@ function App() {
         {/* Admin Dashboard - Direct URL access only */}
         <Route path="/admin" element={<AdminDashboard />} />
         
+        {/* Test Routes */}
+        <Route path="/test-calendar" element={<CalendarTest />} />
+        
         {/* General / Auth - Only accessible when NOT authenticated */}
         <Route path="/login" element={<ProtectedRoute requireAuth={false}><LoginScreen /></ProtectedRoute>} />
         {/* New consolidated signup wizard; keep legacy screens accessible if needed */}
@@ -235,7 +244,15 @@ function App() {
         {/* Co-hosting routes - Require authentication */}
         <Route path="/cohosting-explore" element={<ProtectedRoute><CohostingExplore /></ProtectedRoute>} />
         <Route path="/cohosting-preview/:propertyId" element={<ProtectedRoute><CoHostPropertyPreview /></ProtectedRoute>} />
-        <Route path="/partner/cohosting-management" element={<ProtectedRoute allowedRoles={['partner', 'intermediate']}><PartnerCohostingManagement /></ProtectedRoute>} />
+        <Route path="/partner/cohosting-management" element={<ProtectedRoute allowedRoles={['partner']}><PartnerCohostingManagement /></ProtectedRoute>} />
+        <Route path="/blocking-explore" element={<ProtectedRoute><BlockingExplore /></ProtectedRoute>} />
+        <Route
+          path="/blocking-preview/:propertyId"
+          element={
+              <BlockingPropertyPreview />
+            
+          }
+        />
         
 
         {/* Messages - Require authentication */}
@@ -256,6 +273,7 @@ function App() {
         <Route path="/owner/income" element={<ProtectedRoute allowedRoles={['owner']}><OwnerIncomePage /></ProtectedRoute>} />
         <Route path="/owner/reservations/:propertyId" element={<ProtectedRoute allowedRoles={['owner']}><ReservationPage /></ProtectedRoute>} />
         <Route path="/test-reservations" element={<ProtectedRoute><div className="p-6"><h1>Test Route Works!</h1></div></ProtectedRoute>} />
+        <Route path="/test-property-suite" element={<ProtectedRoute><PropertyCreationTestSuite /></ProtectedRoute>} />
 
         {/* Booking - Require authentication */}
         <Route path="/booking/request/:propertyId" element={<ProtectedRoute><BookingRequest /></ProtectedRoute>} />
