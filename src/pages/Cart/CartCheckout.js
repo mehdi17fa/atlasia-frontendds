@@ -4,6 +4,7 @@ import { useCart } from '../../context/CartContext';
 import { api } from '../../api';
 import { useAuth } from '../../hooks/useAuth';
 import S3Image from '../../components/S3Image';
+import DateRangeCalendar from '../../components/DateRangeCalendar';
 
 export default function CartCheckout() {
   const navigate = useNavigate();
@@ -32,6 +33,7 @@ export default function CartCheckout() {
     checkOut: '',
     guests: 1
   });
+  const [calendarItemId, setCalendarItemId] = useState(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -119,6 +121,18 @@ export default function CartCheckout() {
   const handleCancelEdit = () => {
     setEditingItemId(null);
     setEditValues({ checkIn: '', checkOut: '', guests: 1 });
+  };
+
+  const applyCalendarDates = (startIso, endIso) => {
+    const toYMD = (iso) => {
+      const d = new Date(iso);
+      const y = d.getUTCFullYear();
+      const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(d.getUTCDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
+    setEditValues(prev => ({ ...prev, checkIn: toYMD(startIso), checkOut: toYMD(endIso) }));
+    setCalendarItemId(null);
   };
 
   const validateForm = () => {
@@ -490,24 +504,25 @@ export default function CartCheckout() {
                 {/* Booking Details */}
                 {editingItemId === item._id ? (
                   <div className="bg-gray-50 p-4 rounded-lg space-y-3 mb-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Check-in</label>
-                      <input
-                        type="date"
-                        value={editValues.checkIn}
-                        onChange={(e) => setEditValues(prev => ({ ...prev, checkIn: e.target.value }))}
-                        className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Check-in</label>
+                        <div className="w-full text-base font-medium text-gray-900 p-2 rounded-lg bg-white border border-gray-200">{editValues.checkIn}</div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Check-out</label>
+                        <div className="w-full text-base font-medium text-gray-900 p-2 rounded-lg bg-white border border-gray-200">{editValues.checkOut}</div>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Check-out</label>
-                      <input
-                        type="date"
-                        value={editValues.checkOut}
-                        onChange={(e) => setEditValues(prev => ({ ...prev, checkOut: e.target.value }))}
-                        className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      />
-                    </div>
+                    {item.itemType === 'property' && (
+                      <button
+                        type="button"
+                        onClick={() => setCalendarItemId(item._id)}
+                        className="w-full px-3 py-2 rounded-lg font-medium transition-all border border-green-300 text-green-700 bg-green-50 hover:bg-green-100"
+                      >
+                        Changer les dates
+                      </button>
+                    )}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Invités</label>
                       <input
@@ -586,6 +601,47 @@ export default function CartCheckout() {
                       </div>
                     </div>
                   </>
+                )}
+                {/* Date Calendar Modal for this item */}
+                {calendarItemId === item._id && (
+                  <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-center justify-center p-4">
+                    <div className="max-w-lg w-full">
+                      <DateRangeCalendar
+                        title="Sélectionner les dates"
+                        initialCheckIn={editValues.checkIn}
+                        initialCheckOut={editValues.checkOut}
+                        fetchAvailability={async () => {
+                          try {
+                            if (item.itemType !== 'property') return [];
+                            const res = await api.get(`/api/booking/status/${item.itemId}`);
+                            const ranges = res?.data?.unavailableDates || [];
+                            const blocked = [];
+                            const boundaryCheckIns = [];
+                            const fullyBlockedBoundaries = [];
+                            for (const r of ranges) {
+                              const start = new Date(r.checkIn);
+                              const end = new Date(r.checkOut);
+                              boundaryCheckIns.push(new Date(Date.UTC(start.getFullYear(), start.getMonth(), start.getDate())).toISOString());
+                              for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
+                                blocked.push(new Date(d).toISOString());
+                              }
+                            }
+                            const starts = new Set(boundaryCheckIns);
+                            for (const r of ranges) {
+                              const out = new Date(r.checkOut);
+                              const outIso = new Date(Date.UTC(out.getFullYear(), out.getMonth(), out.getDate())).toISOString();
+                              if (starts.has(outIso)) fullyBlockedBoundaries.push(outIso);
+                            }
+                            return { blockedDates: blocked, boundaryCheckIns, fullyBlockedBoundaries };
+                          } catch (_) {
+                            return [];
+                          }
+                        }}
+                        onApply={applyCalendarDates}
+                        onClose={() => setCalendarItemId(null)}
+                      />
+                    </div>
+                  </div>
                 )}
               </div>
             ))}
