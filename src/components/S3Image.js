@@ -60,13 +60,20 @@ const S3Image = ({
         finalUrl = getS3Url(cleanedUrl);
       }
       
-      // Debug logging
-      console.log('S3Image Debug:', {
-        originalSrc: src,
-        normalized: raw,
-        cleanedUrl: cleanedUrl,
-        finalUrl: finalUrl,
-      });
+  // Debug logging
+  console.log('S3Image Debug:', {
+    originalSrc: src,
+    cleanedUrl: cleanedUrl,
+    finalUrl: finalUrl,
+    isFullUrl: src.startsWith('http'),
+    isLocalPath: src.startsWith('/'),
+    containsS3Bucket: src.includes('atlasia-bucket-1.s3.us-east-2.amazonaws.com')
+  });
+  
+  // Temporary fallback for debugging
+  if (finalUrl && finalUrl.includes('localhost:4000/s3-proxy')) {
+    console.warn('⚠️ Using localhost proxy URL - check if backend is running on port 4000');
+  }
       
       setCurrentSrc(finalUrl);
     } else {

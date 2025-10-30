@@ -182,7 +182,7 @@ export default function CoHostPropertyLayout({
           {host && (
             <div className="flex items-center space-x-4 mb-6">
               <S3Image
-                src={host.photo || "/profilepic.jpg"}
+                src={host.profilePic || host.profileImage || host.photo || "/profilepic.jpg"}
                 alt={host.name}
                 className="w-14 h-14 rounded-full object-cover"
                 fallbackSrc="/profilepic.jpg"
