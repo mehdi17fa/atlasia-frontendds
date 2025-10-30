@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { api } from '../api';
 
@@ -127,9 +127,9 @@ const ReservationCalendar = ({
   };
 
   const getDateClassName = (date) => {
-    if (!date) return 'w-12 h-12';
+    if (!date) return 'w-10 h-10';
     
-    const baseClass = 'w-12 h-12 flex items-center justify-center text-sm cursor-pointer rounded-full transition-colors';
+    const baseClass = 'w-10 h-10 leading-none flex items-center justify-center text-sm cursor-pointer rounded-full transition-colors';
     
     if (isDateUnavailable(date)) {
       return `${baseClass} bg-gray-100 text-gray-400 cursor-not-allowed`;
@@ -169,6 +169,12 @@ const ReservationCalendar = ({
 
   const dayNames = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 
+  const nextMonth = useMemo(() => {
+    const d = new Date(currentMonth);
+    d.setMonth(d.getMonth() + 1);
+    return d;
+  }, [currentMonth]);
+
   if (loading) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -182,7 +188,7 @@ const ReservationCalendar = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+      <div className="bg-white rounded-lg p-8 w-full max-w-[820px] mx-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-gray-800">Sélectionner les dates</h2>
@@ -197,7 +203,7 @@ const ReservationCalendar = ({
         </div>
 
         {/* Month Navigation */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-6">
           <button
             onClick={() => navigateMonth(-1)}
             className="p-2 hover:bg-gray-100 rounded-full"
@@ -208,7 +214,7 @@ const ReservationCalendar = ({
           </button>
           
           <h3 className="text-lg font-medium">
-            {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+            {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()} – {monthNames[nextMonth.getMonth()]} {nextMonth.getFullYear()}
           </h3>
           
           <button
@@ -221,28 +227,55 @@ const ReservationCalendar = ({
           </button>
         </div>
 
-        {/* Day Headers */}
-        <div className="grid grid-cols-7 gap-1 mb-2">
-          {dayNames.map(day => (
-            <div key={day} className="w-12 h-8 flex items-center justify-center text-sm font-medium text-gray-500">
-              {day}
+        {/* Two-month layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+          {/* First month */}
+          <div className="min-w-[24rem]">
+            <div className="grid gap-2 mb-4" style={{ gridTemplateColumns: 'repeat(7, 3rem)' }}>
+              {dayNames.map(day => (
+                <div key={`h1-${day}`} className="w-12 h-8 flex items-center justify-center text-sm font-medium text-gray-500">
+                  {day}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+            <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(7, 3rem)', justifyItems: 'center' }}>
+              {getDaysInMonth(currentMonth).map((date, index) => (
+                <div
+                  key={`m1-${index}`}
+                  className={`${getDateClassName(date)} rounded-full`}
+                  onClick={() => date && handleDateClick(date)}
+                  onMouseEnter={() => date && setHoveredDate(date)}
+                  onMouseLeave={() => setHoveredDate(null)}
+                >
+                  {date && date.getDate()}
+                </div>
+              ))}
+            </div>
+          </div>
 
-        {/* Calendar Days */}
-        <div className="grid grid-cols-7 gap-1">
-          {getDaysInMonth(currentMonth).map((date, index) => (
-            <div
-              key={index}
-              className={getDateClassName(date)}
-              onClick={() => date && handleDateClick(date)}
-              onMouseEnter={() => date && setHoveredDate(date)}
-              onMouseLeave={() => setHoveredDate(null)}
-            >
-              {date && date.getDate()}
+          {/* Second month */}
+          <div className="min-w-[24rem]">
+            <div className="grid gap-2 mb-4" style={{ gridTemplateColumns: 'repeat(7, 3rem)' }}>
+              {dayNames.map(day => (
+                <div key={`h2-${day}`} className="w-12 h-8 flex items-center justify-center text-sm font-medium text-gray-500">
+                  {day}
+                </div>
+              ))}
             </div>
-          ))}
+            <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(7, 3rem)', justifyItems: 'center' }}>
+              {getDaysInMonth(nextMonth).map((date, index) => (
+                <div
+                  key={`m2-${index}`}
+                  className={`${getDateClassName(date)} rounded-full`}
+                  onClick={() => date && handleDateClick(date)}
+                  onMouseEnter={() => date && setHoveredDate(date)}
+                  onMouseLeave={() => setHoveredDate(null)}
+                >
+                  {date && date.getDate()}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Selected Dates Summary */}

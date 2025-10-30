@@ -3,8 +3,14 @@ import './config/axios'; // Import global axios configuration
 import { isTokenExpired } from './utils/tokenUtils';
 import { tokenStorage } from './utils/tokenStorage';
 
-// Prefer runtime-configurable base URL via window, fallback to env, then same-origin
-const API_URL = (typeof window !== 'undefined' && window.__API_BASE_URL__) || process.env.REACT_APP_API_URL || '';
+// Prefer runtime-configurable base URL via window, fallback to env, then dev localhost
+let API_URL = (typeof window !== 'undefined' && window.__API_BASE_URL__) || process.env.REACT_APP_API_URL || '';
+if (!API_URL && typeof window !== 'undefined') {
+  const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+  if (isLocalhost) {
+    API_URL = 'http://localhost:4000';
+  }
+}
 
 // Log API configuration on startup
 console.log('🔧 API Configuration:', {

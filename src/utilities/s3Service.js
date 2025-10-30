@@ -436,12 +436,9 @@ export const getS3Url = (key) => {
     return key;
   }
   
-  // If it's a placeholder or static file, return as-is
-  if (key.includes('placeholder') || key.includes('default-') || key.endsWith('.jpg') || key.endsWith('.png') || key.endsWith('.gif') || key.endsWith('.webp')) {
-    // Check if it's just a filename without path
-    if (!key.includes('/') && !key.includes('property-photos') && !key.includes('profile-pics')) {
-      return `/${key}`;
-    }
+  // Only treat explicit placeholders as static
+  if (key.includes('placeholder') || key.includes('default-')) {
+    return key.includes('http') ? key : `/${key.replace(/^\//, '')}`;
   }
   
   // For S3 keys, use backend proxy to avoid CORS issues
@@ -453,13 +450,17 @@ export const getS3Url = (key) => {
   
   // Parse the S3 key to get folder and filename
   const parts = cleanKey.split('/');
+  const basePath = runtimeBase ? runtimeBase : '';
+  const pathPrefix = runtimeBase ? '' : '/api';
   if (parts.length >= 2) {
     const folder = parts[0];
     const filename = parts.slice(1).join('/');
-    return `${runtimeBase ? runtimeBase : ''}/s3-proxy/${folder}/${encodeURIComponent(filename)}`;
+    return `${basePath}${pathPrefix}/s3-proxy/${folder}/${encodeURIComponent(filename)}`;
   } else {
-    // If no folder specified, assume it's a property photo
-    return `${runtimeBase ? runtimeBase : ''}/s3-proxy/property-photos/${encodeURIComponent(cleanKey)}`;
+    // If no folder specified, default to general uploads (matches backend upload)
+    const hasImageExtension = /\.(jpg|jpeg|png|gif|webp)$/i.test(cleanKey);
+    const defaultFolder = hasImageExtension ? 'general-uploads' : 'property-photos';
+    return `${basePath}${pathPrefix}/s3-proxy/${defaultFolder}/${encodeURIComponent(cleanKey)}`;
   }
 };
 

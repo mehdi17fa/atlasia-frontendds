@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import { api } from '../../api';
 import { useAuth } from '../../hooks/useAuth';
 import S3Image from '../../components/S3Image';
+import DateRangeCalendar from '../../components/DateRangeCalendar';
 
 export default function CartCheckout() {
   const navigate = useNavigate();
-  const { cart, isLoading, removeFromCart, updateCartItem, checkoutCart, getCartTotal, isCartEmpty } = useCart();
+  const { cart, isLoading, removeFromCart, updateCartItem, checkoutCart, clearCart, getCartTotal, isCartEmpty } = useCart();
   const { isAuthenticated } = useAuth();
   
-  const [paymentMethod, setPaymentMethod] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('card');
   const [cardDetails, setCardDetails] = useState({
     cardNumber: '',
     expiryDate: '',
@@ -31,6 +33,7 @@ export default function CartCheckout() {
     checkOut: '',
     guests: 1
   });
+  const [calendarItemId, setCalendarItemId] = useState(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -120,6 +123,18 @@ export default function CartCheckout() {
     setEditValues({ checkIn: '', checkOut: '', guests: 1 });
   };
 
+  const applyCalendarDates = (startIso, endIso) => {
+    const toYMD = (iso) => {
+      const d = new Date(iso);
+      const y = d.getUTCFullYear();
+      const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(d.getUTCDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
+    setEditValues(prev => ({ ...prev, checkIn: toYMD(startIso), checkOut: toYMD(endIso) }));
+    setCalendarItemId(null);
+  };
+
   const validateForm = () => {
     let hasErrors = false;
     const newFieldErrors = { ...fieldErrors };
@@ -170,14 +185,33 @@ export default function CartCheckout() {
     setError('');
 
     try {
-      const result = await checkoutCart(guestMessage);
-      
+      // Build payload from current cart items so backend can create bookings
+      const payload = {
+        guestMessage,
+        paymentMethod,
+        items: (cart.items || []).map(it => ({
+          itemType: it.itemType,
+          itemId: it.itemId,
+          checkIn: it.checkIn,
+          checkOut: it.checkOut,
+          guests: it.guests
+        }))
+      };
+
+      const response = await api.post('/api/cart/checkout', payload);
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Checkout failed');
+      }
+
+      // Clear cart locally after successful server checkout
+      await clearCart();
+
       navigate('/cart/checkout-confirmation', {
-        state: { checkoutResult: result }
+        state: { checkoutResult: response.data }
       });
     } catch (error) {
       console.error('Checkout error:', error);
-      setError(error.message || 'Erreur lors de la commande');
+      setError(error?.response?.data?.message || error.message || 'Erreur lors de la commande');
     } finally {
       setIsSubmitting(false);
     }
@@ -233,33 +267,6 @@ export default function CartCheckout() {
               
               {/* Payment Method Selection */}
               <div className="space-y-3 mb-6">
-                <div 
-                  className={`flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                    paymentMethod === 'cash' 
-                      ? 'border-green-500 bg-green-50' 
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`} 
-                  onClick={() => handlePaymentMethodChange('cash')}
-                >
-                  <input
-                    type="radio"
-                    id="cash"
-                    name="paymentMethod"
-                    value="cash"
-                    checked={paymentMethod === 'cash'}
-                    onChange={(e) => handlePaymentMethodChange(e.target.value)}
-                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
-                  />
-                  <label htmlFor="cash" className="ml-3 flex items-center cursor-pointer">
-                    <svg className={`w-5 h-5 mr-2 ${paymentMethod === 'cash' ? 'text-green-600' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    <span className={`font-medium ${paymentMethod === 'cash' ? 'text-green-800' : 'text-gray-700'}`}>
-                      Paiement en espèces
-                    </span>
-                  </label>
-                </div>
-
                 <div 
                   className={`flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all ${
                     paymentMethod === 'card' 
@@ -411,8 +418,7 @@ export default function CartCheckout() {
                   <div className="flex justify-between">
                     <span className="text-gray-600">Paiement:</span>
                     <span className="font-medium text-sm">
-                      {paymentMethod === 'cash' ? 'En espèces' : 
-                       paymentMethod === 'card' ? 'Par carte' : 'Non sélectionné'}
+                      {paymentMethod === 'card' ? 'Par carte' : 'Non sélectionné'}
                       {paymentMethod === 'card' && cardDetails.cardNumber && (
                         <span className="ml-2 text-xs text-gray-500">
                           (****{cardDetails.cardNumber.replace(/\s/g, '').slice(-4)})
@@ -498,24 +504,25 @@ export default function CartCheckout() {
                 {/* Booking Details */}
                 {editingItemId === item._id ? (
                   <div className="bg-gray-50 p-4 rounded-lg space-y-3 mb-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Check-in</label>
-                      <input
-                        type="date"
-                        value={editValues.checkIn}
-                        onChange={(e) => setEditValues(prev => ({ ...prev, checkIn: e.target.value }))}
-                        className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Check-in</label>
+                        <div className="w-full text-base font-medium text-gray-900 p-2 rounded-lg bg-white border border-gray-200">{editValues.checkIn}</div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Check-out</label>
+                        <div className="w-full text-base font-medium text-gray-900 p-2 rounded-lg bg-white border border-gray-200">{editValues.checkOut}</div>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Check-out</label>
-                      <input
-                        type="date"
-                        value={editValues.checkOut}
-                        onChange={(e) => setEditValues(prev => ({ ...prev, checkOut: e.target.value }))}
-                        className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      />
-                    </div>
+                    {item.itemType === 'property' && (
+                      <button
+                        type="button"
+                        onClick={() => setCalendarItemId(item._id)}
+                        className="w-full px-3 py-2 rounded-lg font-medium transition-all border border-green-300 text-green-700 bg-green-50 hover:bg-green-100"
+                      >
+                        Changer les dates
+                      </button>
+                    )}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Invités</label>
                       <input
@@ -594,6 +601,47 @@ export default function CartCheckout() {
                       </div>
                     </div>
                   </>
+                )}
+                {/* Date Calendar Modal for this item */}
+                {calendarItemId === item._id && (
+                  <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-center justify-center p-4">
+                    <div className="max-w-lg w-full">
+                      <DateRangeCalendar
+                        title="Sélectionner les dates"
+                        initialCheckIn={editValues.checkIn}
+                        initialCheckOut={editValues.checkOut}
+                        fetchAvailability={async () => {
+                          try {
+                            if (item.itemType !== 'property') return [];
+                            const res = await api.get(`/api/booking/status/${item.itemId}`);
+                            const ranges = res?.data?.unavailableDates || [];
+                            const blocked = [];
+                            const boundaryCheckIns = [];
+                            const fullyBlockedBoundaries = [];
+                            for (const r of ranges) {
+                              const start = new Date(r.checkIn);
+                              const end = new Date(r.checkOut);
+                              boundaryCheckIns.push(new Date(Date.UTC(start.getFullYear(), start.getMonth(), start.getDate())).toISOString());
+                              for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
+                                blocked.push(new Date(d).toISOString());
+                              }
+                            }
+                            const starts = new Set(boundaryCheckIns);
+                            for (const r of ranges) {
+                              const out = new Date(r.checkOut);
+                              const outIso = new Date(Date.UTC(out.getFullYear(), out.getMonth(), out.getDate())).toISOString();
+                              if (starts.has(outIso)) fullyBlockedBoundaries.push(outIso);
+                            }
+                            return { blockedDates: blocked, boundaryCheckIns, fullyBlockedBoundaries };
+                          } catch (_) {
+                            return [];
+                          }
+                        }}
+                        onApply={applyCalendarDates}
+                        onClose={() => setCalendarItemId(null)}
+                      />
+                    </div>
+                  </div>
                 )}
               </div>
             ))}
