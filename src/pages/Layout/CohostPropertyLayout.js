@@ -1,5 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
+import S3Image from "../../components/S3Image";
 
 const CoHostPropertyLayout = ({
   title,
@@ -19,95 +20,91 @@ const CoHostPropertyLayout = ({
   mode = "cohost",
 }) => {
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      {/* Property Header */}
-      <h1 className="text-3xl font-bold mb-4">{title || "Propriété sans titre"}</h1>
-      <div className="flex justify-between items-center mb-4">
-        <div>
-          <p className="text-gray-600">{location || "Localisation non spécifiée"}</p>
-          <div className="flex items-center">
-            <span className="text-yellow-500">★ {rating || 0}</span>
-            <span className="ml-2 text-gray-500">({reviewCount || 0} avis)</span>
-          </div>
-        </div>
-        {user && mode !== "blocked" && (
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log("🔘 Button clicked in CohostPropertyLayout");
-              console.log("Mode:", mode);
-              console.log("onCoHostClick function:", onCoHostClick);
-              if (onCoHostClick) {
-                console.log("🚀 Calling onCoHostClick...");
-                onCoHostClick();
-              } else {
-                console.error("❌ onCoHostClick is not defined!");
-              }
-            }}
-            disabled={requestSent && mode !== "booking"}
-            className={`px-6 py-2 rounded-full text-white ${
-              mode === "booking"
-                ? "bg-green-600 hover:bg-green-700"
-                : mode === "block"
-                ? requestSent
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-red-700 hover:bg-red-800"
-                : requestSent
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-blue-700 hover:bg-blue-800"
-            }`}
-          >
-            {mode === "booking"
-              ? "Réserver maintenant"
-              : mode === "block"
-              ? requestSent
-                ? "Bloqué"
-                : "Bloquer pour 15min"
-              : requestSent
-              ? "Demande envoyée"
-              : "Co-héberger"}
-          </button>
-        )}
+    <div className="max-w-7xl mx-auto p-6 pb-28">
+      {/* Header */}
+      <div className="flex items-center space-x-4 mb-4">
+        <button onClick={() => window.history.back()} className="p-2 bg-gray-200 rounded-full">
+          <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <h1 className="text-3xl font-bold">{title || "Propriété sans titre"}</h1>
+      </div>
+
+      <p className="text-gray-600 mb-2">{location || "Localisation non spécifiée"}</p>
+      <div className="flex items-center space-x-2 text-sm text-gray-500 mb-6">
+        <span>⭐ {rating || 0}</span>
+        <span>·</span>
+        <span>{reviewCount || 0} avis</span>
       </div>
 
       {/* Main Image */}
-      <img
-        src={mainImage || "/placeholder1.jpg"}
-        alt={title || "Propriété"}
-        className="w-full h-96 object-cover rounded-lg mb-4"
+      <S3Image
+        src={mainImage || "/villa1.jpg"}
+        alt={title}
+        className="w-full h-96 object-cover rounded-2xl shadow mb-6"
+        fallbackSrc="/villa1.jpg"
       />
 
-      {/* Host Info */}
-      {host && (
-        <div className="mb-4">
-          <h2 className="text-xl font-semibold">Hôte: {host.name}</h2>
-          {host.email && <p className="text-gray-600">{host.email}</p>}
-          {host.photo && (
-            <img
-              src={host.photo}
-              alt={host.name}
-              className="w-16 h-16 rounded-full mt-2"
-            />
-          )}
-        </div>
-      )}
-
       {/* Features */}
-      <div className="mb-4">
-        <h2 className="text-xl font-semibold mb-2">Caractéristiques</h2>
-        <div className="grid grid-cols-2 gap-4">
-          {features.map((feature, index) => (
-            <div key={index} className="flex items-center">
-              {feature.icon}
-              <span className="ml-2">{feature.label}</span>
+      {features?.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          {features.map((f, idx) => (
+            <div key={idx} className="flex items-center space-x-2">
+              {f.icon}
+              <span>{f.label}</span>
             </div>
           ))}
         </div>
+      )}
+
+      {/* Host */}
+      {host && (
+        <div className="flex items-center space-x-4 mb-6">
+          <S3Image
+            src={host.profilePic || host.profileImage || host.photo || "/profilepic.jpg"}
+            alt={host.name}
+            className="w-14 h-14 rounded-full object-cover"
+            fallbackSrc="/profilepic.jpg"
+          />
+          <div>
+            <p className="font-semibold">{host.name}</p>
+            <p className="text-sm text-gray-500">{host.email || host.name}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Co-Host Button */}
+      <div className="text-center mb-6">
+        <button
+          onClick={onCoHostClick}
+          disabled={requestSent}
+          className={`rounded-2xl px-6 py-3 font-semibold shadow flex items-center justify-center mx-auto transition-colors ${
+            requestSent
+              ? 'bg-gray-200 text-gray-600 cursor-not-allowed'
+              : mode === "booking"
+              ? 'bg-green-600 hover:bg-green-700 text-white'
+              : mode === "block"
+              ? 'bg-red-700 hover:bg-red-800 text-white'
+              : 'bg-blue-700 hover:bg-blue-800 text-white'
+          }`}
+        >
+          {mode === "booking"
+            ? requestSent
+              ? "Réservé"
+              : "Réserver maintenant"
+            : mode === "block"
+            ? requestSent
+              ? "Bloqué"
+              : "Bloquer pour 15min"
+            : requestSent
+            ? "Demande envoyée"
+            : "Co-héberger"}
+        </button>
       </div>
 
       {/* Associated Packs */}
-      {associatedPacks.length > 0 && (
+      {associatedPacks?.length > 0 && (
         <div className="mb-4">
           <h2 className="text-xl font-semibold mb-2">Forfaits associés</h2>
           <ul>
@@ -121,17 +118,19 @@ const CoHostPropertyLayout = ({
       )}
 
       {/* Map */}
-      <div className="mb-4">
-        <h2 className="text-xl font-semibold mb-2">Localisation</h2>
-        <img
-          src={mapImage}
-          alt="Carte de localisation"
-          className="w-full h-64 object-cover rounded-lg"
-        />
-      </div>
+      {mapImage && (
+        <div className="mb-4">
+          <h2 className="text-xl font-semibold mb-2">Localisation</h2>
+          <img
+            src={mapImage}
+            alt="Carte de localisation"
+            className="w-full h-64 object-cover rounded-lg"
+          />
+        </div>
+      )}
 
       {/* Reviews */}
-      {reviews.length > 0 && (
+      {reviews?.length > 0 && (
         <div className="mb-4">
           <h2 className="text-xl font-semibold mb-2">Avis</h2>
           <ul>
@@ -145,10 +144,12 @@ const CoHostPropertyLayout = ({
       )}
 
       {/* Check-in Time */}
-      <div>
-        <h2 className="text-xl font-semibold mb-2">Heure d'arrivée</h2>
-        <p>{checkInTime || "Non spécifiée"}</p>
-      </div>
+      {checkInTime && (
+        <div>
+          <h2 className="text-xl font-semibold mb-2">Heure d'arrivée</h2>
+          <p>{checkInTime}</p>
+        </div>
+      )}
     </div>
   );
 };

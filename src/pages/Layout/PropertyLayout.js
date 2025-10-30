@@ -14,6 +14,8 @@ import LoginScreen from "../LogIn/LogInScreen";
 import SignUpScreen from "../SignUp/SignUpScreen";
 import { useFavorites } from "../../hooks/useFavorites";
 import useReviews from "../../hooks/useReviews";
+import DateRangeCalendar from "../../components/DateRangeCalendar";
+import { api } from "../../api";
 
 export default function PropertyLayout({
   title,
@@ -64,6 +66,7 @@ export default function PropertyLayout({
   const [showSignup, setShowSignup] = useState(false);
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
   const [imageViewerIndex, setImageViewerIndex] = useState(0);
+  const [showCalendar, setShowCalendar] = useState(false);
   
   const { isFavorited, toggleFavorite, isAuthenticated } = useFavorites();
   const { getPropertyReviews, submitReview, reviewableBookings } = useReviews();
@@ -218,6 +221,20 @@ export default function PropertyLayout({
         }
             },
           });
+  };
+
+  const handleCalendarApply = (startIso, endIso) => {
+    // Convert UTC ISO strings to yyyy-mm-dd in UTC
+    const toYMD = (iso) => {
+      const d = new Date(iso);
+      const y = d.getUTCFullYear();
+      const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(d.getUTCDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
+    setCheckIn(toYMD(startIso));
+    setCheckOut(toYMD(endIso));
+    setShowCalendar(false);
   };
 
   return (
@@ -510,9 +527,16 @@ export default function PropertyLayout({
         <div className="border rounded-2xl p-6 shadow-sm bg-gradient-to-r from-blue-50 to-green-50 mx-4 md:mx-0">
           <h2 className="font-semibold text-xl mb-4 text-gray-800">👤 Propriétaire</h2>
           <div className="flex items-start space-x-4">
-            {host.photo ? (
+            {console.log('🏠 Host data in PropertyLayout:', {
+              hostName: host.name,
+              profilePic: host.profilePic,
+              profileImage: host.profileImage,
+              photo: host.photo,
+              hasAnyImage: !!(host.profilePic || host.profileImage || host.photo)
+            })}
+            {host.profilePic || host.profileImage || host.photo ? (
               <S3Image
-                src={host.photo}
+                src={host.profilePic || host.profileImage || host.photo}
                 alt={host.name || 'Hôte'}
                 className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg"
                 fallbackSrc="/profilepic.jpg"
@@ -625,26 +649,22 @@ export default function PropertyLayout({
                       {/* Check-in */}
                       <div>
                         <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">ARRIVÉE</label>
-                        <input
-                          type="date"
-                          value={checkIn}
-                          onChange={(e) => setCheckIn(e.target.value)}
-                          className="w-full text-lg font-medium text-gray-900 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                          min={new Date().toISOString().split('T')[0]}
-                        />
+                        <div className="w-full text-lg font-medium text-gray-900 px-3 py-2">{checkIn}</div>
                       </div>
                       
                       {/* Check-out */}
                       <div>
                         <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">DÉPART</label>
-                        <input
-                          type="date"
-                          value={checkOut}
-                          onChange={(e) => setCheckOut(e.target.value)}
-                          className="w-full text-lg font-medium text-gray-900 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                          min={checkIn || new Date().toISOString().split('T')[0]}
-                        />
+                        <div className="w-full text-lg font-medium text-gray-900 px-3 py-2">{checkOut}</div>
                       </div>
+                      {/* Modify dates button */}
+                      <button
+                        type="button"
+                        onClick={() => setShowCalendar(true)}
+                        className="w-full px-3 py-2 rounded-lg font-medium text-lg transition-all border border-green-300 text-green-700 bg-green-50 hover:bg-green-100"
+                      >
+                        Modifier les dates
+                      </button>
                       
                       {/* Guests */}
                       <div>
@@ -753,31 +773,31 @@ export default function PropertyLayout({
             <div className="flex flex-col sm:flex-row items-center gap-4">
               {/* Dates Section */}
               <div className="flex-1 flex flex-col sm:flex-row gap-4 w-full">
-                {/* Check-in */}
-                <div className="flex-1">
-                  <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">ARRIVÉE</label>
-                  <input
-                    type="date"
-                    value={checkIn}
-                    onChange={(e) => setCheckIn(e.target.value)}
-                    className="w-full text-lg font-medium text-gray-900 border-none outline-none bg-transparent"
-                    min={new Date().toISOString().split('T')[0]}
-                  />
-                </div>
-                
-                {/* Divider */}
-                <div className="hidden sm:block w-px bg-gray-200"></div>
-                
-                {/* Check-out */}
+                {/* Check-out first */}
                 <div className="flex-1">
                   <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">DÉPART</label>
-                  <input
-                    type="date"
-                    value={checkOut}
-                    onChange={(e) => setCheckOut(e.target.value)}
-                    className="w-full text-lg font-medium text-gray-900 border-none outline-none bg-transparent"
-                    min={checkIn || new Date().toISOString().split('T')[0]}
-                  />
+                  <div className="w-full text-lg font-medium text-gray-900">{checkOut}</div>
+                </div>
+
+                {/* Divider */}
+                <div className="hidden sm:block w-px bg-gray-200"></div>
+
+                {/* Check-in second */}
+                <div className="flex-1">
+                  <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">ARRIVÉE</label>
+                  <div className="w-full text-lg font-medium text-gray-900">{checkIn}</div>
+                </div>
+                
+                {/* Modify dates button (mobile) */}
+                <div className="flex-1">
+                  <label className="block text-xs font-medium text-transparent select-none mb-1">&nbsp;</label>
+                  <button
+                    type="button"
+                    onClick={() => setShowCalendar(true)}
+                    className="w-full px-3 py-2 rounded-lg font-medium transition-all border border-green-300 text-green-700 bg-green-50 hover:bg-green-100"
+                  >
+                    Modifier les dates
+                  </button>
                 </div>
                 
                 {/* Divider */}
@@ -977,6 +997,47 @@ export default function PropertyLayout({
         isOpen={imageViewerOpen}
         onClose={handleCloseImageViewer}
       />
+
+      {/* Calendar Modal for selecting property dates */}
+      {showCalendar && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-center justify-center p-4">
+          <div className="max-w-lg w-full">
+            <DateRangeCalendar
+              title="Sélectionner les dates"
+              initialCheckIn={checkIn}
+              initialCheckOut={checkOut}
+              fetchAvailability={async () => {
+                try {
+                  const res = await api.get(`/api/booking/status/${propertyId}`);
+                  const ranges = res?.data?.unavailableDates || [];
+                  const blocked = [];
+                  const boundaryCheckIns = [];
+                  const fullyBlockedBoundaries = [];
+                  for (const r of ranges) {
+                    const start = new Date(r.checkIn);
+                    const end = new Date(r.checkOut);
+                    boundaryCheckIns.push(new Date(Date.UTC(start.getFullYear(), start.getMonth(), start.getDate())).toISOString());
+                    for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
+                      blocked.push(new Date(d).toISOString());
+                    }
+                  }
+                  const starts = new Set(boundaryCheckIns);
+                  for (const r of ranges) {
+                    const out = new Date(r.checkOut);
+                    const outIso = new Date(Date.UTC(out.getFullYear(), out.getMonth(), out.getDate())).toISOString();
+                    if (starts.has(outIso)) fullyBlockedBoundaries.push(outIso);
+                  }
+                  return { blockedDates: blocked, boundaryCheckIns, fullyBlockedBoundaries };
+                } catch (_) {
+                  return [];
+                }
+              }}
+              onApply={handleCalendarApply}
+              onClose={() => setShowCalendar(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -19,11 +19,32 @@ const S3Image = ({
 
   // Initialize the source URL
   React.useEffect(() => {
-    if (src) {
+    const toStringSrc = (input) => {
+      try {
+        if (!input) return '';
+        if (typeof input === 'string') return input;
+        if (Array.isArray(input)) return toStringSrc(input[0]);
+        if (typeof input === 'object') {
+          const direct = input.url || input.location || input.fileUrl || input.downloadUrl || input.key || input.path;
+          if (typeof direct === 'string') return direct;
+          for (const value of Object.values(input)) {
+            if (typeof value === 'string' && (value.startsWith('http') || value.includes('amazonaws.com') || value.includes('/'))) {
+              return value;
+            }
+          }
+        }
+        return '';
+      } catch (_) {
+        return '';
+      }
+    };
+
+    const raw = toStringSrc(src);
+    if (raw) {
       let finalUrl;
       
       // First, try to clean any malformed S3 URLs
-      const cleanedUrl = cleanS3Url(src);
+      const cleanedUrl = cleanS3Url(raw);
       
       // Check if it's a local path
       if (cleanedUrl.startsWith('/') && !cleanedUrl.startsWith('http')) {
@@ -50,6 +71,11 @@ const S3Image = ({
         srcType: typeof src,
         srcLength: src?.length
       });
+      
+      // Temporary fallback for debugging
+      if (finalUrl && finalUrl.includes('localhost:4000/s3-proxy')) {
+        console.warn('⚠️ Using localhost proxy URL - check if backend is running on port 4000');
+      }
       
       setCurrentSrc(finalUrl);
     } else {

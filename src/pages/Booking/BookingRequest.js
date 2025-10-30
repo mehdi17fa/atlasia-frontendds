@@ -5,6 +5,8 @@ import axios from "axios";
 import { api } from "../../api";
 import S3ImageUpload from "../../components/S3ImageUpload";
 import ReservationCalendar from "../../components/ReservationCalendar";
+import DateRangeCalendar from "../../components/DateRangeCalendar";
+import { useCart } from "../../context/CartContext";
 import { formatDateForDisplay } from "../../utils/dateUtils";
 
 // Use relative paths with centralized api client
@@ -18,6 +20,18 @@ export default function BookingRequest() {
   const { guests } = bookingData || {};
   const [localCheckIn, setLocalCheckIn] = useState(bookingData?.checkIn || "");
   const [localCheckOut, setLocalCheckOut] = useState(bookingData?.checkOut || "");
+  const { addToCart } = useCart();
+
+  const formatIsoDate = (iso) => {
+    try {
+      if (!iso) return "";
+      const d = new Date(iso);
+      // Render as UTC date to avoid timezone shifting the displayed day
+      return d.toLocaleDateString('fr-FR', { timeZone: 'UTC', day: '2-digit', month: '2-digit', year: 'numeric' });
+    } catch (_) {
+      return iso;
+    }
+  };
 
   const [guestMessage, setGuestMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,20 +41,12 @@ export default function BookingRequest() {
   const [propertyDetails, setPropertyDetails] = useState(null);
   const [idPhotos, setIdPhotos] = useState([]);
   const [idPhotosUploading, setIdPhotosUploading] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState("");
-  const [cardDetails, setCardDetails] = useState({
-    cardNumber: "",
-    expiryDate: "",
-    cvv: "",
-    cardholderName: ""
-  });
   const [fieldErrors, setFieldErrors] = useState({
     guestMessage: false,
-    idPhotos: false,
-    paymentMethod: false,
-    cardDetails: false
+    idPhotos: false
   });
   const [showCalendar, setShowCalendar] = useState(false);
+  const [addedToCart, setAddedToCart] = useState(false);
 
   // Fetch property details on component mount
   useEffect(() => {
@@ -168,62 +174,10 @@ export default function BookingRequest() {
     setIdPhotos(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handlePaymentMethodChange = (method) => {
-    setPaymentMethod(method);
-    // Clear payment method error when user selects a method
-    setFieldErrors(prev => ({ ...prev, paymentMethod: false, cardDetails: false }));
-    
-    // Reset card details when switching to cash or no method
-    if (method === "cash" || method === "") {
-      setCardDetails({
-        cardNumber: "",
-        expiryDate: "",
-        cvv: "",
-        cardholderName: ""
-      });
-    }
-  };
-
-  const handleCardDetailsChange = (field, value) => {
-    setCardDetails(prev => ({
-      ...prev,
-      [field]: value
-    }));
-    // Clear card details error when user starts typing
-    setFieldErrors(prev => ({ ...prev, cardDetails: false }));
-  };
-
   const handleGuestMessageChange = (value) => {
     setGuestMessage(value);
     // Clear guest message error when user starts typing
     setFieldErrors(prev => ({ ...prev, guestMessage: false }));
-  };
-
-  const formatCardNumber = (value) => {
-    // Remove all non-digits
-    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-    // Add spaces every 4 digits
-    const matches = v.match(/\d{4,16}/g);
-    const match = (matches && matches[0]) || '';
-    const parts = [];
-    for (let i = 0, len = match.length; i < len; i += 4) {
-      parts.push(match.substring(i, i + 4));
-    }
-    if (parts.length) {
-      return parts.join(' ');
-    } else {
-      return v;
-    }
-  };
-
-  const formatExpiryDate = (value) => {
-    // Remove all non-digits
-    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-    // Add slash after 2 digits
-    if (v.length >= 2) {
-      return v.substring(0, 2) + '/' + v.substring(2, 4);
-    }
-    return v;
   };
 
   const calculateTotal = () => {
@@ -240,227 +194,66 @@ export default function BookingRequest() {
     return { nights, pricePerNight, total };
   };
 
-  const handleSubmit = async () => {
-    // Reset all field errors
-    setFieldErrors({
-      guestMessage: false,
-      idPhotos: false,
-      paymentMethod: false,
-      cardDetails: false
-    });
-
-    let hasErrors = false;
-    const newFieldErrors = { ...fieldErrors };
-
-    // Validate guest message (now mandatory)
-    if (!guestMessage || guestMessage.trim().length === 0) {
-      newFieldErrors.guestMessage = true;
-      hasErrors = true;
-    }
-
-    // Validate ID photos (now mandatory)
-    // Check both that photos exist AND that they have valid keys/URLs
-    const validIdPhotos = idPhotos.filter(photo => {
-      const key = photo?.key || photo?.url;
-      return key && typeof key === 'string' && key.trim().length > 0;
-    });
-    
-    if (idPhotos.length === 0 || validIdPhotos.length === 0) {
-      newFieldErrors.idPhotos = true;
-      hasErrors = true;
-    }
-
-    // If uploading is active, inform but don't block
-    if (idPhotosUploading) {
-      setFieldErrors(newFieldErrors);
-      setError("Téléchargement de la pièce d'identité en cours. Veuillez patienter jusqu'à la fin du téléversement.");
-      return;
-    }
-
-    // Validate payment details
-    if (!paymentMethod) {
-      newFieldErrors.paymentMethod = true;
-      hasErrors = true;
-    }
-    
-    if (paymentMethod === "card") {
-      if (!cardDetails.cardNumber.trim() || !cardDetails.expiryDate.trim() || 
-          !cardDetails.cvv.trim() || !cardDetails.cardholderName.trim()) {
-        newFieldErrors.cardDetails = true;
-        hasErrors = true;
-      } else {
-        // Additional card validation
-        const cardNumberDigits = cardDetails.cardNumber.replace(/\s/g, '');
-        if (cardNumberDigits.length !== 16) {
-          newFieldErrors.cardDetails = true;
-          hasErrors = true;
-        }
-        if (!/^\d{2}\/\d{2}$/.test(cardDetails.expiryDate)) {
-          newFieldErrors.cardDetails = true;
-          hasErrors = true;
-        }
-        if (!/^\d{3,4}$/.test(cardDetails.cvv)) {
-          newFieldErrors.cardDetails = true;
-          hasErrors = true;
-        }
-      }
-    }
-
-    // Update field errors and show general error if any fields are invalid
-    setFieldErrors(newFieldErrors);
-    
-    if (hasErrors) {
-      const missing = [];
-      if (newFieldErrors.guestMessage) missing.push("message à l'hôte");
-      if (newFieldErrors.idPhotos) missing.push("pièce d'identité");
-      if (newFieldErrors.paymentMethod) missing.push("méthode de paiement");
-      if (newFieldErrors.cardDetails) missing.push("détails de carte");
-      const message = missing.length > 0
-        ? `Veuillez corriger: ${missing.join(', ')}.`
-        : "Veuillez corriger les champs marqués en rouge avant de continuer.";
-      setError(message);
-      return;
-    }
-
-    // Try to get token from state first, then from localStorage as fallback (support both keys)
-    const token = authToken || 
-                 localStorage.getItem("atlasia_access_token") ||
-                 localStorage.getItem("accessToken");
-    
-    console.log("Auth Debug:", {
-      authTokenFromState: authToken,
-      tokenFromLocalStorage: localStorage.getItem("accessToken"),
-      finalToken: token ? token.substring(0, 20) + "..." : "No token"
-    });
-    
-    if (!token || !bookingData || !hostId) {
-      setError("Missing authentication, booking data, or host information.");
-      console.error("Missing data:", { token: !!token, bookingData: !!bookingData, hostId: !!hostId });
-      navigate("/login");
-      return;
-    }
-
-    setLoading(true);
+  const handleAddToCart = async () => {
     setError(null);
+    setFieldErrors({ guestMessage: false, idPhotos: false });
+
+    if (!localCheckIn || !localCheckOut || !guests) {
+      setError("Veuillez sélectionner les dates et le nombre d'invités.");
+      return;
+    }
+
+    if (idPhotosUploading) {
+      setError("Téléchargement de la pièce d'identité en cours. Veuillez patienter.");
+      return;
+    }
+
+    // Require at least one CIN/ID photo
+    if (!idPhotos || idPhotos.length === 0) {
+      setFieldErrors(prev => ({ ...prev, idPhotos: true }));
+      setError("Veuillez télécharger une photo de votre CIN pour continuer.");
+      return;
+    }
+
+    // Require a message to the host
+    if (!guestMessage || guestMessage.trim().length === 0) {
+      setFieldErrors(prev => ({ ...prev, guestMessage: true }));
+      setError("Veuillez ajouter un message à l'hôte pour continuer.");
+      return;
+    }
+
+    const { nights, pricePerNight, total } = calculateTotal();
 
     try {
-      // Step 1: Create booking (critical path)
-      // Filter and validate idPhotos before sending
-      const validIdPhotoValues = idPhotos
-        .map(photo => photo.key || photo.url)
-        .filter(key => key && typeof key === 'string' && key.trim().length > 0);
-      
-      if (validIdPhotoValues.length === 0) {
-        setFieldErrors(prev => ({ ...prev, idPhotos: true }));
-        setError("Veuillez télécharger une pièce d'identité valide avant de confirmer la réservation.");
-        setLoading(false);
-        return;
-      }
+      setLoading(true);
 
-      const bookingPayload = {
-        propertyId,
-        checkIn: new Date(localCheckIn).toISOString(),
-        checkOut: new Date(localCheckOut).toISOString(),
-        guests: Number(guests),
-        guestMessage,
-        idPhotos: validIdPhotoValues,
-        paymentMethod,
-        ...(paymentMethod === "card" && {
-          cardDetails: {
-            cardNumber: cardDetails.cardNumber.replace(/\s/g, ''), // Remove spaces for storage
-            expiryDate: cardDetails.expiryDate,
-            cvv: cardDetails.cvv,
-            cardholderName: cardDetails.cardholderName
-          }
-        })
+      // Build a snapshot for cart display
+      const itemSnapshot = {
+        name: propertyDetails?.title || 'Propriété',
+        description: propertyDetails?.description || '',
+        thumbnail: propertyDetails?.photos?.[0] || '',
+        location: propertyDetails?.localisation ? `${propertyDetails.localisation.city}, ${propertyDetails.localisation.address}` : 'Localisation non disponible',
+        owner: propertyDetails?.owner
       };
 
-      console.log("Submitting booking request with payload:", bookingPayload);
-      console.log("Using token:", token ? `${token.substring(0, 20)}...` : "No token");
-
-      const bookingResponse = await api.post(
-        `${API_BASE_URL}/booking`,
-        bookingPayload,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      console.log("Booking response:", bookingResponse.status, bookingResponse.data);
-
-      const bookingData = bookingResponse?.data || {};
-      const httpOk = bookingResponse?.status >= 200 && bookingResponse?.status < 300;
-      const createdOk = bookingData.success === true || Boolean(bookingData.bookingId) || Boolean(bookingData.booking && bookingData.booking._id) || Boolean(bookingData._id || bookingData.id);
-      if (!httpOk) {
-        throw new Error(bookingData.message || "Booking creation failed");
-      }
-      if (!createdOk) {
-        console.warn("Booking created (HTTP OK) but response body missing identifiers; proceeding without bookingId");
-      }
-
-      const bookingId = bookingData.bookingId || bookingData.booking?._id || bookingData._id || bookingData.id || null;
-
-      const senderId = bookingData.userId || (localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user"))._id : null);
-
-      if (!senderId) {
-        console.warn("User ID not found for conversation; booking created but chat will be skipped");
-      }
-
-      // Step 2 (best-effort): Create conversation
-      let conversationId = null;
-      try {
-        if (senderId && hostId) {
-          const conversationPayload = { senderId, receiverId: hostId };
-          console.log("Creating conversation with payload:", conversationPayload);
-          const conversationResponse = await api.post(
-            `${API_BASE_URL}/chat/conversation`,
-            conversationPayload,
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-          conversationId = conversationResponse.data._id;
-        }
-      } catch (err) {
-        console.warn("Non-blocking: failed to create conversation", err?.response?.data || err.message);
-      }
-
-      // Step 3 (best-effort): Send guest message
-      if (conversationId) {
-        try {
-          const messagePayload = {
-            conversationId,
-            senderId,
-            text: `Booking request for property ${propertyId}: ${guestMessage}`,
-          };
-          await api.post(
-            `${API_BASE_URL}/chat/message`,
-            messagePayload,
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-        } catch (err) {
-          console.warn("Non-blocking: failed to send chat message", err?.response?.data || err.message);
-        }
-      }
-
-      // Step 4: Always navigate after successful booking
-      navigate(`/chat/${hostId}`, {
-        state: {
-          chatData: {
-            recipientId: hostId,
-            avatar: hostPhoto || "A",
-            sender: hostName || "Hôte",
-          },
-          conversationId,
-          bookingId,
-          propertyId,
-          guestMessage,
-          message: "Booking request sent successfully!",
-        },
+      await addToCart({
+        itemType: 'property',
+        itemId: propertyId,
+        checkIn: localCheckIn,
+        checkOut: localCheckOut,
+        guests: Number(guests),
+        guestMessage,
+        subtotal: total,
+        totalNights: nights,
+        pricePerNight,
+        itemSnapshot
       });
-    } catch (err) {
-      console.error("Booking error:", err);
-      const backendMsg = err?.response?.data?.message || err?.response?.data?.error;
-      const friendly = backendMsg || "Booking successful sent!";
-      setError(friendly);
+
+      setAddedToCart(true);
+      navigate('/cart/add-success', { state: { from: 'booking-request', propertyId } });
+    } catch (e) {
+      console.error('Add to cart failed:', e);
+      setError(e.message || "Échec de l'ajout au panier");
     } finally {
       setLoading(false);
     }
@@ -628,152 +421,7 @@ export default function BookingRequest() {
               />
             </div>
 
-            {/* Payment Section */}
-            <div className={`bg-white p-6 rounded-lg shadow-sm ${fieldErrors.paymentMethod ? 'border-2 border-red-500' : ''}`}>
-              <h2 className={`text-xl font-semibold mb-4 ${fieldErrors.paymentMethod ? 'text-red-600' : 'text-gray-800'}`}>
-                Méthode de paiement {fieldErrors.paymentMethod && <span className="text-red-500">*</span>}
-              </h2>
-              
-              {/* Payment Method Selection */}
-              <div className="space-y-3 mb-6">
-                <div className={`flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                  paymentMethod === "cash" 
-                    ? "border-green-500 bg-green-50" 
-                    : "border-gray-200 hover:border-gray-300"
-                }`} onClick={() => handlePaymentMethodChange("cash")}>
-                  <input
-                    type="radio"
-                    id="cash"
-                    name="paymentMethod"
-                    value="cash"
-                    checked={paymentMethod === "cash"}
-                    onChange={(e) => handlePaymentMethodChange(e.target.value)}
-                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
-                  />
-                  <label htmlFor="cash" className="ml-3 flex items-center cursor-pointer">
-                    <svg className={`w-5 h-5 mr-2 ${paymentMethod === "cash" ? "text-green-600" : "text-gray-400"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    <span className={`font-medium ${paymentMethod === "cash" ? "text-green-800" : "text-gray-700"}`}>
-                      Paiement en espèces
-                    </span>
-                  </label>
-                </div>
-                <div className={`flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                  paymentMethod === "card" 
-                    ? "border-green-500 bg-green-50" 
-                    : "border-gray-200 hover:border-gray-300"
-                }`} onClick={() => handlePaymentMethodChange("card")}>
-                  <input
-                    type="radio"
-                    id="card"
-                    name="paymentMethod"
-                    value="card"
-                    checked={paymentMethod === "card"}
-                    onChange={(e) => handlePaymentMethodChange(e.target.value)}
-                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
-                  />
-                  <label htmlFor="card" className="ml-3 flex items-center cursor-pointer">
-                    <svg className={`w-5 h-5 mr-2 ${paymentMethod === "card" ? "text-green-600" : "text-gray-400"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                    </svg>
-                    <span className={`font-medium ${paymentMethod === "card" ? "text-green-800" : "text-gray-700"}`}>
-                      Paiement par carte
-                    </span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Card Details Form */}
-              {paymentMethod === "card" && (
-                <div className={`border-t pt-6 ${fieldErrors.cardDetails ? 'border-red-200' : ''}`}>
-                  <h3 className={`text-lg font-medium mb-4 ${fieldErrors.cardDetails ? 'text-red-600' : 'text-gray-800'}`}>
-                    Détails de la carte {fieldErrors.cardDetails && <span className="text-red-500">*</span>}
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="md:col-span-2">
-                      <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-700 mb-2">
-                        Numéro de carte
-                      </label>
-                      <input
-                        type="text"
-                        id="cardNumber"
-                        value={cardDetails.cardNumber}
-                        onChange={(e) => handleCardDetailsChange('cardNumber', formatCardNumber(e.target.value))}
-                        placeholder="1234 5678 9012 3456"
-                        maxLength="19"
-                        className={`w-full border p-3 rounded-lg focus:ring-2 focus:border-transparent ${
-                          fieldErrors.cardDetails 
-                            ? 'border-red-500 focus:ring-red-500' 
-                            : 'border-gray-300 focus:ring-green-500'
-                        }`}
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-700 mb-2">
-                        Date d'expiration
-                      </label>
-                      <input
-                        type="text"
-                        id="expiryDate"
-                        value={cardDetails.expiryDate}
-                        onChange={(e) => handleCardDetailsChange('expiryDate', formatExpiryDate(e.target.value))}
-                        placeholder="MM/AA"
-                        maxLength="5"
-                        className={`w-full border p-3 rounded-lg focus:ring-2 focus:border-transparent ${
-                          fieldErrors.cardDetails 
-                            ? 'border-red-500 focus:ring-red-500' 
-                            : 'border-gray-300 focus:ring-green-500'
-                        }`}
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="cvv" className="block text-sm font-medium text-gray-700 mb-2">
-                        CVV
-                      </label>
-                      <input
-                        type="text"
-                        id="cvv"
-                        value={cardDetails.cvv}
-                        onChange={(e) => handleCardDetailsChange('cvv', e.target.value.replace(/\D/g, ''))}
-                        placeholder="123"
-                        maxLength="4"
-                        className={`w-full border p-3 rounded-lg focus:ring-2 focus:border-transparent ${
-                          fieldErrors.cardDetails 
-                            ? 'border-red-500 focus:ring-red-500' 
-                            : 'border-gray-300 focus:ring-green-500'
-                        }`}
-                      />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label htmlFor="cardholderName" className="block text-sm font-medium text-gray-700 mb-2">
-                        Nom du titulaire
-                      </label>
-                      <input
-                        type="text"
-                        id="cardholderName"
-                        value={cardDetails.cardholderName}
-                        onChange={(e) => handleCardDetailsChange('cardholderName', e.target.value)}
-                        placeholder="Nom comme indiqué sur la carte"
-                        className={`w-full border p-3 rounded-lg focus:ring-2 focus:border-transparent ${
-                          fieldErrors.cardDetails 
-                            ? 'border-red-500 focus:ring-red-500' 
-                            : 'border-gray-300 focus:ring-green-500'
-                        }`}
-                      />
-                    </div>
-                  </div>
-                  <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-blue-700">
-                      <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                      Vos informations de paiement sont sécurisées et chiffrées.
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
+            {/* Payment Section removed: reservation now added to cart */}
 
             {/* Confirmation */}
             <div className="bg-white p-6 rounded-lg shadow-sm">
@@ -781,11 +429,11 @@ export default function BookingRequest() {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Check-in:</span>
-                  <span className="font-medium">{localCheckIn || "N/A"}</span>
+                  <span className="font-medium">{localCheckIn ? formatIsoDate(localCheckIn) : "N/A"}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Check-out:</span>
-                  <span className="font-medium">{localCheckOut || "N/A"}</span>
+                  <span className="font-medium">{localCheckOut ? formatIsoDate(localCheckOut) : "N/A"}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Invités:</span>
@@ -800,18 +448,6 @@ export default function BookingRequest() {
                     <span className="text-gray-600">Photos d'identité:</span>
                     <span className="font-medium text-sm">{idPhotos.length} photo{idPhotos.length > 1 ? 's' : ''}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Paiement:</span>
-                    <span className="font-medium text-sm">
-                      {paymentMethod === "cash" ? "En espèces" : 
-                       paymentMethod === "card" ? "Par carte" : "Non sélectionné"}
-                      {paymentMethod === "card" && cardDetails.cardNumber && (
-                        <span className="ml-2 text-xs text-gray-500">
-                          (****{cardDetails.cardNumber.slice(-4)})
-                        </span>
-                      )}
-                    </span>
-                  </div>
                 </div>
             </div>
           </div>
@@ -825,15 +461,33 @@ export default function BookingRequest() {
                 Annuler
               </button>
               <button
-                onClick={handleSubmit}
-                disabled={loading}
-                className={`flex-1 py-3 px-6 rounded-lg text-white font-semibold ${
-                  loading ? "bg-gray-400" : "bg-green-800 hover:bg-green-900"
-                } transition`}
+                onClick={handleAddToCart}
+                disabled={
+                  loading ||
+                  !localCheckIn ||
+                  !localCheckOut ||
+                  !guests ||
+                  idPhotosUploading ||
+                  !idPhotos || idPhotos.length === 0 ||
+                  !guestMessage || guestMessage.trim().length === 0
+                }
+                className={`flex-1 py-3 px-6 rounded-lg text-white font-semibold transition ${
+                  loading ||
+                  !localCheckIn ||
+                  !localCheckOut ||
+                  !guests ||
+                  idPhotosUploading ||
+                  !idPhotos || idPhotos.length === 0 ||
+                  !guestMessage || guestMessage.trim().length === 0
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-green-800 hover:bg-green-900'
+                }`}
               >
-                {loading ? "Envoi..." : "Confirmer la demande"}
+                {loading ? "Ajout..." : "Ajouter au panier"}
               </button>
             </div>
+
+            {/* Success prompt moved to dedicated page */}
           </div>
 
           {/* Right Section - Property Information */}
@@ -942,11 +596,11 @@ export default function BookingRequest() {
                   <div className="space-y-3">
                     <div className="flex justify-between items-center py-2 border-b border-gray-100">
                       <span className="text-gray-600">Check-in:</span>
-                      <span className="font-medium text-gray-800">{localCheckIn || "N/A"}</span>
+                      <span className="font-medium text-gray-800">{localCheckIn ? formatIsoDate(localCheckIn) : "N/A"}</span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-gray-100">
                       <span className="text-gray-600">Check-out:</span>
-                      <span className="font-medium text-gray-800">{localCheckOut || "N/A"}</span>
+                      <span className="font-medium text-gray-800">{localCheckOut ? formatIsoDate(localCheckOut) : "N/A"}</span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-gray-100">
                       <span className="text-gray-600">Invités:</span>
@@ -1021,13 +675,44 @@ export default function BookingRequest() {
 
       {/* Calendar Modal */}
       {showCalendar && (
-        <ReservationCalendar
-          propertyId={propertyId}
-          onDateSelect={handleDateSelection}
-          onClose={() => setShowCalendar(false)}
-          initialCheckIn={localCheckIn}
-          initialCheckOut={localCheckOut}
-        />
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-center justify-center p-4">
+          <div className="max-w-lg w-full">
+            <DateRangeCalendar
+              title="Sélectionner les dates"
+              initialCheckIn={localCheckIn}
+              initialCheckOut={localCheckOut}
+              fetchAvailability={async () => {
+                try {
+                  // Use booking status endpoint to get active booking ranges
+                  const res = await api.get(`/api/booking/status/${propertyId}`);
+                  const ranges = res?.data?.unavailableDates || [];
+                  const blocked = [];
+                  const boundaryCheckIns = [];
+                  const fullyBlockedBoundaries = [];
+                  for (const r of ranges) {
+                    const start = new Date(r.checkIn);
+                    const end = new Date(r.checkOut);
+                    boundaryCheckIns.push(new Date(Date.UTC(start.getFullYear(), start.getMonth(), start.getDate())).toISOString());
+                    for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
+                      blocked.push(new Date(d).toISOString());
+                    }
+                  }
+                  const starts = new Set(boundaryCheckIns);
+                  for (const r of ranges) {
+                    const out = new Date(r.checkOut);
+                    const outIso = new Date(Date.UTC(out.getFullYear(), out.getMonth(), out.getDate())).toISOString();
+                    if (starts.has(outIso)) fullyBlockedBoundaries.push(outIso);
+                  }
+                  return { blockedDates: blocked, boundaryCheckIns, fullyBlockedBoundaries };
+                } catch (_) {
+                  return [];
+                }
+              }}
+              onApply={(startIso, endIso) => handleDateSelection(startIso, endIso)}
+              onClose={() => setShowCalendar(false)}
+            />
+          </div>
+        </div>
       )}
     </div>
   );
