@@ -9,17 +9,20 @@ const CartIcon = ({ onClick, className = "" }) => {
   return (
     <button
       onClick={onClick}
-      className={`relative flex flex-col items-center justify-center text-xs transition-colors duration-200 focus:outline-none ${className}`}
+      className={`relative inline-flex md:flex-row flex-col items-center justify-center md:px-4 px-3 md:py-2 py-2 rounded-lg text-gray-600 hover:text-green-700 hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600 ${className}`}
       aria-label={`Shopping cart with ${itemCount} items`}
       type="button"
+      title="Panier"
     >
-      <ShoppingCartIcon className="w-5 h-5 mb-1 stroke-current" />
-      <span className="text-xs">Panier</span>
-      {itemCount > 0 && (
-        <span className="absolute -top-1 -right-1 bg-primary-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-medium text-[10px]">
-          {itemCount > 99 ? '99+' : itemCount}
-        </span>
-      )}
+      <span className="relative inline-flex items-center justify-center">
+        <ShoppingCartIcon className="w-6 h-6 md:mb-0 mb-1 stroke-current" />
+        {itemCount > 0 && (
+          <span className="absolute -top-1.5 -right-1.5 bg-green-600 text-white rounded-full h-5 w-5 flex items-center justify-center font-semibold text-[10px] ring-2 ring-white shadow">
+            {itemCount > 99 ? '99+' : itemCount}
+          </span>
+        )}
+      </span>
+      <span className="md:ml-3 text-[11px] md:text-xs font-medium">Panier</span>
     </button>
   );
 };

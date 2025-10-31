@@ -504,6 +504,16 @@ export default function PartnerDashboard() {
     await fetchBlockedProperties();
   };
 
+  const handleUnblock = async (propertyId) => {
+    try {
+      await apiCall(`/partner/unblock-property/${propertyId}`, { method: 'DELETE' });
+      await fetchBlockedProperties();
+    } catch (e) {
+      console.error('Error unblocking property', e);
+      alert('Erreur lors du déblocage');
+    }
+  };
+
   const stats = {
     totalProperties: properties.length,
     publishedProperties: properties.filter(p => p && p.status === 'published').length,
@@ -897,15 +907,23 @@ export default function PartnerDashboard() {
                             </div>
                           )}
 
-                          <button
-                            onClick={() => {
-                              setShowBlockedModal(false);
-                              navigate(`/blocking-preview/${property._id}`);
-                            }}
-                            className="text-orange-600 hover:text-orange-700 text-sm font-medium"
-                          >
-                            Voir détails
-                          </button>
+                          <div className="flex items-center space-x-4">
+                            <button
+                              onClick={() => handleUnblock(property._id)}
+                              className="text-red-600 hover:text-red-700 text-sm font-medium"
+                            >
+                              Débloquer
+                            </button>
+                            <button
+                              onClick={() => {
+                                setShowBlockedModal(false);
+                                navigate(`/blocking-preview/${property._id}`);
+                              }}
+                              className="text-orange-600 hover:text-orange-700 text-sm font-medium"
+                            >
+                              Voir détails
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>

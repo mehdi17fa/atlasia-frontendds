@@ -241,7 +241,7 @@ export default function PropertyLayout({
     <div className="relative min-h-screen">
       {/* Desktop Header */}
       <div className="hidden md:flex items-center justify-between px-6 py-4 bg-white shadow-sm sticky top-0 z-10">
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4 ml-12">
           <button
             onClick={() => navigate('/')}
             className="text-2xl font-bold text-green-800 hover:text-green-600 transition-colors"

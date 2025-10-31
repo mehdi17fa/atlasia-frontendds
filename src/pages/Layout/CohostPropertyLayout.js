@@ -78,28 +78,22 @@ const CoHostPropertyLayout = ({
       <div className="text-center mb-6">
         <button
           onClick={onCoHostClick}
-          disabled={requestSent}
+          disabled={mode === 'block' && requestSent}
           className={`rounded-2xl px-6 py-3 font-semibold shadow flex items-center justify-center mx-auto transition-colors ${
-            requestSent
-              ? 'bg-gray-200 text-gray-600 cursor-not-allowed'
-              : mode === "booking"
+            mode === 'booking'
               ? 'bg-green-600 hover:bg-green-700 text-white'
-              : mode === "block"
+              : mode === 'block' && requestSent
+              ? 'bg-gray-200 text-gray-600 cursor-not-allowed'
+              : mode === 'block'
               ? 'bg-red-700 hover:bg-red-800 text-white'
               : 'bg-blue-700 hover:bg-blue-800 text-white'
           }`}
         >
-          {mode === "booking"
-            ? requestSent
-              ? "Réservé"
-              : "Réserver maintenant"
-            : mode === "block"
-            ? requestSent
-              ? "Bloqué"
-              : "Bloquer pour 15min"
-            : requestSent
-            ? "Demande envoyée"
-            : "Co-héberger"}
+          {mode === 'booking'
+            ? 'Réserver maintenant'
+            : mode === 'block'
+            ? (requestSent ? 'Bloqué' : 'Bloquer pour 15min')
+            : (requestSent ? 'Demande envoyée' : 'Co-héberger')}
         </button>
       </div>
 

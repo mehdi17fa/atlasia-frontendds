@@ -189,6 +189,18 @@ export default function BlockingPropertyPreview() {
     }
 
     try {
+      // Enforce single active block per partner
+      const existing = await api.get('/api/partner/blocked-properties', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (existing.data?.success && Array.isArray(existing.data.properties)) {
+        const otherBlocked = existing.data.properties.find(p => p._id !== propertyId);
+        if (otherBlocked) {
+          toast.error("Vous avez déjà bloqué une propriété. Débloquez-la d'abord.");
+          return;
+        }
+      }
+
       const res = await api.post(`/api/property/${propertyId}/block`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });

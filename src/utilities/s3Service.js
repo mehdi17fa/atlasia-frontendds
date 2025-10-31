@@ -1,4 +1,5 @@
 import { api } from '../api';
+import { tokenStorage } from '../utils/tokenStorage';
 
 /**
  * Frontend S3 Service
@@ -34,6 +35,18 @@ export const uploadFileToS3 = async (file, folder = 'general', onProgress = null
         }
       },
     };
+
+    // Ensure Authorization header is present for protected upload endpoint
+    try {
+      const { accessToken } = tokenStorage.getTokens();
+      const ctxToken = typeof window !== 'undefined' ? window.authContextToken : null;
+      const token = accessToken || ctxToken;
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch (_) {
+      // Non-fatal; interceptor may still add the header
+    }
 
     console.log('📤 Making API call to /api/upload with config:', config);
     const response = await api.post('/api/upload', formData, config);
