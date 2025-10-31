@@ -68,8 +68,7 @@ export default function CoHostPropertyPreview() {
   ].filter(Boolean);
 
   const associatedPacks = Array.isArray(property.associatedPacks) ? property.associatedPacks : [];
-
-  const mapImage = "/map-placeholder.jpg";
+  const locationLabel = `${property.localisation?.city || ""}${property.localisation?.address ? ", " + property.localisation.address : ""}`;
 
   const owner = property.owner || {};
   const computedOwnerName = owner.displayName 
@@ -116,7 +115,7 @@ export default function CoHostPropertyPreview() {
       <Toaster position="top-right" reverseOrder={false} />
       <CoHostPropertyLayout
         title={property.title}
-        location={`${property.localisation?.city || ""}${property.localisation?.address ? ", " + property.localisation.address : ""}`}
+        location={locationLabel}
         rating={5}
         reviewCount={property.reviews?.length || 0}
         mainImage={property.photos?.[0] || "/placeholder1.jpg"}
@@ -124,7 +123,7 @@ export default function CoHostPropertyPreview() {
         checkInTime="15:00"
         features={features}
         associatedPacks={associatedPacks}
-        mapImage={mapImage}
+        mapLocation={locationLabel}
         reviews={property.reviews || []}
         user={user}
         onCoHostClick={handleCoHostClick}

@@ -1,6 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import S3Image from "../../components/S3Image";
+import SinglePropertyMap from "../../components/SinglePropertyMap";
 
 const CoHostPropertyLayout = ({
   title,
@@ -12,13 +13,14 @@ const CoHostPropertyLayout = ({
   checkInTime,
   features,
   associatedPacks,
-  mapImage,
+  mapLocation,
   reviews,
   user,
   onCoHostClick,
   requestSent,
   mode = "cohost",
 }) => {
+  const resolvedMapLocation = mapLocation || location;
   return (
     <div className="max-w-7xl mx-auto p-6 pb-28">
       {/* Header */}
@@ -112,14 +114,10 @@ const CoHostPropertyLayout = ({
       )}
 
       {/* Map */}
-      {mapImage && (
+      {resolvedMapLocation && (
         <div className="mb-4">
           <h2 className="text-xl font-semibold mb-2">Localisation</h2>
-          <img
-            src={mapImage}
-            alt="Carte de localisation"
-            className="w-full h-64 object-cover rounded-lg"
-          />
+          <SinglePropertyMap location={resolvedMapLocation} />
         </div>
       )}
 
@@ -174,7 +172,7 @@ CoHostPropertyLayout.propTypes = {
       description: PropTypes.string,
     })
   ),
-  mapImage: PropTypes.string,
+  mapLocation: PropTypes.string,
   reviews: PropTypes.arrayOf(
     PropTypes.shape({
       comment: PropTypes.string,

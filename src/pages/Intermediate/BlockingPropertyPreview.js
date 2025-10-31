@@ -161,9 +161,9 @@ export default function BlockingPropertyPreview() {
 
   const associatedPacks = Array.isArray(property.associatedPacks) ? property.associatedPacks : [];
 
-  const mapImage = "/map-placeholder.jpg";
-
   const owner = property.owner || {};
+  const locationLabel = `${property.localisation?.city || ""}${property.localisation?.address ? ", " + property.localisation.address : ""}`;
+
   const computedOwnerName = owner.displayName 
     || owner.fullName 
     || [owner.firstName, owner.lastName].filter(Boolean).join(' ')
@@ -297,7 +297,7 @@ export default function BlockingPropertyPreview() {
       <Toaster position="top-right" reverseOrder={false} />
       <CoHostPropertyLayout
         title={property.title}
-        location={`${property.localisation?.city || ""}${property.localisation?.address ? ", " + property.localisation.address : ""}`}
+        location={locationLabel}
         rating={5}
         reviewCount={property.reviews?.length || 0}
         mainImage={property.photos?.[0] || "/placeholder1.jpg"}
@@ -305,7 +305,7 @@ export default function BlockingPropertyPreview() {
         checkInTime="15:00"
         features={features}
         associatedPacks={associatedPacks}
-        mapImage={mapImage}
+        mapLocation={locationLabel}
         reviews={property.reviews || []}
         user={user}
         onCoHostClick={isBlocked ? handleBookClick : handleBlockClick}

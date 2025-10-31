@@ -1,4 +1,4 @@
- import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const navItems = [
@@ -10,15 +10,6 @@ const navItems = [
       </svg>
     ),
     path: '/owner-welcome',
-  },
-  {
-    name: 'Panier',
-    icon: (
-      <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 3h2l.4 2M7 13h10l3-7H6.4M7 13l-2 7h12M7 13L5.4 5M17 21a1 1 0 100-2 1 1 0 000 2zM9 21a1 1 0 100-2 1 1 0 000 2z" />
-      </svg>
-    ),
-    path: '/cart/checkout',
   },
   {
     name: 'Activités',
@@ -63,6 +54,13 @@ export default function Navbar() {
   const navigate = useNavigate();
   const [isDesktopOpen, setIsDesktopOpen] = useState(false);
 
+  const homePath = '/owner-welcome';
+  const toggleDesktopNav = () => setIsDesktopOpen((v) => !v);
+  const handleLogoClick = () => {
+    navigate(homePath);
+    setIsDesktopOpen(false);
+  };
+
   // ✅ Hide navbar on all routes like /chat/anything
   const isChatPage = /^\/chat\/[^/]+$/.test(location.pathname);
   if (isChatPage) return null;
@@ -73,11 +71,11 @@ export default function Navbar() {
       <button
         type="button"
         aria-label="Open menu"
-        className="hidden md:flex fixed top-5 left-3 z-[60] items-center justify-center w-10 h-10 rounded-md border border-gray-300 bg-white shadow"
-        onClick={() => setIsDesktopOpen((v) => !v)}
+        className="hidden md:flex fixed top-5 left-3 z-[60] items-center justify-center w-12 h-12 rounded-lg border border-gray-300 bg-white shadow transition-colors hover:border-gray-400"
+        onClick={toggleDesktopNav}
       >
         <svg
-          className="w-5 h-5 text-gray-800"
+          className="w-6 h-6 text-gray-800"
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -96,20 +94,56 @@ export default function Navbar() {
         />
       )}
 
-      <nav className={`fixed md:top-0 md:left-0 md:min-h-screen md:bg-white md:border-r md:border-gray-200 bottom-0 w-full bg-white border-t border-gray-200 z-[70] md:transition-all md:duration-300 md:transform ${isDesktopOpen ? 'md:translate-x-0 md:w-64' : 'md:-translate-x-full md:w-0'}`}>
-        <div className="flex md:flex-col flex justify-around md:h-full md:py-4 py-2">
+      <nav
+        className={`fixed md:top-0 md:left-0 md:min-h-screen md:bg-white md:border-r md:border-gray-200 bottom-0 w-full bg-white border-t border-gray-200 z-[70] md:transition-all md:duration-300 md:transform ${
+          isDesktopOpen ? 'md:translate-x-0 md:w-64' : 'md:-translate-x-full md:w-0'
+        }`}
+      >
+        <div className="hidden md:flex items-center gap-4 px-5 py-6 border-b border-gray-200">
+          <button
+            type="button"
+            aria-label={isDesktopOpen ? 'Close menu' : 'Open menu'}
+            className="flex items-center justify-center w-12 h-12 rounded-lg border border-gray-300 bg-white shadow transition-colors hover:border-gray-400"
+            onClick={toggleDesktopNav}
+          >
+            <svg
+              className="w-6 h-6 text-gray-800"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M3 6h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              <path d="M3 12h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              <path d="M3 18h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            onClick={handleLogoClick}
+            className="text-2xl font-bold tracking-wide text-green-700"
+            aria-label="Aller à l'accueil propriétaire"
+          >
+            ATLASIA
+          </button>
+        </div>
+
+        <div className="flex md:flex-col md:items-stretch md:justify-start flex justify-around md:py-4 py-2 md:space-y-1">
           {navItems.map((item, idx) => {
             const isActive = location.pathname === item.path;
             return (
               <button
                 key={item.name}
-                onClick={() => { navigate(item.path); setIsDesktopOpen(false); }}
+                onClick={() => {
+                  navigate(item.path);
+                  setIsDesktopOpen(false);
+                }}
                 className={`
-                  flex md:flex-row flex-col items-center justify-center md:justify-start md:px-4 ${isActive ? 'text-base' : 'text-sm'}
+                  flex md:flex-row flex-col items-center justify-center md:justify-start md:w-full md:px-5 md:py-3 ${isActive ? 'text-base' : 'text-sm'}
                   transition-colors duration-200
                   focus:outline-none
                   ${isActive ? 'text-green-700' : 'text-gray-500 hover:text-green-600'}
                   md:transition md:duration-300 md:transform ${isDesktopOpen ? 'md:opacity-100 md:translate-y-0' : 'md:opacity-0 md:-translate-y-2'}
+                  md:gap-3
                 `}
                 style={{ transitionDelay: isDesktopOpen ? `${idx * 80}ms` : '0ms' }}
                 aria-current={isActive ? 'page' : undefined}
@@ -118,10 +152,10 @@ export default function Navbar() {
               >
                 {React.cloneElement(item.icon, {
                   className: isActive
-                    ? 'w-8 h-8 md:mr-3 mb-1 md:mb-0 stroke-green-700'
-                    : 'w-5 h-5 mb-1 stroke-gray-500',
+                    ? 'w-8 h-8 mb-1 md:mb-0 stroke-green-700'
+                    : 'w-5 h-5 mb-1 md:mb-0 stroke-gray-500',
                 })}
-                <span className="md:ml-3">{item.name}</span>
+                <span className="md:text-left md:font-medium md:uppercase md:text-[13px] md:leading-none">{item.name}</span>
               </button>
             );
           })}
