@@ -93,6 +93,7 @@ import ExploreLayout from './pages/Layout/Layout';
 import CohostPropertyLayout from './pages/Layout/CohostPropertyLayout';
 import VillaMakarska from './pages/Propriétés 3/VillaMakarska';
 import EditProfileScreen from './pages/Profile/EditProfile';
+import B2BProfile from './pages/Profile/B2BProfile';
 import DocumentUpload from './utilities/DocumentUpload';
 
 // Admin Dashboard
@@ -234,8 +235,9 @@ function App() {
         <Route path="/welcomescreen" element={<ProtectedRoute requireAuth={false}><WelcomeScreen /></ProtectedRoute>} />
 
         {/* User sections - Require authentication */}
-        <Route path="/profile" element={<ProtectedRoute allowedRoles={['owner', 'partner', 'intermediate', 'tourist', 'user']}><Profile /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute allowedRoles={['owner', 'partner', 'intermediate', 'tourist', 'user', 'b2b']}><Profile /></ProtectedRoute>} />
         <Route path="/edit-profile" element={<ProtectedRoute allowedRoles={['owner', 'partner', 'intermediate', 'tourist', 'user']}><EditProfileScreen /></ProtectedRoute>} />
+        <Route path="/b2b-profile" element={<ProtectedRoute allowedRoles={['b2b']}><B2BProfile /></ProtectedRoute>} />
         <Route path="/favorites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
         <Route path="/test-upload" element={<ProtectedRoute><TestDocumentUpload /></ProtectedRoute>} />
         <Route path="/partner-welcome" element={<ProtectedRoute allowedRoles={['partner', 'intermediate']}><HomeIntermédiaire /></ProtectedRoute>} />

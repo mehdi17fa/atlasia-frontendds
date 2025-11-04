@@ -81,8 +81,10 @@ export default function LoginScreen({onClose, currentLocation}) {
         
         if (response.data.user.role === 'owner') {
           navigate(targetUrl || '/owner-welcome');
-        } else if (response.data.user.role === 'partner') {
+        } else if (response.data.user.role === 'partner' || response.data.user.role === 'intermediate') {
           navigate(targetUrl || '/partner-welcome');
+        } else if (response.data.user.role === 'b2b') {
+          navigate(targetUrl || '/b2b-profile');
         } else {
           // For tourists and other roles, go to target URL or home page
           navigate(targetUrl || '/');
