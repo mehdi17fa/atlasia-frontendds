@@ -127,12 +127,16 @@ export default function SignUpWizard() {
   const handleFinishProfile = async () => {
     if (!isProfileFormValid) return;
     try {
+      // Map French gender values to English for backend
+      const genderMap = { 'Homme': 'Male', 'Femme': 'Female' };
+      const mappedGender = genderMap[gender] || gender;
+      
       const formData = new FormData();
       formData.append('email', email);
       formData.append('fullName', fullName);
       formData.append('phoneNumber', selectedCountry.code + phoneNumber);
       formData.append('country', selectedCountry.name);
-      formData.append('gender', gender);
+      formData.append('gender', mappedGender);
       formData.append('profileType', profileType);
       if (profileImage) formData.append('profilePic', profileImage);
 

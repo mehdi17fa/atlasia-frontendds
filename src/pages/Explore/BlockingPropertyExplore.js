@@ -58,12 +58,22 @@ export default function BlockingPropertyExplore() {
   };
 
   if (loading) {
-    return <p className="text-center mt-20">Chargement...</p>;
+    return (
+      <>
+        {/* White background bar at top for desktop - prevents content overlap when scrolling */}
+        <div className="hidden md:block fixed top-0 left-0 right-0 h-20 bg-white z-30"></div>
+        <p className="text-center md:pt-28 mt-20">Chargement...</p>
+      </>
+    );
   }
 
   if (error) {
     return (
-      <div className="px-4 py-8 max-w-4xl mx-auto">
+      <>
+        {/* White background bar at top for desktop - prevents content overlap when scrolling */}
+        <div className="hidden md:block fixed top-0 left-0 right-0 h-20 bg-white z-30"></div>
+        
+        <div className="px-4 md:pt-28 py-8 max-w-4xl mx-auto">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
           <h3 className="text-red-800 font-semibold mb-2">Erreur</h3>
           <p>{error}</p>
@@ -75,13 +85,17 @@ export default function BlockingPropertyExplore() {
           Retour au tableau de bord
         </button>
       </div>
+      </>
     );
   }
 
   return (
     <>
       <Toaster position="top-right" reverseOrder={false} />
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      {/* White background bar at top for desktop - prevents content overlap when scrolling */}
+      <div className="hidden md:block fixed top-0 left-0 right-0 h-20 bg-white z-30"></div>
+      
+      <div className="max-w-6xl mx-auto px-4 md:pt-28 py-8">
         <h1 className="text-3xl font-bold mb-6">Explorer les propriétés pour blocage</h1>
         {properties.length === 0 ? (
           <p className="text-gray-500">Aucune propriété disponible pour le blocage.</p>

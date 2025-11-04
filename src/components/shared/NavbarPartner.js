@@ -120,25 +120,6 @@ export default function Navbar() {
 
   return (
     <>
-      {/* Desktop hamburger toggle (top-left) */}
-      <button
-        type="button"
-        aria-label="Open menu"
-        className="hidden md:flex fixed top-5 left-3 z-[60] items-center justify-center w-12 h-12 rounded-lg border border-gray-300 bg-white shadow transition-colors hover:border-gray-400"
-        onClick={toggleDesktopNav}
-      >
-        <svg
-          className="w-6 h-6 text-gray-800"
-          viewBox="0 0 24 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path d="M3 6h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          <path d="M3 12h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          <path d="M3 18h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        </svg>
-      </button>
-
       {/* Dark overlay when desktop nav is open */}
       {isDesktopOpen && (
         <div
@@ -176,7 +157,7 @@ export default function Navbar() {
           <button
             type="button"
             aria-label={isDesktopOpen ? 'Close menu' : 'Open menu'}
-            className="flex items-center justify-center w-12 h-12 rounded-lg border border-gray-300 bg-white shadow transition-colors hover:border-gray-400"
+            className="flex items-center justify-center w-12 h-12 min-w-12 flex-shrink-0 rounded-lg border border-gray-300 bg-white shadow transition-colors hover:border-gray-400"
             onClick={toggleDesktopNav}
           >
             <svg

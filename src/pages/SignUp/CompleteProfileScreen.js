@@ -72,6 +72,10 @@ const handleFinish = async () => {
   if (!isFormValid) return;
 
   try {
+    // Map French gender values to English for backend
+    const genderMap = { 'Homme': 'Male', 'Femme': 'Female' };
+    const mappedGender = genderMap[gender] || gender;
+    
     const formData = new FormData();
     const signupEmail = localStorage.getItem('signupEmail') || '';
 
@@ -79,7 +83,7 @@ const handleFinish = async () => {
     formData.append('fullName', fullName);
     formData.append('phoneNumber', selectedCountry.code + phoneNumber);
     formData.append('country', selectedCountry.name);
-    formData.append('gender', gender);
+    formData.append('gender', mappedGender);
     formData.append('profileType', profileType);
     if (profileImage) formData.append('profilePic', profileImage);
 

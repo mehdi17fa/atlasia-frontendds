@@ -94,13 +94,6 @@ export default function CohostingExplore() {
               <FaArrowLeft className="w-5 h-5" />
             </button>
 
-            {/* Center: Atlasia Branding */}
-            <div className="text-center">
-              <div className="font-bold text-green-700 text-2xl">
-                Atlasia
-              </div>
-            </div>
-
             {/* Right: Account Icon */}
             <button
               onClick={() => navigate('/profile')}

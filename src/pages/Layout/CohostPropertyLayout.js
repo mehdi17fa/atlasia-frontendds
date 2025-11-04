@@ -19,6 +19,10 @@ const CoHostPropertyLayout = ({
   onCoHostClick,
   requestSent,
   mode = "cohost",
+  blockCheckIn,
+  blockCheckOut,
+  onBlockDatesChange,
+  blockDatesError,
 }) => {
   const resolvedMapLocation = mapLocation || location;
   return (
@@ -113,6 +117,44 @@ const CoHostPropertyLayout = ({
         </div>
       )}
 
+      {mode === 'block' && (
+        <div className="mb-6 bg-gray-50 border border-gray-200 rounded-xl p-5">
+          <h2 className="text-xl font-semibold mb-3">Sélectionnez vos dates</h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Choisissez les dates d'arrivée et de départ souhaitées avant de bloquer cette propriété pendant 15 minutes.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="block-check-in">
+                Date d'arrivée
+              </label>
+              <input
+                id="block-check-in"
+                type="date"
+                value={blockCheckIn || ""}
+                onChange={(e) => onBlockDatesChange?.({ checkIn: e.target.value, checkOut: blockCheckOut })}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="block-check-out">
+                Date de départ
+              </label>
+              <input
+                id="block-check-out"
+                type="date"
+                value={blockCheckOut || ""}
+                onChange={(e) => onBlockDatesChange?.({ checkIn: blockCheckIn, checkOut: e.target.value })}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              />
+            </div>
+          </div>
+          {blockDatesError && (
+            <p className="mt-3 text-sm text-red-600">{blockDatesError}</p>
+          )}
+        </div>
+      )}
+
       {/* Map */}
       {resolvedMapLocation && (
         <div className="mb-4">
@@ -183,6 +225,10 @@ CoHostPropertyLayout.propTypes = {
   onCoHostClick: PropTypes.func,
   requestSent: PropTypes.bool,
   mode: PropTypes.oneOf(["cohost", "block", "booking", "blocked"]),
+  blockCheckIn: PropTypes.string,
+  blockCheckOut: PropTypes.string,
+  onBlockDatesChange: PropTypes.func,
+  blockDatesError: PropTypes.string,
 };
 
 export default CoHostPropertyLayout;

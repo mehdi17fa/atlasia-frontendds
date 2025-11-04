@@ -154,9 +154,10 @@ function ConditionalNavbar() {
   const location = useLocation();
   const { user } = useContext(AuthContext);
   const isChatPage = location.pathname.startsWith('/chat/');
+  const isCartCheckoutPage = location.pathname.startsWith('/cart/checkout');
 
-  // Don't show navbar on chat pages
-  if (isChatPage) return null;
+  // Don't show navbar on chat pages or cart checkout pages
+  if (isChatPage || isCartCheckoutPage) return null;
 
   // Don't show navbar if user is not logged in
   if (!user) return null;

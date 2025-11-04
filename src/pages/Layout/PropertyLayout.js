@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { ReactComponent as ArrowLeftIcon } from '../../assets/icons/arrow-left.svg';
 import { FaHeart } from "react-icons/fa";
 import S3Image from "../../components/S3Image";
 import ImageCarousel from "../../components/ImageCarousel";
@@ -32,9 +31,15 @@ export default function PropertyLayout({
   reviews,
   user,
   token,
+  propertyId: propertyIdProp,
+  initialCheckIn,
+  initialCheckOut,
+  onDatesChange,
+  ctaConfig,
 }) {
   const navigate = useNavigate();
-  const { id: propertyId } = useParams();
+  const params = useParams();
+  const propertyId = propertyIdProp || params?.id || params?.propertyId;
   const currentLocation = useLocation();
 
   const fallbackToken = localStorage.getItem('accessToken');
@@ -54,8 +59,8 @@ export default function PropertyLayout({
     return dayAfter.toISOString().split('T')[0];
   };
 
-  const [checkIn, setCheckIn] = useState(getTomorrow());
-  const [checkOut, setCheckOut] = useState(getDayAfter());
+  const [checkIn, setCheckIn] = useState(initialCheckIn !== undefined ? initialCheckIn : getTomorrow());
+  const [checkOut, setCheckOut] = useState(initialCheckOut !== undefined ? initialCheckOut : getDayAfter());
   const [guests, setGuests] = useState(1);
   const [error, setError] = useState(null);
   const [showReviewForm, setShowReviewForm] = useState(false);
@@ -67,6 +72,64 @@ export default function PropertyLayout({
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
   const [imageViewerIndex, setImageViewerIndex] = useState(0);
   const [showCalendar, setShowCalendar] = useState(false);
+
+  useEffect(() => {
+    if (initialCheckIn !== undefined) {
+      setCheckIn(initialCheckIn || "");
+    }
+  }, [initialCheckIn]);
+
+  useEffect(() => {
+    if (initialCheckOut !== undefined) {
+      setCheckOut(initialCheckOut || "");
+    }
+  }, [initialCheckOut]);
+
+  const ctaSettings = ctaConfig || {};
+  const {
+    title: ctaTitle,
+    buttonLabel: customButtonLabel,
+    buttonDisabled: customButtonDisabled,
+    buttonLoading: customButtonLoading,
+    buttonClassName: customButtonClassName,
+    onAction: customOnAction,
+    showGuestsInput: customShowGuestsInput,
+    infoMessage: customInfoMessage,
+    errorMessage: customErrorMessage,
+    subText: customSubText,
+  } = ctaSettings;
+
+  const shouldShowGuestsInput = ctaConfig ? (customShowGuestsInput ?? true) : true;
+  const guestsValid = !shouldShowGuestsInput || guests >= 1;
+  const resolvedCardTitle = ctaTitle || "Réserver ce logement";
+  const defaultButtonText = !isLoggedIn ? "🔒 Connectez-vous pour réserver" : "Réserver";
+  const resolvedButtonText = customButtonLabel || defaultButtonText;
+  const defaultDisabled = !isLoggedIn || !checkIn || !checkOut || !guestsValid;
+  const resolvedDisabled = typeof customButtonDisabled === "boolean" ? customButtonDisabled : defaultDisabled;
+  const finalButtonDisabled = resolvedDisabled || !!customButtonLoading;
+  const resolvedInfoMessage = customInfoMessage || null;
+  const resolvedSubText = customSubText !== undefined ? customSubText : "Vous ne serez pas encore débité";
+  const combinedError = customErrorMessage || error;
+
+  const buttonVisualClass = (() => {
+    if (customButtonClassName) {
+      return finalButtonDisabled
+        ? `${customButtonClassName} cursor-not-allowed opacity-60`
+        : customButtonClassName;
+    }
+    return finalButtonDisabled
+      ? "bg-gray-400 text-white cursor-not-allowed opacity-60"
+      : "bg-green-600 text-white hover:bg-green-700 shadow-md hover:shadow-lg";
+  })();
+
+  const handlePrimaryAction = () => {
+    if (customOnAction) {
+      setError("");
+      customOnAction({ checkIn, checkOut, guests });
+    } else {
+      handleBooking();
+    }
+  };
   
   const { isFavorited, toggleFavorite, isAuthenticated } = useFavorites();
   const { getPropertyReviews, submitReview, reviewableBookings } = useReviews();
@@ -177,9 +240,13 @@ export default function PropertyLayout({
     }
 
     // Check if required fields are filled
-    if (!checkIn || !checkOut || guests < 1) {
+    const guestsValid = shouldShowGuestsInput ? guests >= 1 : true;
+    if (!checkIn || !checkOut || !guestsValid) {
       console.log('❌ Missing required booking information');
-      setError('Veuillez sélectionner les dates d\'arrivée, de départ et le nombre d\'invités.');
+      const message = shouldShowGuestsInput
+        ? 'Veuillez sélectionner les dates d\'arrivée, de départ et le nombre d\'invités.'
+        : 'Veuillez sélectionner les dates d\'arrivée et de départ.';
+      setError(message);
       return;
     }
 
@@ -232,39 +299,20 @@ export default function PropertyLayout({
       const day = String(d.getUTCDate()).padStart(2, '0');
       return `${y}-${m}-${day}`;
     };
-    setCheckIn(toYMD(startIso));
-    setCheckOut(toYMD(endIso));
+    const nextCheckIn = toYMD(startIso);
+    const nextCheckOut = toYMD(endIso);
+    setCheckIn(nextCheckIn);
+    setCheckOut(nextCheckOut);
+    setError("");
+    onDatesChange?.({ checkIn: nextCheckIn, checkOut: nextCheckOut });
     setShowCalendar(false);
   };
 
   return (
     <div className="relative min-h-screen">
-      {/* Desktop Header */}
-      <div className="hidden md:flex items-center justify-between px-6 py-4 bg-white shadow-sm sticky top-0 z-10">
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={() => navigate('/')}
-            className="text-2xl font-bold text-green-800 hover:text-green-600 transition-colors"
-          >
-            ATLASIA
-          </button>
-        </div>
-        <div className="flex-1 max-w-3xl mx-10">
-          <div 
-            onClick={() => navigate('/search')}
-            className="bg-white border border-gray-300 rounded-full px-6 py-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-          >
-            <div className="flex items-center space-x-3">
-              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <span className="text-gray-500">Rechercher des destinations</span>
-            </div>
-          </div>
-        </div>
-        <div className="w-32"></div> {/* Spacer for balance */}
-      </div>
-
+      {/* White background bar at top for desktop - prevents content overlap when scrolling */}
+      <div className="hidden md:block fixed top-0 left-0 right-0 h-20 bg-white z-30"></div>
+      
       {/* Mobile Header */}
       <div className="md:hidden sticky top-0 z-50 bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -308,7 +356,7 @@ export default function PropertyLayout({
 
       {/* Desktop Two-Column Layout */}
       <div className="hidden lg:block">
-        <div className="max-w-7xl mx-auto px-6 py-6 pb-28">
+        <div className="max-w-7xl mx-auto px-6 pt-20 py-6 pb-28">
           <div className="flex gap-8">
             {/* Left Column - Main Content */}
             <div className="flex-1 space-y-8">
@@ -640,8 +688,13 @@ export default function PropertyLayout({
             <div className="w-80 flex-shrink-0">
               <div className="sticky top-1/2 -translate-y-1/2">
                 <div className="border rounded-2xl p-4 shadow-sm">
-                  <h2 className="font-semibold text-lg mb-3">Réserver ce logement</h2>
-                  {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
+                  <h2 className="font-semibold text-lg mb-3">{resolvedCardTitle}</h2>
+                  {combinedError && <p className="text-red-500 text-sm mb-3">{combinedError}</p>}
+                  {resolvedInfoMessage && (
+                    <p className="text-sm text-gray-600 mb-3 bg-green-50 border border-green-100 rounded-lg px-3 py-2">
+                      {resolvedInfoMessage}
+                    </p>
+                  )}
                   
                   {/* Reservation Widget - Vertical Layout for Desktop */}
                   <div className="bg-white rounded-xl border border-gray-200 p-4">
@@ -667,39 +720,43 @@ export default function PropertyLayout({
                       </button>
                       
                       {/* Guests */}
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">VOYAGEURS</label>
-                        <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-green-500">
-                          <input
-                            type="number"
-                            min="1"
-                            value={guests}
-                            onChange={(e) => setGuests(Number(e.target.value))}
-                            className="w-full text-lg font-medium text-gray-900 border-none outline-none bg-transparent"
-                          />
-                          <span className="text-gray-500 ml-1">{guests > 1 ? 'voyageurs' : 'voyageur'}</span>
+                      {shouldShowGuestsInput && (
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">VOYAGEURS</label>
+                          <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-green-500">
+                            <input
+                              type="number"
+                              min="1"
+                              value={guests}
+                              onChange={(e) => setGuests(Number(e.target.value))}
+                              className="w-full text-lg font-medium text-gray-900 border-none outline-none bg-transparent"
+                            />
+                            <span className="text-gray-500 ml-1">{guests > 1 ? 'voyageurs' : 'voyageur'}</span>
+                          </div>
                         </div>
-                      </div>
+                      )}
                       
                       {/* Reserve Button */}
                       <button
-                        onClick={handleBooking}
-                        disabled={!isLoggedIn || !checkIn || !checkOut || guests < 1}
-                        className={`w-full px-6 py-4 rounded-xl text-white font-semibold text-lg transition-all ${
-                          !isLoggedIn || !checkIn || !checkOut || guests < 1
-                            ? 'bg-gray-400 cursor-not-allowed opacity-60'
-                            : 'bg-green-600 hover:bg-green-700 shadow-md hover:shadow-lg'
-                        }`}
+                        onClick={handlePrimaryAction}
+                        disabled={finalButtonDisabled}
+                        className={`w-full px-6 py-4 rounded-xl font-semibold text-lg transition-all ${buttonVisualClass}`}
                       >
-                        {!isLoggedIn 
-                          ? '🔒 Connectez-vous pour réserver'
-                          : 'Réserver'
-                        }
+                        {customButtonLoading ? (
+                          <span className="flex items-center justify-center gap-2">
+                            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                            {resolvedButtonText}
+                          </span>
+                        ) : (
+                          resolvedButtonText
+                        )}
                       </button>
                     </div>
                     
                     {/* Disclaimer */}
-                    <p className="text-gray-500 text-sm mt-3 text-center">Vous ne serez pas encore débité</p>
+                    {resolvedSubText && (
+                      <p className="text-gray-500 text-sm mt-3 text-center">{resolvedSubText}</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -709,7 +766,7 @@ export default function PropertyLayout({
       </div>
 
       {/* Mobile Layout */}
-      <div className="lg:hidden max-w-4xl mx-auto px-4 py-6 pb-28 space-y-8">
+      <div className="lg:hidden max-w-4xl mx-auto px-4 md:pt-20 py-6 pb-28 space-y-8">
         {/* Mobile Content */}
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold">{title}</h1>
@@ -765,8 +822,13 @@ export default function PropertyLayout({
 
         {/* Mobile Booking Widget */}
         <div className="border rounded-2xl p-4 shadow-sm">
-          <h2 className="font-semibold text-lg mb-3">Réserver ce logement</h2>
-          {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
+          <h2 className="font-semibold text-lg mb-3">{resolvedCardTitle}</h2>
+          {combinedError && <p className="text-red-500 text-sm mb-3">{combinedError}</p>}
+          {resolvedInfoMessage && (
+            <p className="text-sm text-gray-600 mb-3 bg-green-50 border border-green-100 rounded-lg px-3 py-2">
+              {resolvedInfoMessage}
+            </p>
+          )}
           
           {/* Reservation Widget - Horizontal Layout for Mobile */}
           <div className="bg-white rounded-xl border border-gray-200 p-4">
@@ -804,42 +866,46 @@ export default function PropertyLayout({
                 <div className="hidden sm:block w-px bg-gray-200"></div>
                 
                 {/* Guests */}
-                <div className="flex-1">
-                  <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">VOYAGEURS</label>
-                  <div className="flex items-center">
-                    <input
-                      type="number"
-                      min="1"
-                      value={guests}
-                      onChange={(e) => setGuests(Number(e.target.value))}
-                      className="w-full text-lg font-medium text-gray-900 border-none outline-none bg-transparent"
-                    />
-                    <span className="text-gray-500 ml-1">{guests > 1 ? 'voyageurs' : 'voyageur'}</span>
+                {shouldShowGuestsInput && (
+                  <div className="flex-1">
+                    <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">VOYAGEURS</label>
+                    <div className="flex items-center">
+                      <input
+                        type="number"
+                        min="1"
+                        value={guests}
+                        onChange={(e) => setGuests(Number(e.target.value))}
+                        className="w-full text-lg font-medium text-gray-900 border-none outline-none bg-transparent"
+                      />
+                      <span className="text-gray-500 ml-1">{guests > 1 ? 'voyageurs' : 'voyageur'}</span>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
               
               {/* Reserve Button */}
               <div className="w-full sm:w-auto">
                 <button
-                  onClick={handleBooking}
-                  disabled={!isLoggedIn || !checkIn || !checkOut || guests < 1}
-                  className={`w-full sm:w-auto px-8 py-4 rounded-xl text-white font-semibold text-lg transition-all ${
-                    !isLoggedIn || !checkIn || !checkOut || guests < 1
-                      ? 'bg-gray-400 cursor-not-allowed opacity-60'
-                      : 'bg-green-600 hover:bg-green-700 shadow-md hover:shadow-lg'
-                  }`}
+                  onClick={handlePrimaryAction}
+                  disabled={finalButtonDisabled}
+                  className={`w-full sm:w-auto px-8 py-4 rounded-xl font-semibold text-lg transition-all ${buttonVisualClass}`}
                 >
-                  {!isLoggedIn 
-                    ? '🔒 Connectez-vous pour réserver'
-                    : 'Réserver'
-                  }
+                  {customButtonLoading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                      {resolvedButtonText}
+                    </span>
+                  ) : (
+                    resolvedButtonText
+                  )}
                 </button>
               </div>
             </div>
             
             {/* Disclaimer */}
-            <p className="text-gray-500 text-sm mt-3 text-center">Vous ne serez pas encore débité</p>
+            {resolvedSubText && (
+              <p className="text-gray-500 text-sm mt-3 text-center">{resolvedSubText}</p>
+            )}
           </div>
         </div>
 
