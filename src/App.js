@@ -26,7 +26,12 @@ import Restauration from './pages/Explore/Restauration';
 import Packages from './pages/Explore/Packages';
 import Activites from './pages/Explore/Activites';
 import Profile from './pages/Profile/Profile';
+import B2BProfile from './pages/Profile/B2BProfile';
 import Favorites from './pages/Favorite/Favorite';
+import B2BServicesBrowser from './pages/B2BServices/B2BServicesBrowser';
+import B2BServiceDetail from './pages/B2BServices/B2BServiceDetail';
+import ServicesBrowser from './pages/B2BServices/ServicesBrowser';
+import ServiceDetail from './pages/B2BServices/ServiceDetail';
 import Navbar from './components/shared/Navbar';
 import PropertyCreationTestSuite from './components/PropertyCreationTestSuite';
 import NavbarProperty from './components/shared/NavbarProperty';
@@ -93,7 +98,6 @@ import ExploreLayout from './pages/Layout/Layout';
 import CohostPropertyLayout from './pages/Layout/CohostPropertyLayout';
 import VillaMakarska from './pages/Propriétés 3/VillaMakarska';
 import EditProfileScreen from './pages/Profile/EditProfile';
-import B2BProfile from './pages/Profile/B2BProfile';
 import B2BDashboard from './pages/B2B/B2BDashboard';
 import B2BBookings from './pages/B2B/B2BBookings';
 import DocumentUpload from './utilities/DocumentUpload';
@@ -214,6 +218,14 @@ function App() {
 
         <Route path="/search" element={<PropertySearchFlow />} />
         <Route path="/search/results" element={<SearchResultsPage />} />
+        
+        {/* B2B Services - Public access */}
+        <Route path="/b2b-services" element={<B2BServicesBrowser />} />
+        <Route path="/b2b-service/:id" element={<B2BServiceDetail />} />
+        
+        {/* Service Listings - For tourists/partners to browse */}
+        <Route path="/services" element={<ServicesBrowser />} />
+        <Route path="/service/:id" element={<ServiceDetail />} />
         
         {/* Admin Dashboard - Direct URL access only */}
         <Route path="/admin" element={<AdminDashboard />} />

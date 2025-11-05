@@ -106,10 +106,38 @@ const handleFinish = async () => {
     console.log("🔄 Tokens saved after profile completion");
 
     // Navigate safely with replace: true to prevent back navigation
-    if (profileType === 'owner') navigate('/owner-welcome', { replace: true });
-    else if (profileType === 'partner' || profileType === 'intermediate') navigate('/partner-welcome', { replace: true });
-    else if (profileType === 'b2b') navigate('/b2b-dashboard', { replace: true }); // B2B users go to B2B dashboard
-    else navigate('/', { replace: true }); // default dashboard
+    // Check both profileType and user role for B2B redirect
+    const userRole = response.data.user?.role?.toLowerCase();
+    const normalizedProfileType = profileType?.toLowerCase();
+    const isB2B = normalizedProfileType === 'b2b' || userRole === 'b2b';
+
+    console.log('🔀 Complete Profile redirect check:', {
+      profileType,
+      normalizedProfileType,
+      userRole,
+      isB2B,
+      user: response.data.user
+    });
+
+    // Priority: B2B users always go to B2B profile page
+    if (isB2B) {
+      console.log('✅ Redirecting B2B user to /b2b-profile');
+      // Use replace: true to prevent back navigation and ensure clean redirect
+      navigate('/b2b-profile', { replace: true });
+      // Fallback: Use window.location as additional safety measure
+      setTimeout(() => {
+        if (window.location.pathname !== '/b2b-profile') {
+          console.log('⚠️ Fallback redirect to /b2b-profile');
+          window.location.replace('/b2b-profile');
+        }
+      }, 100);
+    } else if (normalizedProfileType === 'owner' || userRole === 'owner') {
+      navigate('/owner-welcome', { replace: true });
+    } else if (normalizedProfileType === 'partner' || normalizedProfileType === 'intermediate' || userRole === 'partner' || userRole === 'intermediate') {
+      navigate('/partner-welcome', { replace: true });
+    } else {
+      navigate('/', { replace: true }); // default dashboard
+    }
 
   } catch (error) {
     console.error('Error completing profile:', error.response?.data || error.message);
