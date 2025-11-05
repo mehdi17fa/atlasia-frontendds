@@ -407,13 +407,6 @@ export default function WelcomeOwner() {
             {/* Left: Empty space for balance */}
             <div className="w-10"></div>
 
-            {/* Center: Atlasia Branding */}
-            <div className="text-center">
-              <div className="font-bold text-green-700 text-2xl">
-                Atlasia
-              </div>
-            </div>
-
             {/* Right: Account Icon */}
             <button
               onClick={() => navigate('/profile')}

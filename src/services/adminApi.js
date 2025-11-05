@@ -32,5 +32,44 @@ export const adminApi = {
   getUserDetails: async (userId) => {
     const response = await api.get(`/api/admin/user/${userId}`);
     return response.data;
+  },
+
+  // Get all users
+  getAllUsers: async (params = {}) => {
+    const { search, role, page = 1, limit = 50 } = params;
+    const queryParams = new URLSearchParams();
+    if (search) queryParams.append('search', search);
+    if (role && role !== 'all') queryParams.append('role', role);
+    queryParams.append('page', page);
+    queryParams.append('limit', limit);
+    
+    const response = await api.get(`/api/admin/users/all?${queryParams.toString()}`);
+    return response.data;
+  },
+
+  // Get all properties
+  getAllProperties: async (params = {}) => {
+    const { search, status, page = 1, limit = 50 } = params;
+    const queryParams = new URLSearchParams();
+    if (search) queryParams.append('search', search);
+    if (status && status !== 'all') queryParams.append('status', status);
+    queryParams.append('page', page);
+    queryParams.append('limit', limit);
+    
+    const response = await api.get(`/api/admin/properties/all?${queryParams.toString()}`);
+    return response.data;
+  },
+
+  // Get all documents
+  getAllDocuments: async (params = {}) => {
+    const { search, role, page = 1, limit = 50 } = params;
+    const queryParams = new URLSearchParams();
+    if (search) queryParams.append('search', search);
+    if (role && role !== 'all') queryParams.append('role', role);
+    queryParams.append('page', page);
+    queryParams.append('limit', limit);
+    
+    const response = await api.get(`/api/admin/documents/all?${queryParams.toString()}`);
+    return response.data;
   }
 };

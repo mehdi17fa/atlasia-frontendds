@@ -9,9 +9,13 @@ import DateRangeCalendar from '../../components/DateRangeCalendar';
 export default function CartCheckout() {
   const navigate = useNavigate();
   const { cart, isLoading, removeFromCart, updateCartItem, checkoutCart, clearCart, getCartTotal, isCartEmpty } = useCart();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   
-  const [paymentMethod, setPaymentMethod] = useState('card');
+  // Check if user is a partner/intermediary
+  const isPartner = user?.role?.toLowerCase() === 'partner';
+  
+  // Set default payment method - cash for partners, card for tourists
+  const [paymentMethod, setPaymentMethod] = useState(isPartner ? 'cash' : 'card');
   const [cardDetails, setCardDetails] = useState({
     cardNumber: '',
     expiryDate: '',
@@ -45,6 +49,13 @@ export default function CartCheckout() {
       navigate('/');
     }
   }, [isAuthenticated, isCartEmpty, isLoading, navigate]);
+
+  // Update payment method when user data loads
+  useEffect(() => {
+    if (user?.role?.toLowerCase() === 'partner') {
+      setPaymentMethod('cash');
+    }
+  }, [user?.role]);
 
   const handleGoBack = () => {
     navigate(-1);
@@ -267,33 +278,94 @@ export default function CartCheckout() {
               
               {/* Payment Method Selection */}
               <div className="space-y-3 mb-6">
+                {/* Card Payment Option - Hidden for Partners */}
+                {!isPartner && (
+                  <div 
+                    className={`flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      paymentMethod === 'card' 
+                        ? 'border-green-500 bg-green-50' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`} 
+                    onClick={() => handlePaymentMethodChange('card')}
+                  >
+                    <input
+                      type="radio"
+                      id="card"
+                      name="paymentMethod"
+                      value="card"
+                      checked={paymentMethod === 'card'}
+                      onChange={(e) => handlePaymentMethodChange(e.target.value)}
+                      className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
+                    />
+                    <label htmlFor="card" className="ml-3 flex items-center cursor-pointer">
+                      <svg className={`w-5 h-5 mr-2 ${paymentMethod === 'card' ? 'text-green-600' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                      </svg>
+                      <span className={`font-medium ${paymentMethod === 'card' ? 'text-green-800' : 'text-gray-700'}`}>
+                        Paiement par carte
+                      </span>
+                    </label>
+                  </div>
+                )}
+
+                {/* Cash Payment Option */}
                 <div 
                   className={`flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                    paymentMethod === 'card' 
+                    paymentMethod === 'cash' 
                       ? 'border-green-500 bg-green-50' 
                       : 'border-gray-200 hover:border-gray-300'
                   }`} 
-                  onClick={() => handlePaymentMethodChange('card')}
+                  onClick={() => handlePaymentMethodChange('cash')}
                 >
                   <input
                     type="radio"
-                    id="card"
+                    id="cash"
                     name="paymentMethod"
-                    value="card"
-                    checked={paymentMethod === 'card'}
+                    value="cash"
+                    checked={paymentMethod === 'cash'}
                     onChange={(e) => handlePaymentMethodChange(e.target.value)}
                     className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
                   />
-                  <label htmlFor="card" className="ml-3 flex items-center cursor-pointer">
-                    <svg className={`w-5 h-5 mr-2 ${paymentMethod === 'card' ? 'text-green-600' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  <label htmlFor="cash" className="ml-3 flex items-center cursor-pointer flex-1">
+                    <svg className={`w-5 h-5 mr-2 ${paymentMethod === 'cash' ? 'text-green-600' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
-                    <span className={`font-medium ${paymentMethod === 'card' ? 'text-green-800' : 'text-gray-700'}`}>
-                      Paiement par carte
+                    <span className={`font-medium ${paymentMethod === 'cash' ? 'text-green-800' : 'text-gray-700'}`}>
+                      Paiement en espèces
                     </span>
+                    {isPartner && (
+                      <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                        Intermédiaire
+                      </span>
+                    )}
                   </label>
                 </div>
               </div>
+
+              {/* Cash Payment Info */}
+              {paymentMethod === 'cash' && (
+                <div className="border-t pt-6">
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <svg className="w-6 h-6 text-blue-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      </svg>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-blue-900 mb-1">Paiement en espèces</h4>
+                        <p className="text-sm text-blue-800">
+                          {isPartner 
+                            ? "En tant que partenaire, vous effectuerez le paiement en espèces directement auprès de l'hôte lors de votre arrivée."
+                            : "Vous effectuerez le paiement en espèces directement auprès de l'hôte lors de votre arrivée. Assurez-vous d'avoir le montant exact."
+                          }
+                        </p>
+                        <p className="text-sm text-blue-700 mt-2">
+                          <strong>Important :</strong> Veuillez confirmer le montant avec l'hôte avant votre arrivée.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Card Details Form */}
               {paymentMethod === 'card' && (

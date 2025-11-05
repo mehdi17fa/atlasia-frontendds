@@ -16,10 +16,22 @@ export default function BookingRequest() {
   const { propertyId } = useParams();
   const { state } = useLocation();
   const navigate = useNavigate();
+  
+  // Check if coming from blocked flow
+  const fromBlocked = state?.fromBlocked || false;
+  const blockedCheckIn = state?.checkIn;
+  const blockedCheckOut = state?.checkOut;
+  
   const { bookingData, authToken, hostId, hostName, hostPhoto } = state || {};
   const { guests } = bookingData || {};
-  const [localCheckIn, setLocalCheckIn] = useState(bookingData?.checkIn || "");
-  const [localCheckOut, setLocalCheckOut] = useState(bookingData?.checkOut || "");
+  
+  // Initialize dates from blocked flow if available, otherwise from bookingData
+  const [localCheckIn, setLocalCheckIn] = useState(
+    fromBlocked ? blockedCheckIn : (bookingData?.checkIn || "")
+  );
+  const [localCheckOut, setLocalCheckOut] = useState(
+    fromBlocked ? blockedCheckOut : (bookingData?.checkOut || "")
+  );
   const { addToCart } = useCart();
 
   const formatIsoDate = (iso) => {
@@ -198,8 +210,11 @@ export default function BookingRequest() {
     setError(null);
     setFieldErrors({ guestMessage: false, idPhotos: false });
 
-    if (!localCheckIn || !localCheckOut || !guests) {
-      setError("Veuillez sélectionner les dates et le nombre d'invités.");
+    // Get guests from bookingData or state (for blocked flow)
+    const guestCount = guests || state?.guests || 1;
+
+    if (!localCheckIn || !localCheckOut) {
+      setError("Veuillez sélectionner les dates.");
       return;
     }
 
@@ -241,7 +256,7 @@ export default function BookingRequest() {
         itemId: propertyId,
         checkIn: localCheckIn,
         checkOut: localCheckOut,
-        guests: Number(guests),
+        guests: Number(guestCount),
         guestMessage,
         subtotal: total,
         totalNights: nights,
@@ -296,13 +311,32 @@ export default function BookingRequest() {
             <div className="bg-white p-6 rounded-lg shadow-sm">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-800">Dates de séjour</h3>
-                <button
-                  onClick={() => setShowCalendar(true)}
-                  className="px-3 py-1 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  {localCheckIn && localCheckOut ? 'Modifier' : 'Sélectionner'}
-                </button>
+                {!fromBlocked && (
+                  <button
+                    onClick={() => setShowCalendar(true)}
+                    className="px-3 py-1 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    {localCheckIn && localCheckOut ? 'Modifier' : 'Sélectionner'}
+                  </button>
+                )}
               </div>
+              
+              {/* Show info message for blocked dates */}
+              {fromBlocked && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-blue-900">Dates pré-réservées</p>
+                      <p className="text-xs text-blue-700 mt-1">
+                        Ces dates proviennent de votre blocage. Confirmez votre réservation pour finaliser.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
               
               <div className="space-y-3">
                 {localCheckIn && localCheckOut ? (
@@ -317,7 +351,7 @@ export default function BookingRequest() {
                     </div>
                     <div className="flex justify-between items-center py-2">
                       <span className="text-gray-600">Invités:</span>
-                      <span className="font-medium text-gray-800">{guests || "N/A"}</span>
+                      <span className="font-medium text-gray-800">{guests || state?.guests || 1}</span>
                     </div>
                   </>
                 ) : (
@@ -466,7 +500,7 @@ export default function BookingRequest() {
                   loading ||
                   !localCheckIn ||
                   !localCheckOut ||
-                  !guests ||
+                  (!guests && !state?.guests) ||
                   idPhotosUploading ||
                   !idPhotos || idPhotos.length === 0 ||
                   !guestMessage || guestMessage.trim().length === 0
@@ -475,7 +509,7 @@ export default function BookingRequest() {
                   loading ||
                   !localCheckIn ||
                   !localCheckOut ||
-                  !guests ||
+                  (!guests && !state?.guests) ||
                   idPhotosUploading ||
                   !idPhotos || idPhotos.length === 0 ||
                   !guestMessage || guestMessage.trim().length === 0

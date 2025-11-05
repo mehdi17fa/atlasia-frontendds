@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { api } from "../../api";
-import CoHostPropertyLayout from "../Layout/CohostPropertyLayout";
+import PropertyLayout from "../Layout/PropertyLayout";
 import { AuthContext } from "../../context/AuthContext";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -28,6 +28,11 @@ export default function BlockingPropertyPreview() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isBlocked, setIsBlocked] = useState(false);
+  const [blockCheckIn, setBlockCheckIn] = useState("");
+  const [blockCheckOut, setBlockCheckOut] = useState("");
+  const [blockDatesError, setBlockDatesError] = useState("");
+  const [blockInfo, setBlockInfo] = useState(null);
+  const [blockLoading, setBlockLoading] = useState(false);
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -93,8 +98,34 @@ export default function BlockingPropertyPreview() {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.data.success && Array.isArray(res.data.properties)) {
-          const blocked = res.data.properties.some(p => p._id === propertyId);
+          const blockedProperty = res.data.properties.find(p => p._id === propertyId);
+          const blocked = !!blockedProperty;
           setIsBlocked(blocked);
+          if (blockedProperty?.blockingInfo) {
+            const { checkIn, checkOut } = blockedProperty.blockingInfo;
+            const normalizeDate = (value) => {
+              if (!value) return "";
+              if (typeof value === "string") {
+                return value.includes("T") ? value.split("T")[0] : value;
+              }
+              try {
+                return new Date(value).toISOString().split("T")[0];
+              } catch (e) {
+                return "";
+              }
+            };
+            const normalizedCheckIn = normalizeDate(checkIn);
+            const normalizedCheckOut = normalizeDate(checkOut);
+            if (normalizedCheckIn) setBlockCheckIn(normalizedCheckIn);
+            if (normalizedCheckOut) setBlockCheckOut(normalizedCheckOut);
+            setBlockInfo(blockedProperty.blockingInfo);
+            setBlockDatesError("");
+          } else {
+            setBlockInfo(null);
+          }
+        } else {
+          setIsBlocked(false);
+          setBlockInfo(null);
         }
       } catch (err) {
         console.error("Error checking if property is blocked:", err);
@@ -177,6 +208,41 @@ export default function BlockingPropertyPreview() {
     email: owner.email
   } : null;
 
+  const handleBlockDatesChange = ({ checkIn, checkOut }) => {
+    if (typeof checkIn !== 'undefined') {
+      setBlockCheckIn(checkIn);
+    }
+    if (typeof checkOut !== 'undefined') {
+      setBlockCheckOut(checkOut);
+    }
+    setBlockDatesError("");
+  };
+
+  const computeMinutesRemaining = (expiresAt, fallbackMinutes) => {
+    if (expiresAt) {
+      const expires = new Date(expiresAt).getTime();
+      if (!Number.isNaN(expires)) {
+        const diff = Math.ceil((expires - Date.now()) / (1000 * 60));
+        if (diff > 0) {
+          return diff;
+        }
+      }
+    }
+    if (typeof fallbackMinutes === 'number' && fallbackMinutes > 0) {
+      return fallbackMinutes;
+    }
+    return null;
+  };
+
+  const formatExpiryMessage = (expiresAt) => {
+    if (!expiresAt) return null;
+    const expires = new Date(expiresAt);
+    if (Number.isNaN(expires.getTime())) return null;
+    const datePart = expires.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+    const timePart = expires.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    return `Blocage actif jusqu'au ${datePart} à ${timePart}`;
+  };
+
   const handleBlockClick = async () => {
     if (!user) {
       toast.error("Vous devez être connecté pour bloquer la propriété");
@@ -188,6 +254,31 @@ export default function BlockingPropertyPreview() {
       return;
     }
 
+    if (!blockCheckIn || !blockCheckOut) {
+      const message = "Veuillez sélectionner les dates d'arrivée et de départ.";
+      setBlockDatesError(message);
+      toast.error(message);
+      return;
+    }
+
+    const checkInDate = new Date(blockCheckIn);
+    const checkOutDate = new Date(blockCheckOut);
+
+    if (Number.isNaN(checkInDate.getTime()) || Number.isNaN(checkOutDate.getTime())) {
+      const message = "Les dates sélectionnées ne sont pas valides.";
+      setBlockDatesError(message);
+      toast.error(message);
+      return;
+    }
+
+    if (checkOutDate <= checkInDate) {
+      const message = "La date de départ doit être après la date d'arrivée.";
+      setBlockDatesError(message);
+      toast.error(message);
+      return;
+    }
+
+    setBlockLoading(true);
     try {
       // Enforce single active block per partner
       const existing = await api.get('/api/partner/blocked-properties', {
@@ -201,12 +292,30 @@ export default function BlockingPropertyPreview() {
         }
       }
 
-      const res = await api.post(`/api/property/${propertyId}/block`, {}, {
+      const res = await api.post(`/api/property/${propertyId}/block`, {
+        checkIn: blockCheckIn,
+        checkOut: blockCheckOut,
+      }, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.data.success) {
         setIsBlocked(true);
+        toast.dismiss();
         toast.success("Propriété bloquée pour 15 minutes !");
+        setBlockDatesError("");
+        if (res.data.booking?.checkIn) {
+          setBlockCheckIn(res.data.booking.checkIn.split('T')[0]);
+        }
+        if (res.data.booking?.checkOut) {
+          setBlockCheckOut(res.data.booking.checkOut.split('T')[0]);
+        }
+        setBlockInfo({
+          bookingId: res.data.booking?._id,
+          expiresAt: res.data.booking?.expiresAt,
+          checkIn: res.data.booking?.checkIn,
+          checkOut: res.data.booking?.checkOut,
+          timeRemaining: res.data.booking?.timeRemaining,
+        });
       }
     } catch (err) {
       console.error("❌ Error sending block request:", {
@@ -217,7 +326,10 @@ export default function BlockingPropertyPreview() {
       const msg = err.response?.status === 404
         ? "Propriété introuvable ou non publiée"
         : err.response?.data?.message || err.message || "Erreur lors du blocage";
+      setBlockDatesError(msg);
       toast.error(msg);
+    } finally {
+      setBlockLoading(false);
     }
   };
 
@@ -226,6 +338,7 @@ export default function BlockingPropertyPreview() {
     console.log("User:", user);
     console.log("PropertyId:", propertyId);
     console.log("Token:", token ? "Present" : "Missing");
+    console.log("📅 Blocked dates:", { checkIn: blockCheckIn || blockInfo?.checkIn, checkOut: blockCheckOut || blockInfo?.checkOut });
     
     if (!user) {
       toast.error("Vous devez être connecté pour réserver");
@@ -233,7 +346,17 @@ export default function BlockingPropertyPreview() {
       return;
     }
 
+    // Get the blocked dates
+    const blockedCheckIn = blockCheckIn || blockInfo?.checkIn;
+    const blockedCheckOut = blockCheckOut || blockInfo?.checkOut;
+
+    if (!blockedCheckIn || !blockedCheckOut) {
+      toast.error("Dates de blocage manquantes. Veuillez réessayer.");
+      return;
+    }
+
     try {
+      setBlockLoading(true);
       // First, unblock the property if it's currently blocked
       console.log("📤 Sending unblock request...");
       toast.loading("Déblocage de la propriété...");
@@ -246,17 +369,27 @@ export default function BlockingPropertyPreview() {
 
       if (unblockRes.data.success) {
         toast.dismiss();
-        toast.success("Propriété débloquée ! Redirection vers la réservation...");
+        toast.success("Redirection vers la réservation...");
+        setIsBlocked(false);
+        setBlockInfo(null);
         
-        console.log("🚀 Navigating to property page...");
+        console.log("🚀 Navigating to booking page with dates:", { blockedCheckIn, blockedCheckOut });
         // Wait a moment for the backend to process
         setTimeout(() => {
-          // Navigate to booking flow - same as regular property booking
-          console.log("🔄 Executing navigation...");
-          navigate(`/property/${propertyId}`, {
+          // Navigate directly to booking request page with pre-filled dates
+          console.log("🔄 Executing navigation to booking...");
+          navigate(`/booking/request/${propertyId}`, {
             state: {
               fromBlocked: true,
-              propertyData: property
+              propertyData: property,
+              checkIn: blockedCheckIn,
+              checkOut: blockedCheckOut,
+              guests: 1, // Default to 1 guest for partners
+              authToken: token,
+              userId: user._id,
+              hostId: property?.owner?._id,
+              hostName: property?.owner?.fullName || property?.owner?.name || "Hôte",
+              hostPhoto: property?.owner?.profilePic || property?.owner?.profileImage
             }
           });
         }, 500);
@@ -278,10 +411,18 @@ export default function BlockingPropertyPreview() {
         console.log("ℹ️ Property not blocked (404), proceeding with booking anyway");
         toast.success("Redirection vers la réservation...");
         setTimeout(() => {
-          navigate(`/property/${propertyId}`, {
+          navigate(`/booking/request/${propertyId}`, {
             state: {
               fromBlocked: true,
-              propertyData: property
+              propertyData: property,
+              checkIn: blockedCheckIn,
+              checkOut: blockedCheckOut,
+              guests: 1,
+              authToken: token,
+              userId: user._id,
+              hostId: property?.owner?._id,
+              hostName: property?.owner?.fullName || property?.owner?.name || "Hôte",
+              hostPhoto: property?.owner?.profilePic || property?.owner?.profileImage
             }
           });
         }, 300);
@@ -289,28 +430,65 @@ export default function BlockingPropertyPreview() {
         const msg = err.response?.data?.message || err.message || "Erreur lors du déblocage";
         toast.error(msg);
       }
+    } finally {
+      setBlockLoading(false);
     }
+  };
+
+  const minutesRemaining = computeMinutesRemaining(blockInfo?.expiresAt, blockInfo?.timeRemaining);
+
+  const blockInfoMessage = isBlocked
+    ? formatExpiryMessage(blockInfo?.expiresAt) || "Blocage actif. Finalisez votre réservation pour ne pas le perdre."
+    : "Sélectionnez vos dates pour bloquer ce logement pendant 15 minutes.";
+
+  const blockSubText = isBlocked
+    ? minutesRemaining
+      ? `Le blocage expirera dans environ ${minutesRemaining} minute${minutesRemaining > 1 ? 's' : ''}.`
+      : "Le blocage expirera automatiquement après 15 minutes."
+    : "Le blocage expire automatiquement après 15 minutes.";
+
+  const ctaButtonLabel = blockLoading
+    ? "Traitement..."
+    : (isBlocked ? "Continuer vers la réservation" : "Bloquer pour 15 min");
+
+  const ctaConfig = {
+    title: isBlocked ? "Blocage en cours" : "Bloquer ce logement",
+    buttonLabel: ctaButtonLabel,
+    buttonDisabled: blockLoading,
+    buttonLoading: blockLoading,
+    buttonClassName: isBlocked
+      ? "bg-green-600 text-white hover:bg-green-700 shadow-md hover:shadow-lg"
+      : "bg-red-600 text-white hover:bg-red-700 shadow-md hover:shadow-lg",
+    onAction: isBlocked ? handleBookClick : handleBlockClick,
+    showGuestsInput: false,
+    infoMessage: blockInfoMessage,
+    errorMessage: blockDatesError,
+    subText: blockSubText,
   };
 
   return (
     <>
       <Toaster position="top-right" reverseOrder={false} />
-      <CoHostPropertyLayout
+      <PropertyLayout
         title={property.title}
         location={locationLabel}
-        rating={5}
-        reviewCount={property.reviews?.length || 0}
+        rating={property.rating?.average || 0}
+        reviewCount={property.rating?.count || property.reviews?.length || 0}
         mainImage={property.photos?.[0] || "/placeholder1.jpg"}
+        photos={property.photos || []}
         host={hostData}
-        checkInTime="15:00"
+        checkInTime={property.checkInTime || "15:00"}
         features={features}
         associatedPacks={associatedPacks}
-        mapLocation={locationLabel}
+        mapImage={locationLabel}
         reviews={property.reviews || []}
         user={user}
-        onCoHostClick={isBlocked ? handleBookClick : handleBlockClick}
-        requestSent={isBlocked}
-        mode={isBlocked ? "booking" : "block"}
+        token={token}
+        propertyId={propertyId}
+        initialCheckIn={blockCheckIn}
+        initialCheckOut={blockCheckOut}
+        onDatesChange={handleBlockDatesChange}
+        ctaConfig={ctaConfig}
       />
     </>
   );
