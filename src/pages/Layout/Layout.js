@@ -85,8 +85,8 @@ export default function ExploreLayout() {
       >
         {/* Desktop Header */}
         <div className="hidden md:flex items-center justify-between px-6 py-4 bg-white shadow-sm sticky top-0 z-10">
-          {/* Removed 'Atlasia' text here */}
-          <h1 className="text-2xl font-bold text-green-800">ATLASIA</h1>
+          {/* Show ATLASIA only when user is not logged in */}
+          {!user && <h1 className="text-2xl font-bold text-green-800">ATLASIA</h1>}
           <div className="flex-1 max-w-3xl mx-10">
             <SearchBar onClick={handleSearchBarClick} />
           </div>
@@ -139,7 +139,8 @@ export default function ExploreLayout() {
         <div className="block md:hidden">
           {/* App name centered on top */}
           <div className="flex items-center justify-between py-4 px-4 bg-white shadow-sm">
-            <span className="text-2xl font-bold text-green-700">ATLASIA</span>
+            {/* Show ATLASIA only when user is not logged in */}
+            {!user && <span className="text-2xl font-bold text-green-700">ATLASIA</span>}
             
             {/* User avatar or login/signup buttons */}
             {user ? (

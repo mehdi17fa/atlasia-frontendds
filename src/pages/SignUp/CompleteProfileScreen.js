@@ -108,7 +108,7 @@ const handleFinish = async () => {
     // Navigate safely with replace: true to prevent back navigation
     if (profileType === 'owner') navigate('/owner-welcome', { replace: true });
     else if (profileType === 'partner' || profileType === 'intermediate') navigate('/partner-welcome', { replace: true });
-    else if (profileType === 'b2b') navigate('/b2b-profile', { replace: true }); // B2B users go to B2B profile page
+    else if (profileType === 'b2b') navigate('/b2b-dashboard', { replace: true }); // B2B users go to B2B dashboard
     else navigate('/', { replace: true }); // default dashboard
 
   } catch (error) {

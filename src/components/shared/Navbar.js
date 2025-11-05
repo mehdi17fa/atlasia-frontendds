@@ -68,6 +68,9 @@ export default function Navbar() {
   const [isDesktopOpen, setIsDesktopOpen] = useState(false);
 
   const homePath = '/';
+  
+  // Check if current page is a B2B page
+  const isB2BPage = location.pathname.startsWith('/b2b-');
 
   const toggleDesktopNav = () => setIsDesktopOpen((v) => !v);
   const handleLogoClick = () => {
@@ -120,14 +123,17 @@ export default function Navbar() {
               <path d="M3 18h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
             </svg>
           </button>
-          <button
-            type="button"
-            onClick={handleLogoClick}
-            className="text-2xl font-bold tracking-wide text-green-700"
-            aria-label="Retour à l'accueil"
-          >
-            ATLASIA
-          </button>
+          {/* Hide ATLASIA button on B2B pages when navbar is closed, show when open */}
+          {(!isB2BPage || isDesktopOpen) && (
+            <button
+              type="button"
+              onClick={handleLogoClick}
+              className="text-2xl font-bold tracking-wide text-green-700"
+              aria-label="Retour à l'accueil"
+            >
+              ATLASIA
+            </button>
+          )}
         </div>
 
         <div className="flex md:flex-col md:items-stretch md:justify-start flex justify-around md:py-4 py-2 md:space-y-1">

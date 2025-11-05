@@ -94,6 +94,8 @@ import CohostPropertyLayout from './pages/Layout/CohostPropertyLayout';
 import VillaMakarska from './pages/Propriétés 3/VillaMakarska';
 import EditProfileScreen from './pages/Profile/EditProfile';
 import B2BProfile from './pages/Profile/B2BProfile';
+import B2BDashboard from './pages/B2B/B2BDashboard';
+import B2BBookings from './pages/B2B/B2BBookings';
 import DocumentUpload from './utilities/DocumentUpload';
 
 // Admin Dashboard
@@ -238,6 +240,8 @@ function App() {
         <Route path="/profile" element={<ProtectedRoute allowedRoles={['owner', 'partner', 'intermediate', 'tourist', 'user', 'b2b']}><Profile /></ProtectedRoute>} />
         <Route path="/edit-profile" element={<ProtectedRoute allowedRoles={['owner', 'partner', 'intermediate', 'tourist', 'user']}><EditProfileScreen /></ProtectedRoute>} />
         <Route path="/b2b-profile" element={<ProtectedRoute allowedRoles={['b2b']}><B2BProfile /></ProtectedRoute>} />
+        <Route path="/b2b-dashboard" element={<ProtectedRoute allowedRoles={['b2b']}><B2BDashboard /></ProtectedRoute>} />
+        <Route path="/b2b-bookings" element={<ProtectedRoute allowedRoles={['b2b']}><B2BBookings /></ProtectedRoute>} />
         <Route path="/favorites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
         <Route path="/test-upload" element={<ProtectedRoute><TestDocumentUpload /></ProtectedRoute>} />
         <Route path="/partner-welcome" element={<ProtectedRoute allowedRoles={['partner', 'intermediate']}><HomeIntermédiaire /></ProtectedRoute>} />

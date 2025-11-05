@@ -153,7 +153,7 @@ export default function SignUpWizard() {
 
       if (profileType === 'owner') navigate('/owner-welcome', { replace: true });
       else if (profileType === 'partner' || profileType === 'intermediate') navigate('/partner-welcome', { replace: true });
-      else if (profileType === 'b2b') navigate('/b2b-profile', { replace: true }); // B2B users go to B2B profile page
+      else if (profileType === 'b2b') navigate('/b2b-dashboard', { replace: true }); // B2B users go to B2B dashboard
       else navigate('/', { replace: true });
     } catch (err) {
       const message = err.response?.data?.message || 'Failed to complete profile. Please try again.';
