@@ -84,6 +84,7 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   
   // Form data state
   const [formData, setFormData] = useState({
@@ -140,8 +141,22 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
   };
 
   const handleNext = () => {
-    if (currentStep < 5) {
+    // Check how many steps we have
+    const totalSteps = 6; // Property, Items, Dates, Info, Price, Review
+    
+    // Validate current step before moving forward
+    if (!validateStep(currentStep)) {
+      setError(`Veuillez compléter l'étape ${currentStep} avant de continuer`);
+      return;
+    }
+    
+    if (currentStep < totalSteps) {
+      console.log(`Moving from step ${currentStep} to step ${currentStep + 1}`);
       setCurrentStep(currentStep + 1);
+      setError(''); // Clear any previous errors
+    } else if (currentStep === totalSteps) {
+      // On the last step (step 6), clicking "Suivant" should trigger publish
+      handlePublish();
     }
   };
 
@@ -161,11 +176,14 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
 
   // Item management functions
   const addItem = (category, item) => {
-    if (!item.name || !item.price) return;
+    if (!item.name) return;
+    
+    // Allow price to be 0 (for B2B items that can be priced later)
+    const price = item.price !== undefined && item.price !== null ? parseFloat(item.price) : 0;
     
     setFormData(prev => ({
       ...prev,
-      [category]: [...prev[category], { ...item, price: parseFloat(item.price) }]
+      [category]: [...prev[category], { ...item, price: price }]
     }));
   };
 
@@ -200,10 +218,12 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
       case 2:
         return formData.restaurants.length > 0 || formData.activities.length > 0 || formData.services.length > 0;
       case 3:
-        return formData.name.trim() !== '' && formData.description.trim() !== '';
+        return formData.startDate !== '' && formData.endDate !== '';
       case 4:
-        return formData.totalPrice && parseFloat(formData.totalPrice) > 0;
+        return formData.name.trim() !== '' && formData.description.trim() !== '';
       case 5:
+        return formData.totalPrice && parseFloat(formData.totalPrice) > 0;
+      case 6:
         return true; // Review step is always valid
       default:
         return true;
@@ -247,10 +267,12 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
         console.log('✅ Draft saved successfully:', data);
         
         // Show success message
-        alert('Brouillon enregistré avec succès!');
+        setSuccessMessage('Brouillon enregistré avec succès!');
         
         // Navigate to partner dashboard after successful draft save
-        navigate('/partner-welcome');
+        setTimeout(() => {
+          navigate('/partner-welcome');
+        }, 1500);
       } else {
         const errorData = await response.json().catch(() => ({ message: 'Failed to save draft' }));
         console.error('❌ Draft save error:', response.status, errorData);
@@ -286,8 +308,9 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
     const validationErrors = [];
     if (!validateStep(1)) validationErrors.push('Property selection required');
     if (!validateStep(2)) validationErrors.push('At least one item (restaurant, activity, or service) required');
-    if (!validateStep(3)) validationErrors.push('Package name and description required');
-    if (!validateStep(4)) validationErrors.push('Total price required');
+    if (!validateStep(3)) validationErrors.push('Start date and end date required');
+    if (!validateStep(4)) validationErrors.push('Package name and description required');
+    if (!validateStep(5)) validationErrors.push('Total price required');
 
     if (validationErrors.length > 0) {
       setError(`Please complete all required steps: ${validationErrors.join(', ')}`);
@@ -318,6 +341,23 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
         }
       }
 
+      // Ensure all required fields are present
+      if (!payload.property) {
+        throw new Error('Property selection is required');
+      }
+      if (!payload.startDate || !payload.endDate) {
+        throw new Error('Start date and end date are required');
+      }
+      if (!payload.name || !payload.description) {
+        throw new Error('Package name and description are required');
+      }
+      if (!payload.totalPrice || parseFloat(payload.totalPrice) <= 0) {
+        throw new Error('Total price must be greater than 0');
+      }
+      if (payload.restaurants.length === 0 && payload.activities.length === 0 && payload.services.length === 0) {
+        throw new Error('At least one item (restaurant, activity, or service) is required');
+      }
+
       console.log('🚀 Creating package for publish with payload:', payload);
       
       const apiUrl = process.env.REACT_APP_API_URL;
@@ -332,39 +372,69 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
 
       console.log('📡 Create response status:', createResponse.status);
 
-      if (createResponse.ok) {
-        const createData = await createResponse.json();
-        console.log('✅ Package created:', createData);
-        
-        if (!createData.package || !createData.package._id) {
-          throw new Error('Invalid response from server - no package ID');
+      if (!createResponse.ok) {
+        const errorData = await createResponse.json().catch(() => ({ message: 'Failed to create package' }));
+        console.error('❌ Create error:', createResponse.status, errorData);
+        throw new Error(errorData.message || 'Failed to create package');
+      }
+
+      const createData = await createResponse.json();
+      console.log('✅ Package created:', createData);
+      
+      if (!createData.package || !createData.package._id) {
+        throw new Error('Invalid response from server - no package ID');
+      }
+      
+      // Check if package is ready to publish before attempting to publish
+      const packageData = createData.package;
+      console.log('📋 Package data:', {
+        basicInfoCompleted: packageData.basicInfoCompleted,
+        datesSet: packageData.datesSet,
+        itemsAdded: packageData.itemsAdded,
+        totalPrice: packageData.totalPrice,
+        readyToPublish: packageData.readyToPublish,
+        restaurants: packageData.restaurants?.length || 0,
+        activities: packageData.activities?.length || 0,
+        services: packageData.services?.length || 0
+      });
+      
+      // Then publish it
+      console.log('📢 Publishing package:', createData.package._id);
+      const publishResponse = await fetch(`${apiUrl}/api/packages/${createData.package._id}/publish`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
+      });
+
+      console.log('📡 Publish response status:', publishResponse.status);
+
+      if (publishResponse.ok) {
+        const publishData = await publishResponse.json();
+        console.log('✅ Package published successfully:', publishData);
         
-        // Then publish it
-        console.log('📢 Publishing package:', createData.package._id);
-        const publishResponse = await fetch(`${apiUrl}/api/packages/${createData.package._id}/publish`, {
-          method: 'PATCH',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        console.log('📡 Publish response status:', publishResponse.status);
-
-        if (publishResponse.ok) {
-          const publishData = await publishResponse.json();
-          console.log('✅ Package published successfully:', publishData);
-          
-          // Show success message
-          alert('Package créé et publié avec succès!');
-          
-          // Navigate to partner dashboard after successful publish
+        // Show success message
+        setSuccessMessage('Pack ajouté avec succès!');
+        
+        // Navigate to partner dashboard after successful publish
+        setTimeout(() => {
           navigate('/partner-welcome');
-        } else {
-          const errorData = await publishResponse.json().catch(() => ({ message: 'Failed to publish package' }));
-          console.error('❌ Publish error:', publishResponse.status, errorData);
+        }, 1500);
+      } else {
+        const errorData = await publishResponse.json().catch(() => ({ message: 'Failed to publish package' }));
+        console.error('❌ Publish error:', publishResponse.status, errorData);
+        
+        // Provide more detailed error message
+        if (errorData.message === 'Package is not ready to publish') {
+          const missingFields = [];
+          if (!packageData.basicInfoCompleted) missingFields.push('name and description');
+          if (!packageData.datesSet) missingFields.push('start date and end date');
+          if (!packageData.itemsAdded) missingFields.push('at least one item');
+          if (!packageData.totalPrice || packageData.totalPrice <= 0) missingFields.push('total price > 0');
           
+          setError(`Package n'est pas prêt à être publié. Manque: ${missingFields.join(', ')}`);
+        } else {
           // Handle token expiration
           if (publishResponse.status === 401) {
             setError('Votre session a expiré. Veuillez vous reconnecter.');
@@ -383,31 +453,10 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
             setError(errorData.message || 'Échec de la publication du package');
           }
         }
-      } else {
-        const errorData = await createResponse.json().catch(() => ({ message: 'Failed to create package' }));
-        console.error('❌ Create error:', createResponse.status, errorData);
-        
-        // Handle token expiration
-        if (createResponse.status === 401) {
-          setError('Votre session a expiré. Veuillez vous reconnecter.');
-          // Use the proper logout function instead of manual clearing
-          if (window.authLogout) {
-            window.authLogout();
-          } else {
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('user');
-            localStorage.removeItem('refreshToken');
-          }
-          setTimeout(() => {
-            navigate('/login');
-          }, 2000);
-        } else {
-          setError(errorData.message || 'Échec de la création du package');
-        }
       }
     } catch (err) {
       console.error('❌ Publish error:', err);
-      setError(`Erreur lors de la publication du package: ${err.message}`);
+      setError(err.message || 'Erreur lors de la publication du package');
     } finally {
       setIsLoading(false);
     }
@@ -416,6 +465,7 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
   const steps = [
     'Choisir Propriété',
     'Sélectionner Éléments',
+    'Sélectionner Dates',
     'Informations De Base',
     'Définir Prix',
     'Réviser & Publier'
@@ -494,6 +544,22 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
               </div>
               <div className="ml-3">
                 <p className="text-red-800 text-sm font-medium">{error}</p>
+              </div>
+            </div>
+        </div>
+      )}
+
+        {/* Success Message Display */}
+      {successMessage && (
+          <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded-lg shadow-sm">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-green-800 text-sm font-medium">{successMessage}</p>
               </div>
             </div>
         </div>
@@ -597,8 +663,15 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
                                 <S3Image src={item.thumbnail} alt={item.name} className="w-12 h-12 object-cover rounded-md" fallbackSrc="/placeholder.jpg" />
                               )}
                               <div className="flex-1 min-w-0">
-                                <div className="font-medium text-gray-900 truncate">{item.name}</div>
-                                <div className="text-sm text-gray-600 truncate">{item.price} MAD</div>
+                                <div className="flex items-center gap-2">
+                                  <div className="font-medium text-gray-900 truncate">{item.name}</div>
+                                  {item.isB2B && (
+                                    <span className="inline-flex items-center px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+                                      B2B
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-sm text-gray-600 truncate">{item.price || 0} MAD</div>
                                 {item.scheduledTime && (
                                   <div className="text-xs text-blue-600 mt-1 flex items-center">
                                     <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -631,8 +704,15 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
                                 <S3Image src={item.thumbnail} alt={item.name} className="w-12 h-12 object-cover rounded-md" fallbackSrc="/placeholder.jpg" />
                               )}
                               <div className="flex-1 min-w-0">
-                                <div className="font-medium text-gray-900 truncate">{item.name}</div>
-                                <div className="text-sm text-gray-600 truncate">{item.price} MAD</div>
+                                <div className="flex items-center gap-2">
+                                  <div className="font-medium text-gray-900 truncate">{item.name}</div>
+                                  {item.isB2B && (
+                                    <span className="inline-flex items-center px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+                                      B2B
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-sm text-gray-600 truncate">{item.price || 0} MAD</div>
                                 {item.scheduledTime && (
                                   <div className="text-xs text-blue-600 mt-1 flex items-center">
                                     <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -665,8 +745,15 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
                                 <S3Image src={item.thumbnail} alt={item.name} className="w-12 h-12 object-cover rounded-md" fallbackSrc="/placeholder.jpg" />
                               )}
                               <div className="flex-1 min-w-0">
-                                <div className="font-medium text-gray-900 truncate">{item.name}</div>
-                                <div className="text-sm text-gray-600 truncate">{item.price} MAD</div>
+                                <div className="flex items-center gap-2">
+                                  <div className="font-medium text-gray-900 truncate">{item.name}</div>
+                                  {item.isB2B && (
+                                    <span className="inline-flex items-center px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+                                      B2B
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-sm text-gray-600 truncate">{item.price || 0} MAD</div>
                                 {item.availableDates && item.availableDates.length > 0 && (
                                   <div className="text-xs text-green-700 mt-1">
                                     Dates: {formatDatesAsRanges(item.availableDates)}
@@ -696,6 +783,8 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
                 onToggleExpanded={handleToggleExpanded}
                 availableProperties={availableProperties}
                 pkgForm={formData}
+                allowB2BSelection={true}
+                b2bCategoryFilter={['restaurant', 'catering']}
               />
               
               {/* Activities */}
@@ -710,6 +799,8 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
                 onToggleExpanded={handleToggleExpanded}
                 availableProperties={availableProperties}
                 pkgForm={formData}
+                allowB2BSelection={true}
+                b2bCategoryFilter={['activities', 'tours']}
               />
               
               {/* Services */}
@@ -724,14 +815,56 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
                 onToggleExpanded={handleToggleExpanded}
                 availableProperties={availableProperties}
                 pkgForm={formData}
+                allowB2BSelection={true}
+                b2bCategoryFilter={['transportation', 'cleaning', 'maintenance', 'event-planning', 'photography', 'other']}
               />
             </div>
           </div>
         )}
 
 
-          {/* Step 3: Basic Info - Enhanced Mobile Design */}
+          {/* Step 3: Select Dates - Enhanced Mobile Design */}
         {currentStep === 3 && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Sélectionner Dates</h2>
+                <p className="text-gray-600">Choisissez les dates de début et de fin pour votre package</p>
+              </div>
+              
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">Date de Début</label>
+                  <input
+                    type="date"
+                    value={formData.startDate}
+                    onChange={(e) => handleInputChange('startDate', e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 text-gray-900"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">Date de Fin</label>
+                  <input
+                    type="date"
+                    value={formData.endDate}
+                    onChange={(e) => handleInputChange('endDate', e.target.value)}
+                    min={formData.startDate || new Date().toISOString().split('T')[0]}
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 text-gray-900"
+                  />
+                </div>
+                {formData.startDate && formData.endDate && (
+                  <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                    <p className="text-sm text-green-800">
+                      <strong>Période sélectionnée:</strong> Du {new Date(formData.startDate).toLocaleDateString()} au {new Date(formData.endDate).toLocaleDateString()}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+        )}
+
+          {/* Step 4: Basic Info - Enhanced Mobile Design */}
+        {currentStep === 4 && (
             <div className="space-y-6">
               <div className="text-center">
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Informations De Base</h2>
@@ -763,8 +896,8 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
           </div>
         )}
 
-          {/* Step 4: Set Price - Enhanced Mobile Design */}
-        {currentStep === 4 && (
+          {/* Step 5: Set Price - Enhanced Mobile Design */}
+        {currentStep === 5 && (
             <div className="space-y-6">
               <div className="text-center">
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Définir Prix</h2>
@@ -791,8 +924,8 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
           </div>
         )}
 
-          {/* Step 5: Review - Enhanced Mobile Design */}
-        {currentStep === 5 && (
+          {/* Step 6: Review - Enhanced Mobile Design */}
+        {currentStep === 6 && (
             <div className="space-y-6">
               <div className="text-center">
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Réviser & Publier</h2>
@@ -909,7 +1042,7 @@ const CreatePackageForm = ({ onSuccess, onCancel }) => {
 };
 
 // Item Section Component with inline editing
-const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditItem, isExpanded, onToggleExpanded, availableProperties = [], pkgForm = {} }) => {
+const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditItem, isExpanded, onToggleExpanded, availableProperties = [], pkgForm = {}, allowB2BSelection = false, b2bCategoryFilter = [] }) => {
   const [newItem, setNewItem] = useState({ name: '', description: '', price: '', thumbnail: '', scheduledTime: '', availableDates: [] });
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
@@ -922,6 +1055,14 @@ const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditIt
   const [rangeEndAdd, setRangeEndAdd] = useState('');
   const [rangeStartEdit, setRangeStartEdit] = useState('');
   const [rangeEndEdit, setRangeEndEdit] = useState('');
+  
+  // B2B service selection state
+  const [serviceMode, setServiceMode] = useState('manual'); // 'manual' | 'b2b'
+  const [b2bServices, setB2bServices] = useState([]);
+  const [loadingB2B, setLoadingB2B] = useState(false);
+  const [b2bSearchQuery, setB2bSearchQuery] = useState('');
+  const [b2bServiceType, setB2bServiceType] = useState('all');
+  const [selectedB2BServices, setSelectedB2BServices] = useState([]);
 
   // Auto-show add form when section becomes expanded
   useEffect(() => {
@@ -931,6 +1072,89 @@ const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditIt
       setShowAddForm(false);
     }
   }, [isExpanded, showAddForm]);
+
+  const fetchB2BServices = async () => {
+    setLoadingB2B(true);
+    try {
+      const params = {
+        page: 1,
+        limit: 50,
+        ...(b2bSearchQuery && { search: b2bSearchQuery }),
+        ...(b2bServiceType !== 'all' && { serviceType: b2bServiceType })
+      };
+      const response = await api.get('/api/b2b/search', { params });
+      if (response.data.success) {
+        let services = response.data.services || [];
+        // Filter by category if b2bCategoryFilter is provided
+        if (b2bCategoryFilter.length > 0) {
+          services = services.filter(service => 
+            b2bCategoryFilter.includes(service.serviceType || service.serviceProvided)
+          );
+        }
+        setB2bServices(services);
+      }
+    } catch (error) {
+      console.error('Error fetching B2B services:', error);
+    } finally {
+      setLoadingB2B(false);
+    }
+  };
+
+  // Fetch B2B services when in B2B mode
+  useEffect(() => {
+    if (allowB2BSelection && serviceMode === 'b2b' && isExpanded) {
+      fetchB2BServices();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allowB2BSelection, serviceMode, isExpanded, b2bSearchQuery, b2bServiceType]);
+
+  const handleB2BServiceToggle = (service) => {
+    setSelectedB2BServices(prev => {
+      const isSelected = prev.some(s => s._id === service._id);
+      if (isSelected) {
+        return prev.filter(s => s._id !== service._id);
+      } else {
+        return [...prev, service];
+      }
+    });
+  };
+
+  const handleAddSelectedB2BServices = () => {
+    if (selectedB2BServices.length === 0) return;
+    
+    selectedB2BServices.forEach(b2bService => {
+      // Convert B2B service to package service format
+      // Now using actual service data (title, description, price, images) instead of business info
+      const packageService = {
+        name: b2bService.title || b2bService.businessName || b2bService.fullName,
+        description: b2bService.description || `${b2bService.serviceType || 'Service'} - ${b2bService.location || ''}`,
+        price: b2bService.price || 0, // Use the actual service price
+        thumbnail: (b2bService.images && b2bService.images.length > 0) 
+          ? b2bService.images[0] 
+          : (b2bService.profilePic || ''),
+        scheduledTime: '',
+        availableDates: [],
+        b2bServiceId: b2bService._id, // Store reference to B2B service
+        isB2B: true, // Flag to identify B2B items
+        b2bProvider: {
+          id: b2bService.businessId || b2bService._id,
+          name: b2bService.businessName || b2bService.fullName,
+          email: b2bService.email,
+          phone: b2bService.phoneNumber,
+          serviceType: b2bService.serviceType || b2bService.serviceProvided,
+          location: b2bService.location
+        }
+      };
+      onAddItem(category, packageService);
+    });
+
+    // Clear selection and reset mode
+    setSelectedB2BServices([]);
+    setServiceMode('manual');
+    setShowAddForm(false);
+    // Collapse the section after adding so user can see items in preview
+    onToggleExpanded(category, false);
+  };
 
   const handleAdd = () => {
     onAddItem(category, newItem);
@@ -1201,8 +1425,209 @@ const ItemSection = ({ title, category, items, onAddItem, onRemoveItem, onEditIt
         </div>
       )}
 
-      {/* Add Form - Only show when expanded and form is active */}
-      {isExpanded && showAddForm && (
+      {/* Mode Toggle - Only show if allowB2BSelection is true */}
+      {isExpanded && allowB2BSelection && (
+        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+          <label className="block text-sm font-semibold text-gray-700 mb-3">Choisir le mode d'ajout</label>
+          <div className="flex gap-4">
+            <label className={`flex-1 cursor-pointer p-3 rounded-lg border-2 transition-all ${
+              serviceMode === 'manual' 
+                ? 'border-green-500 bg-green-50' 
+                : 'border-gray-200 bg-white hover:border-gray-300'
+            }`}>
+              <input
+                type="radio"
+                name={`${category}Mode`}
+                value="manual"
+                checked={serviceMode === 'manual'}
+                onChange={(e) => {
+                  setServiceMode(e.target.value);
+                  setShowAddForm(true);
+                }}
+                className="mr-2"
+              />
+              <span className="font-medium">Créer manuellement</span>
+            </label>
+            <label className={`flex-1 cursor-pointer p-3 rounded-lg border-2 transition-all ${
+              serviceMode === 'b2b' 
+                ? 'border-blue-500 bg-blue-50' 
+                : 'border-gray-200 bg-white hover:border-gray-300'
+            }`}>
+              <input
+                type="radio"
+                name={`${category}Mode`}
+                value="b2b"
+                checked={serviceMode === 'b2b'}
+                onChange={(e) => {
+                  setServiceMode(e.target.value);
+                  setShowAddForm(false);
+                }}
+                className="mr-2"
+              />
+              <span className="font-medium">Sélectionner depuis B2B</span>
+            </label>
+          </div>
+        </div>
+      )}
+
+      {/* B2B Selection - Only show when in B2B mode */}
+      {isExpanded && allowB2BSelection && serviceMode === 'b2b' && (
+        <div className="space-y-4 border-t border-gray-300 pt-6 bg-white rounded-xl p-4">
+          <h4 className="text-lg font-semibold text-gray-900 mb-4">Sélectionner des {title.toLowerCase()} B2B</h4>
+          
+          {/* Search and Filter */}
+          <div className="space-y-3 mb-4">
+            <input
+              type="text"
+              placeholder={`Rechercher un ${title.toLowerCase()}...`}
+              value={b2bSearchQuery}
+              onChange={(e) => setB2bSearchQuery(e.target.value)}
+              className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+            <select
+              value={b2bServiceType}
+              onChange={(e) => setB2bServiceType(e.target.value)}
+              className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="all">Tous les types</option>
+              {b2bCategoryFilter.map(filterType => {
+                const labels = {
+                  'restaurant': 'Restaurant',
+                  'catering': 'Traiteur',
+                  'activities': 'Activités',
+                  'tours': 'Visites guidées',
+                  'transportation': 'Transport',
+                  'cleaning': 'Nettoyage',
+                  'maintenance': 'Maintenance',
+                  'event-planning': 'Organisation d\'événements',
+                  'photography': 'Photographie',
+                  'other': 'Autre'
+                };
+                return (
+                  <option key={filterType} value={filterType}>
+                    {labels[filterType] || filterType}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+
+          {/* Loading State */}
+          {loadingB2B && (
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+              <p className="mt-2 text-gray-600">Chargement des services...</p>
+            </div>
+          )}
+
+          {/* B2B Services List */}
+          {!loadingB2B && (
+            <>
+              {b2bServices.length > 0 ? (
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {b2bServices.map((service) => {
+                    const isSelected = selectedB2BServices.some(s => s._id === service._id);
+                    return (
+                      <div
+                        key={service._id}
+                        onClick={() => handleB2BServiceToggle(service)}
+                        className={`relative p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                          isSelected
+                            ? 'border-blue-500 bg-blue-50 shadow-md'
+                            : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50'
+                        }`}
+                      >
+                        {/* Selection Indicator */}
+                        {isSelected && (
+                          <div className="absolute top-2 right-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                        )}
+                        <div className="flex items-start gap-3">
+                          {((service.images && service.images.length > 0) || service.profilePic) && (
+                              <S3Image
+                                src={(service.images && service.images.length > 0) ? service.images[0] : service.profilePic}
+                                alt={service.title || service.businessName}
+                                className={`w-16 h-16 object-cover rounded-lg flex-shrink-0 ${
+                                  isSelected ? 'ring-2 ring-blue-500' : ''
+                                }`}
+                                fallbackSrc="/placeholder.jpg"
+                              />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between">
+                                <h5 className={`font-semibold ${isSelected ? 'text-blue-900' : 'text-gray-900'}`}>
+                                  {service.title || service.businessName || service.fullName}
+                                </h5>
+                              </div>
+                              {service.description && (
+                                <p className={`text-xs mt-1 ${isSelected ? 'text-blue-600' : 'text-gray-500'} line-clamp-2`}>
+                                  {service.description}
+                                </p>
+                              )}
+                              <p className={`text-sm mt-1 ${isSelected ? 'text-blue-700' : 'text-gray-600'}`}>
+                                <span className="font-medium">{service.serviceType || service.serviceProvided}</span>
+                                {service.location && <span> • {service.location}</span>}
+                                {service.price !== undefined && service.price > 0 && (
+                                  <span> • {service.price} MAD</span>
+                                )}
+                              </p>
+                            {service.email && (
+                              <p className="text-xs text-gray-500 mt-1">{service.email}</p>
+                            )}
+                            {service.phoneNumber && (
+                              <p className="text-xs text-gray-500">{service.phoneNumber}</p>
+                            )}
+                            {isSelected && (
+                              <div className="mt-2 inline-flex items-center px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs font-medium">
+                                ✓ Sélectionné
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <p>Aucun {title.toLowerCase()} B2B trouvé</p>
+                </div>
+              )}
+
+              {/* Add Selected Items Button */}
+              {selectedB2BServices.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-medium text-gray-700">
+                      {selectedB2BServices.length} {title.toLowerCase()} sélectionné(s)
+                    </span>
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleAddSelectedB2BServices}
+                      className="flex-1 px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-all duration-200 font-semibold"
+                    >
+                      Ajouter {selectedB2BServices.length} {title.toLowerCase()} au package
+                    </button>
+                    <button
+                      onClick={() => setSelectedB2BServices([])}
+                      className="px-4 py-3 text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium"
+                    >
+                      Réinitialiser
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Add Form - Only show when expanded and form is active (manual mode) */}
+      {isExpanded && showAddForm && serviceMode !== 'b2b' && (
         <div className="space-y-4 border-t border-gray-300 pt-6 bg-white rounded-xl p-4">
           <input
             type="text"
