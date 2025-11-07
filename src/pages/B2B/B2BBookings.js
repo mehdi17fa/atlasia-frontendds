@@ -98,10 +98,374 @@ export default function B2BBookings() {
       const queryString = buildQueryParams();
       const response = await apiCall(`/api/b2b/bookings?${queryString}`).catch(() => {
         // Return mock data if API doesn't exist yet
+        const now = new Date();
+        const generateMockBookings = () => {
+          const tajineDishes = [
+            'Tajine aux Pruneaux et Amandes',
+            'Tajine de Poulet aux Citrons Confits',
+            'Tajine d\'Agneau aux Légumes',
+            'Tajine de Kefta aux Œufs',
+            'Tajine de Poisson aux Olives',
+            'Tajine de Bœuf aux Carottes',
+            'Tajine de Poulet aux Olives',
+            'Tajine de Légumes',
+            'Tajine de Mouton aux Haricots Verts',
+            'Tajine de Poulet aux Amandes',
+            'Tajine d\'Agneau aux Pruneaux',
+            'Tajine de Poisson aux Tomates',
+            'Tajine de Kefta aux Tomates',
+            'Tajine de Bœuf aux Pruneaux',
+            'Tajine de Poulet aux Légumes',
+            'Tajine d\'Agneau aux Olives',
+            'Tajine de Poisson aux Citrons',
+            'Tajine de Légumes aux Herbes'
+          ];
+          const customerNames = [
+            { fullName: 'Ahmed Benali', email: 'ahmed.benali@example.com', phoneNumber: '+212612345678' },
+            { fullName: 'Fatima Alami', email: 'fatima.alami@example.com', phoneNumber: '+212698765432' },
+            { fullName: 'Youssef Idrissi', email: 'youssef.idrissi@example.com', phoneNumber: '+212655443322' },
+            { fullName: 'Aicha Bensaid', email: 'aicha.bensaid@example.com', phoneNumber: '+212677889900' },
+            { fullName: 'Mohamed Tazi', email: 'mohamed.tazi@example.com', phoneNumber: '+212644556677' },
+            { fullName: 'Sanae El Fassi', email: 'sanae.elfassi@example.com', phoneNumber: '+212633445566' },
+            { fullName: 'Karim Amrani', email: 'karim.amrani@example.com', phoneNumber: '+212622334455' },
+            { fullName: 'Nadia Berrada', email: 'nadia.berrada@example.com', phoneNumber: '+212611223344' }
+          ];
+          
+          const getTableSize = (index) => {
+            const sizes = [2, 2, 3, 4, 2, 4, 3, 2, 4, 3, 2, 4, 2, 3, 4, 2, 3, 4];
+            return sizes[index % sizes.length];
+          };
+          
+          const bookings = [
+            // Upcoming bookings within different time ranges
+            {
+              _id: 'mock_booking_1',
+              status: 'confirmed',
+              customer: customerNames[0],
+              serviceItem: {
+                name: tajineDishes[0],
+                type: 'restaurant',
+                description: `Table pour ${getTableSize(0)} personnes - Réservation table`
+              },
+              serviceStartTime: new Date(now.getTime() + 30 * 60 * 1000).toISOString(), // 30 min from now (within 1h)
+              bookingDate: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+              totalAmount: 280,
+              createdAt: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+              notes: 'Préférence pour table près de la fenêtre, demande spéciale: tajine bien cuit'
+            },
+            {
+              _id: 'mock_booking_2',
+              status: 'upcoming',
+              customer: customerNames[1],
+              serviceItem: {
+                name: tajineDishes[1],
+                type: 'restaurant',
+                description: `Table pour ${getTableSize(1)} personnes - Réservation table`
+              },
+              serviceStartTime: new Date(now.getTime() + 90 * 60 * 1000).toISOString(), // 1.5h from now (within 2h)
+              bookingDate: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+              totalAmount: 320,
+              createdAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+              notes: 'Anniversaire - gâteau souhaité'
+            },
+            {
+              _id: 'mock_booking_3',
+              status: 'confirmed',
+              customer: customerNames[2],
+              serviceItem: {
+                name: tajineDishes[2],
+                type: 'restaurant',
+                description: `Table pour ${getTableSize(2)} personnes - Réservation table`
+              },
+              serviceStartTime: new Date(now.getTime() + 4 * 60 * 60 * 1000).toISOString(), // 4h from now (within 6h)
+              bookingDate: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+              totalAmount: 450,
+              createdAt: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+              notes: 'Table en terrasse si possible'
+            },
+            {
+              _id: 'mock_booking_4',
+              status: 'upcoming',
+              customer: customerNames[3],
+              serviceItem: {
+                name: tajineDishes[3],
+                type: 'restaurant',
+                description: `Table pour ${getTableSize(3)} personnes - Réservation table`
+              },
+              serviceStartTime: new Date(now.getTime() + 10 * 60 * 60 * 1000).toISOString(), // 10h from now (within 12h)
+              bookingDate: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+              totalAmount: 380,
+              createdAt: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+              notes: 'Allergie aux noix - attention'
+            },
+            {
+              _id: 'mock_booking_5',
+              status: 'confirmed',
+              customer: customerNames[4],
+              serviceItem: {
+                name: tajineDishes[4],
+                type: 'restaurant',
+                description: `Table pour ${getTableSize(4)} personnes - Réservation table`
+              },
+              serviceStartTime: new Date(now.getTime() + 20 * 60 * 60 * 1000).toISOString(), // 20h from now (within 24h)
+              bookingDate: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+              totalAmount: 290,
+              createdAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+              notes: 'Première visite - recommandations bienvenues'
+            },
+            {
+              _id: 'mock_booking_6',
+              status: 'confirmed',
+              customer: customerNames[5],
+              serviceItem: {
+                name: tajineDishes[5],
+                type: 'restaurant',
+                description: `Table pour ${getTableSize(5)} personnes - Réservation table`
+              },
+              serviceStartTime: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days from now
+              bookingDate: new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000).toISOString(),
+              totalAmount: 520,
+              createdAt: new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000).toISOString(),
+              notes: 'Dîner d\'affaires'
+            },
+            {
+              _id: 'mock_booking_7',
+              status: 'upcoming',
+              customer: customerNames[6],
+              serviceItem: {
+                name: tajineDishes[6],
+                type: 'restaurant',
+                description: `Table pour ${getTableSize(6)} personnes - Réservation table`
+              },
+              serviceStartTime: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days from now
+              bookingDate: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+              totalAmount: 420,
+              createdAt: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+              notes: 'Célébration - musique douce souhaitée'
+            },
+            // Past bookings
+            {
+              _id: 'mock_booking_8',
+              status: 'past',
+              customer: customerNames[0],
+              serviceItem: {
+                name: tajineDishes[7],
+                type: 'restaurant',
+                description: `Table pour ${getTableSize(7)} personnes - Réservation table`
+              },
+              serviceStartTime: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+              bookingDate: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+              totalAmount: 280,
+              createdAt: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+              notes: 'Excellent service - client satisfait'
+            },
+            {
+              _id: 'mock_booking_9',
+              status: 'past',
+              customer: customerNames[1],
+              serviceItem: {
+                name: tajineDishes[8],
+                type: 'restaurant',
+                description: `Table pour ${getTableSize(8)} personnes - Réservation table`
+              },
+              serviceStartTime: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
+              bookingDate: new Date(now.getTime() - 12 * 24 * 60 * 60 * 1000).toISOString(),
+              totalAmount: 480,
+              createdAt: new Date(now.getTime() - 12 * 24 * 60 * 60 * 1000).toISOString(),
+              notes: 'Famille avec enfants'
+            },
+            {
+              _id: 'mock_booking_10',
+              status: 'past',
+              customer: customerNames[2],
+              serviceItem: {
+                name: tajineDishes[9],
+                type: 'restaurant',
+                description: `Table pour ${getTableSize(9)} personnes - Réservation table`
+              },
+              serviceStartTime: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000).toISOString(), // 15 days ago
+              bookingDate: new Date(now.getTime() - 20 * 24 * 60 * 60 * 1000).toISOString(),
+              totalAmount: 360,
+              createdAt: new Date(now.getTime() - 20 * 24 * 60 * 60 * 1000).toISOString(),
+              notes: 'Client régulier'
+            },
+            // Canceled bookings
+            {
+              _id: 'mock_booking_11',
+              status: 'canceled',
+              customer: customerNames[3],
+              serviceItem: {
+                name: tajineDishes[10],
+                type: 'restaurant',
+                description: `Table pour ${getTableSize(10)} personnes - Réservation table`
+              },
+              serviceStartTime: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
+              bookingDate: new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000).toISOString(),
+              totalAmount: 520,
+              createdAt: new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000).toISOString(),
+              notes: 'Annulé par le client - changement de plans'
+            },
+            {
+              _id: 'mock_booking_12',
+              status: 'canceled',
+              customer: customerNames[4],
+              serviceItem: {
+                name: tajineDishes[11],
+                type: 'restaurant',
+                description: `Table pour ${getTableSize(11)} personnes - Réservation table`
+              },
+              serviceStartTime: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
+              bookingDate: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+              totalAmount: 480,
+              createdAt: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+              notes: 'Annulé - client malade'
+            },
+            // More upcoming bookings
+            {
+              _id: 'mock_booking_13',
+              status: 'confirmed',
+              customer: customerNames[5],
+              serviceItem: {
+                name: tajineDishes[12],
+                type: 'restaurant',
+                description: `Table pour ${getTableSize(12)} personnes - Réservation table`
+              },
+              serviceStartTime: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days from now
+              bookingDate: new Date(now.getTime() - 9 * 24 * 60 * 60 * 1000).toISOString(),
+              totalAmount: 280,
+              createdAt: new Date(now.getTime() - 9 * 24 * 60 * 60 * 1000).toISOString(),
+              notes: 'Déjeuner romantique'
+            },
+            {
+              _id: 'mock_booking_14',
+              status: 'upcoming',
+              customer: customerNames[6],
+              serviceItem: {
+                name: tajineDishes[13],
+                type: 'restaurant',
+                description: `Table pour ${getTableSize(13)} personnes - Réservation table`
+              },
+              serviceStartTime: new Date(now.getTime() + 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days from now
+              bookingDate: new Date(now.getTime() - 11 * 24 * 60 * 60 * 1000).toISOString(),
+              totalAmount: 420,
+              createdAt: new Date(now.getTime() - 11 * 24 * 60 * 60 * 1000).toISOString(),
+              notes: 'Groupe d\'amis'
+            },
+            {
+              _id: 'mock_booking_15',
+              status: 'confirmed',
+              customer: customerNames[7],
+              serviceItem: {
+                name: tajineDishes[14],
+                type: 'restaurant',
+                description: `Table pour ${getTableSize(14)} personnes - Réservation table`
+              },
+              serviceStartTime: new Date(now.getTime() + 6 * 24 * 60 * 60 * 1000).toISOString(), // 6 days from now
+              bookingDate: new Date(now.getTime() - 13 * 24 * 60 * 60 * 1000).toISOString(),
+              totalAmount: 560,
+              createdAt: new Date(now.getTime() - 13 * 24 * 60 * 60 * 1000).toISOString(),
+              notes: 'Réunion de famille'
+            },
+            {
+              _id: 'mock_booking_16',
+              status: 'past',
+              customer: customerNames[0],
+              serviceItem: {
+                name: tajineDishes[15],
+                type: 'restaurant',
+                description: `Table pour ${getTableSize(15)} personnes - Réservation table`
+              },
+              serviceStartTime: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
+              bookingDate: new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+              totalAmount: 300,
+              createdAt: new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+              notes: 'Client très satisfait'
+            },
+            {
+              _id: 'mock_booking_17',
+              status: 'confirmed',
+              customer: customerNames[1],
+              serviceItem: {
+                name: tajineDishes[16],
+                type: 'restaurant',
+                description: `Table pour ${getTableSize(16)} personnes - Réservation table`
+              },
+              serviceStartTime: new Date(now.getTime() + 8 * 24 * 60 * 60 * 1000).toISOString(), // 8 days from now
+              bookingDate: new Date(now.getTime() - 16 * 24 * 60 * 60 * 1000).toISOString(),
+              totalAmount: 450,
+              createdAt: new Date(now.getTime() - 16 * 24 * 60 * 60 * 1000).toISOString(),
+              notes: 'Célébration spéciale'
+            },
+            {
+              _id: 'mock_booking_18',
+              status: 'past',
+              customer: customerNames[2],
+              serviceItem: {
+                name: tajineDishes[17],
+                type: 'restaurant',
+                description: `Table pour ${getTableSize(17)} personnes - Réservation table`
+              },
+              serviceStartTime: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(), // 10 days ago
+              bookingDate: new Date(now.getTime() - 18 * 24 * 60 * 60 * 1000).toISOString(),
+              totalAmount: 560,
+              createdAt: new Date(now.getTime() - 18 * 24 * 60 * 60 * 1000).toISOString(),
+              notes: 'Excellent tajine - recommandé à des amis'
+            }
+          ];
+          
+          return bookings;
+        };
+        
+        const allBookings = generateMockBookings();
+        const currentPage = parseInt(new URLSearchParams(queryString).get('page') || '1');
+        const limit = parseInt(new URLSearchParams(queryString).get('limit') || '10');
+        const statusFilter = new URLSearchParams(queryString).get('status');
+        const timeRange = new URLSearchParams(queryString).get('timeRange');
+        const startTime = new URLSearchParams(queryString).get('startTime');
+        const endTime = new URLSearchParams(queryString).get('endTime');
+        
+        // Filter bookings based on status
+        let filteredBookings = allBookings;
+        if (statusFilter && statusFilter !== 'all') {
+          filteredBookings = filteredBookings.filter(booking => booking.status === statusFilter);
+        }
+        
+        // Filter bookings based on time range
+        if (timeRange || startTime || endTime) {
+          filteredBookings = filteredBookings.filter(booking => {
+            const serviceTime = new Date(booking.serviceStartTime);
+            const now = new Date();
+            
+            if (startTime && endTime) {
+              const start = new Date(startTime);
+              const end = new Date(endTime);
+              return serviceTime >= start && serviceTime <= end;
+            }
+            
+            if (timeRange) {
+              const hours = parseInt(timeRange.replace('h', ''));
+              const futureTime = new Date(now.getTime() + hours * 60 * 60 * 1000);
+              return serviceTime >= now && serviceTime <= futureTime;
+            }
+            
+            return true;
+          });
+        }
+        
+        // Paginate
+        const startIndex = (currentPage - 1) * limit;
+        const endIndex = startIndex + limit;
+        const paginatedBookings = filteredBookings.slice(startIndex, endIndex);
+        const totalPages = Math.ceil(filteredBookings.length / limit);
+        
         return {
           success: true,
-          bookings: [],
-          pagination: { current: 1, total: 1, count: 0 }
+          bookings: paginatedBookings,
+          pagination: {
+            current: currentPage,
+            total: totalPages,
+            count: filteredBookings.length
+          }
         };
       });
 
@@ -143,9 +507,9 @@ export default function B2BBookings() {
   };
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('fr-FR', {
+    return new Intl.NumberFormat('fr-MA', {
       style: 'currency',
-      currency: 'EUR'
+      currency: 'MAD'
     }).format(amount || 0);
   };
 
