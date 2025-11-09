@@ -1,179 +1,122 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useContext, useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import { api } from '../../api';
-import ReservationDetailModal from '../../components/B2B/ReservationDetailModal';
 import {
   ArrowLeftIcon,
+  BuildingOfficeIcon,
   CalendarDaysIcon,
   ClockIcon,
-  CurrencyDollarIcon,
-  FunnelIcon,
-  EyeIcon,
-  BuildingOfficeIcon,
-  UserIcon
+  UsersIcon,
+  EnvelopeIcon,
+  PhoneIcon,
+  CheckBadgeIcon,
+  XCircleIcon
 } from '@heroicons/react/24/outline';
+
+const STATUS_OPTIONS = [
+  { value: 'pending', label: 'En attente' },
+  { value: 'confirmed', label: 'Confirmées' },
+  { value: 'cancelled', label: 'Annulées' },
+  { value: 'all', label: 'Toutes' }
+];
+
+const STATUS_STYLES = {
+  pending: { label: 'En attente', bg: 'bg-yellow-100', text: 'text-yellow-800' },
+  confirmed: { label: 'Confirmée', bg: 'bg-green-100', text: 'text-green-800' },
+  cancelled: { label: 'Annulée', bg: 'bg-red-100', text: 'text-red-700' },
+  completed: { label: 'Terminée', bg: 'bg-blue-100', text: 'text-blue-800' }
+};
+
+const formatDate = (date) => {
+  if (!date) return '—';
+  try {
+    return new Date(date).toLocaleDateString('fr-FR', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  } catch {
+    return date;
+  }
+};
 
 export default function B2BBookings() {
   const { user, token } = useContext(AuthContext);
   const navigate = useNavigate();
-
-  // Filters
-  const [statusFilter, setStatusFilter] = useState('all'); // all, past, upcoming, canceled, confirmed
-  const [timeRangeFilter, setTimeRangeFilter] = useState('all'); // all, 1h, 2h, 6h, 12h, 24h, custom
-  const [customStartTime, setCustomStartTime] = useState('');
-  const [customEndTime, setCustomEndTime] = useState('');
-
-  // Data
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [limit] = useState(10);
+  const [statusFilter, setStatusFilter] = useState('pending');
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  // Modal
-  const [selectedReservation, setSelectedReservation] = useState(null);
-  const [showReservationModal, setShowReservationModal] = useState(false);
+  const filteredBookings = useMemo(() => {
+    if (statusFilter === 'all') return bookings;
+    return bookings.filter((booking) => booking.status === statusFilter);
+  }, [bookings, statusFilter]);
 
-  useEffect(() => {
-    if (user && user.role === 'b2b') {
-      fetchBookings();
-    }
-  }, [user, statusFilter, timeRangeFilter, customStartTime, customEndTime, page]);
-
-  const apiCall = async (endpoint, options = {}) => {
-    const headers = { 'Content-Type': 'application/json' };
-    if (token) headers.Authorization = `Bearer ${token}`;
-
-    try {
-      const method = (options.method || 'GET').toUpperCase();
-      const config = { headers };
-      
-      if (method === 'GET') {
-        const response = await api.get(endpoint, config);
-        return response.data;
-      } else {
-        const response = await api.request({
-          url: endpoint,
-          method,
-          data: options.body ? JSON.parse(options.body) : undefined,
-          ...config
-        });
-        return response.data;
-      }
-    } catch (err) {
-      console.error(`Error calling ${endpoint}:`, err);
-      throw err;
-    }
-  };
-
-  const buildQueryParams = () => {
-    const params = new URLSearchParams();
-    
-    if (statusFilter !== 'all') {
-      params.append('status', statusFilter);
-    }
-
-    if (timeRangeFilter !== 'all') {
-      if (timeRangeFilter === 'custom') {
-        if (customStartTime) params.append('startTime', customStartTime);
-        if (customEndTime) params.append('endTime', customEndTime);
-      } else {
-        params.append('timeRange', timeRangeFilter);
-      }
-    }
-
-    params.append('page', page.toString());
-    params.append('limit', limit.toString());
-
-    return params.toString();
-  };
-
-  const fetchBookings = async () => {
+  const loadBookings = async () => {
+    if (!token) return;
     setLoading(true);
     setError(null);
-
     try {
-      const queryString = buildQueryParams();
-      const response = await apiCall(`/api/b2b/bookings?${queryString}`).catch(() => {
-        // Return mock data if API doesn't exist yet
-        return {
-          success: true,
-          bookings: [],
-          pagination: { current: 1, total: 1, count: 0 }
-        };
+      const params = {};
+      if (statusFilter && statusFilter !== 'all') {
+        params.status = statusFilter;
+      }
+      const response = await api.get('/api/service-bookings/business/my', {
+        headers: { Authorization: `Bearer ${token}` },
+        params
       });
-
-      if (response.success) {
-        setBookings(response.bookings || []);
-        setPage(response.pagination?.current || 1);
-        setTotalPages(response.pagination?.total || 1);
+      if (response.data?.success) {
+        setBookings(response.data.bookings || []);
+      } else {
+        setBookings([]);
       }
     } catch (err) {
-      console.error('Error fetching bookings:', err);
-      setError('Erreur lors du chargement des réservations');
+      console.error('Error fetching restaurant bookings', err);
+      const serverMessage = err?.response?.data?.message;
+      setError(serverMessage || "Impossible de charger vos réservations. Veuillez réessayer plus tard.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleReservationClick = (reservation) => {
-    setSelectedReservation(reservation);
-    setShowReservationModal(true);
-  };
+  useEffect(() => {
+    if (user?.role === 'b2b') {
+      loadBookings();
+    }
+  }, [user, statusFilter]);
 
-  const handleCloseModal = () => {
-    setShowReservationModal(false);
-    setSelectedReservation(null);
-  };
-
-  const handleStatusFilterChange = (status) => {
-    setStatusFilter(status);
-    setPage(1); // Reset to first page when filter changes
-  };
-
-  const handleTimeRangeFilterChange = (range) => {
-    setTimeRangeFilter(range);
-    setPage(1); // Reset to first page when filter changes
-    if (range !== 'custom') {
-      setCustomStartTime('');
-      setCustomEndTime('');
+  const updateBooking = async (bookingId, action, reason) => {
+    if (!token) return;
+    setIsUpdating(true);
+    try {
+      const endpoint = `/api/service-bookings/${bookingId}/${action}`;
+      const response = await api.patch(endpoint, reason ? { reason } : undefined, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data?.success) {
+        setBookings((prev) =>
+          prev.map((booking) =>
+            booking._id === bookingId ? response.data.booking : booking
+          )
+        );
+      }
+    } catch (err) {
+      console.error(`Failed to ${action} booking`, err);
+      alert("Une erreur est survenue lors de la mise à jour. Réessayez.");
+    } finally {
+      setIsUpdating(false);
     }
   };
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(amount || 0);
-  };
+  const handleConfirm = (bookingId) => updateBooking(bookingId, 'confirm');
 
-  const formatDate = (date) => {
-    if (!date) return 'N/A';
-    return new Date(date).toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const getStatusBadge = (status) => {
-    const statusConfig = {
-      confirmed: { bg: 'bg-green-100', text: 'text-green-800', label: 'Confirmée' },
-      upcoming: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'À venir' },
-      past: { bg: 'bg-gray-100', text: 'text-gray-800', label: 'Passée' },
-      canceled: { bg: 'bg-red-100', text: 'text-red-800', label: 'Annulée' }
-    };
-
-    const config = statusConfig[status] || statusConfig.past;
-    return (
-      <span className={`px-3 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text}`}>
-        {config.label}
-      </span>
-    );
+  const handleDecline = (bookingId) => {
+    const reason = window.prompt("Indiquez la raison du refus (optionnel) :");
+    updateBooking(bookingId, 'cancel', reason);
   };
 
   if (!user || user.role !== 'b2b') {
@@ -193,221 +136,184 @@ export default function B2BBookings() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white pb-28">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b sticky top-0 z-30 md:pl-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4 min-w-0 flex-1">
-              <button
-                onClick={() => navigate('/b2b-dashboard')}
-                className="md:hidden p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
-              >
-                <ArrowLeftIcon className="w-6 h-6 text-gray-600" />
-              </button>
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <BuildingOfficeIcon className="w-6 h-6 text-green-700" />
-                </div>
-                <div className="min-w-0">
-                  <h1 className="text-2xl font-bold text-gray-900">Toutes les réservations</h1>
-                  <p className="text-sm text-gray-600">Gérez toutes vos réservations</p>
-                </div>
-              </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white pb-24">
+      <div className="bg-white shadow-sm border-b sticky top-0 z-30">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex items-center gap-4">
+          <button
+            onClick={() => navigate('/b2b-dashboard')}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <ArrowLeftIcon className="w-6 h-6 text-gray-600" />
+          </button>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+              <BuildingOfficeIcon className="w-6 h-6 text-green-700" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Réservations restaurant</h1>
+              <p className="text-sm text-gray-600">
+                Gérez les demandes reçues et confirmez vos tables.
+              </p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Filters Section */}
-        <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200 mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <FunnelIcon className="w-5 h-5 text-gray-600" />
-            <h2 className="text-lg font-semibold text-gray-900">Filtres</h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Status Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">Statut</label>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { value: 'all', label: 'Tous' },
-                  { value: 'past', label: 'Passées' },
-                  { value: 'upcoming', label: 'À venir' },
-                  { value: 'confirmed', label: 'Confirmées' },
-                  { value: 'canceled', label: 'Annulées' }
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => handleStatusFilterChange(option.value)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      statusFilter === option.value
-                        ? 'bg-green-700 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Time Range Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                <ClockIcon className="w-4 h-4 inline mr-1" />
-                Période (début du service)
-              </label>
-              <div className="space-y-3">
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    { value: 'all', label: 'Toutes' },
-                    { value: '1h', label: 'Prochaine heure' },
-                    { value: '2h', label: '2 prochaines heures' },
-                    { value: '6h', label: '6 prochaines heures' },
-                    { value: '12h', label: '12 prochaines heures' },
-                    { value: '24h', label: '24 prochaines heures' },
-                    { value: 'custom', label: 'Personnalisé' }
-                  ].map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => handleTimeRangeFilterChange(option.value)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        timeRangeFilter === option.value
-                          ? 'bg-green-700 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Custom Time Range Inputs */}
-                {timeRangeFilter === 'custom' && (
-                  <div className="grid grid-cols-2 gap-3 pt-2 border-t border-gray-200">
-                    <div>
-                      <label className="block text-xs text-gray-600 mb-1">Début</label>
-                      <input
-                        type="datetime-local"
-                        value={customStartTime}
-                        onChange={(e) => setCustomStartTime(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-gray-600 mb-1">Fin</label>
-                      <input
-                        type="datetime-local"
-                        value={customEndTime}
-                        onChange={(e) => setCustomEndTime(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-white rounded-xl shadow-md border border-gray-200 p-5 mb-6">
+          <span className="text-sm font-semibold text-gray-700 block mb-3">
+            Filtrer par statut
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {STATUS_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setStatusFilter(option.value)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  statusFilter === option.value
+                    ? 'bg-green-700 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Bookings List */}
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+          <div className="flex items-center justify-center py-24">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-green-600"></div>
           </div>
         ) : error ? (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
             {error}
           </div>
-        ) : bookings.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-lg p-12 border border-gray-200 text-center">
+        ) : filteredBookings.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-md border border-gray-200 p-12 text-center">
             <CalendarDaysIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600 text-lg">Aucune réservation trouvée</p>
-            <p className="text-gray-500 text-sm mt-2">Essayez de modifier vos filtres</p>
+            <p className="text-gray-600 text-lg">Aucune réservation {statusFilter === 'all' ? '' : STATUS_STYLES[statusFilter]?.label?.toLowerCase()}.</p>
+            <p className="text-gray-500 text-sm mt-2">
+              Vous recevrez un e-mail et une notification lorsqu'un client effectuera une réservation.
+            </p>
           </div>
         ) : (
-          <>
-            <div className="space-y-4 mb-6">
-              {bookings.map((booking) => (
-                <div
-                  key={booking._id}
-                  onClick={() => handleReservationClick(booking)}
-                  className="bg-white rounded-xl shadow-lg p-6 border border-gray-200 hover:shadow-xl cursor-pointer transition-all"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-3">
+          <div className="space-y-4">
+            {filteredBookings.map((booking) => {
+              const statusInfo = STATUS_STYLES[booking.status] || STATUS_STYLES.pending;
+              return (
+                <div key={booking._id} className="bg-white rounded-xl shadow-md border border-gray-200 p-5">
+                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                    <div className="flex-1 space-y-3">
+                      <div className="flex items-center gap-3 flex-wrap">
                         <h3 className="text-xl font-semibold text-gray-900">
-                          {booking.serviceItem?.name || 'Réservation'}
+                          {booking.service?.title || booking.service?.businessName || 'Restaurant'}
                         </h3>
-                        {getStatusBadge(booking.status)}
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusInfo.bg} ${statusInfo.text}`}>
+                          {statusInfo.label}
+                        </span>
                       </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
-                        <div className="flex items-center gap-2">
-                          <UserIcon className="w-4 h-4" />
-                          <span className="font-medium">Client:</span> {booking.customer?.fullName || 'N/A'}
-                        </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-700">
                         <div className="flex items-center gap-2">
                           <ClockIcon className="w-4 h-4" />
-                          <span className="font-medium">Début:</span> {formatDate(booking.serviceStartTime)}
+                          <span>
+                            {formatDate(booking.reservationDate)} — <strong>{booking.reservationTime}</strong>
+                          </span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <CurrencyDollarIcon className="w-4 h-4" />
-                          <span className="font-medium">Montant:</span> {formatCurrency(booking.totalAmount)}
+                          <UsersIcon className="w-4 h-4" />
+                          <span>{booking.partySize} convive{booking.partySize > 1 ? 's' : ''}</span>
                         </div>
+                        {booking.tableAssignment?.tableNumber && (
+                          <div className="flex items-center gap-2 text-green-700">
+                            <CheckBadgeIcon className="w-4 h-4" />
+                            <span>
+                              Table {booking.tableAssignment.tableNumber} (capacité {booking.tableAssignment.capacity})
+                            </span>
+                          </div>
+                        )}
+                        {booking.tourist?.email && (
+                          <div className="flex items-center gap-2">
+                            <EnvelopeIcon className="w-4 h-4" />
+                            <span>{booking.tourist.email}</span>
+                          </div>
+                        )}
                       </div>
 
-                      {booking.serviceItem?.type && (
-                        <p className="text-sm text-gray-500 mt-2">
-                          Type: {booking.serviceItem.type}
-                        </p>
+                      {booking.notes && (
+                        <div className="text-sm text-gray-600 bg-gray-50 border border-gray-100 rounded-lg p-3">
+                          <span className="font-semibold text-gray-700 block mb-1">Notes:</span>
+                          {booking.notes}
+                        </div>
+                      )}
+
+                      {booking.menuSelections?.length > 0 && (
+                        <div className="bg-green-50 border border-green-100 rounded-lg p-3">
+                          <span className="text-sm font-semibold text-green-800 block mb-2">Plats sélectionnés :</span>
+                          <ul className="list-disc list-inside text-sm text-green-900 space-y-1">
+                            {booking.menuSelections.map((item, index) => (
+                              <li key={index}>
+                                {item.quantity || 1} × {item.name} — {item.price} MAD
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {booking.cancellation?.reason && (
+                        <div className="text-sm text-red-700 bg-red-50 border border-red-100 rounded-lg p-3">
+                          <span className="font-semibold block">Motif du refus :</span>
+                          {booking.cancellation.reason}
+                        </div>
                       )}
                     </div>
-                    <button className="ml-4 p-3 text-gray-400 hover:text-green-700 transition-colors">
-                      <EyeIcon className="w-6 h-6" />
-                    </button>
+
+                    <div className="flex flex-col gap-2 min-w-[200px]">
+                      {booking.status === 'pending' && (
+                        <>
+                          <button
+                            onClick={() => handleConfirm(booking._id)}
+                            disabled={isUpdating}
+                            className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold transition disabled:opacity-50"
+                          >
+                            Confirmer
+                          </button>
+                          <button
+                            onClick={() => handleDecline(booking._id)}
+                            disabled={isUpdating}
+                            className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 transition disabled:opacity-50"
+                          >
+                            Refuser
+                          </button>
+                        </>
+                      )}
+                      {booking.tourist?.email && (
+                        <button
+                          onClick={() => (window.location.href = `mailto:${booking.tourist.email}`)}
+                          className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100 transition"
+                        >
+                          <EnvelopeIcon className="w-4 h-4" />
+                          Contacter
+                        </button>
+                      )}
+                      {booking.service?.contactPhone && (
+                        <button
+                          onClick={() => window.open(`tel:${booking.service.contactPhone}`, '_self')}
+                          className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100 transition"
+                        >
+                          <PhoneIcon className="w-4 h-4" />
+                          Appeler
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2">
-                <button
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  Précédent
-                </button>
-                <span className="px-4 py-2 text-gray-700">
-                  Page {page} sur {totalPages}
-                </span>
-                <button
-                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                  className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  Suivant
-                </button>
-              </div>
-            )}
-          </>
+              );
+            })}
+          </div>
         )}
       </div>
-
-      {/* Reservation Detail Modal */}
-      {showReservationModal && selectedReservation && (
-        <ReservationDetailModal
-          reservation={selectedReservation}
-          onClose={handleCloseModal}
-        />
-      )}
     </div>
   );
 }

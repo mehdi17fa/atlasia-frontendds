@@ -6,6 +6,7 @@ import ImageCarousel from "../../components/ImageCarousel";
 import ImageViewer from "../../components/ImageViewer";
 import S3Image from "../../components/S3Image";
 import { FaArrowLeft, FaStar, FaTimes, FaCamera, FaCheck } from "react-icons/fa";
+import { UsersIcon, EnvelopeIcon, PhoneIcon, ClockIcon, CheckBadgeIcon } from "@heroicons/react/24/outline";
 
 const TouristBookings = () => {
   const { user, token, logout } = useContext(AuthContext);
@@ -15,12 +16,15 @@ const TouristBookings = () => {
   const [packageBookings, setPackageBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [packageLoading, setPackageLoading] = useState(true);
+  const [serviceBookings, setServiceBookings] = useState([]);
+  const [serviceLoading, setServiceLoading] = useState(true);
   const [error, setError] = useState("");
   const [packageError, setPackageError] = useState("");
+  const [serviceError, setServiceError] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [statusFilter, setStatusFilter] = useState("");
-  const [activeTab, setActiveTab] = useState("properties"); // "properties" or "packages"
+  const [activeTab, setActiveTab] = useState("properties"); // "properties" | "packages" | "restaurants"
   
   // Image viewer functionality
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
@@ -37,6 +41,20 @@ const TouristBookings = () => {
   });
   const [reviewLoading, setReviewLoading] = useState(false);
   const [existingReviews, setExistingReviews] = useState({});
+
+  const formatDate = (date) => {
+    if (!date) return "—";
+    try {
+      return new Date(date).toLocaleDateString("fr-FR", {
+        weekday: "short",
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+      });
+    } catch {
+      return date;
+    }
+  };
 
   // Central axios client with relative paths
   const apiCall = async (endpoint, options = {}) => {
@@ -119,9 +137,38 @@ const TouristBookings = () => {
     }
   };
 
+  const fetchServiceBookings = async (status = "") => {
+    if (!user || user.role !== "tourist") {
+      setServiceLoading(false);
+      return;
+    }
+
+    setServiceLoading(true);
+    setServiceError("");
+
+    try {
+      const params = new URLSearchParams();
+      if (status) params.append("status", status);
+
+      const data = await apiCall(`/api/service-bookings/my?${params.toString()}`);
+
+      if (data.success) {
+        setServiceBookings(data.bookings || []);
+      } else {
+        throw new Error(data.message || "Failed to fetch service bookings");
+      }
+    } catch (err) {
+      console.error("Error fetching service bookings:", err);
+      setServiceError(err.message);
+    } finally {
+      setServiceLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchBookings(page, statusFilter);
     fetchPackageBookings(page, statusFilter);
+  fetchServiceBookings(statusFilter);
   }, [user, token, page, statusFilter]);
 
   const handleCancel = async (bookingId) => {
@@ -456,6 +503,16 @@ const TouristBookings = () => {
             >
               Packages ({packageBookings.length})
             </button>
+            <button
+              onClick={() => setActiveTab("restaurants")}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === "restaurants"
+                  ? "border-green-500 text-green-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              Restaurants ({serviceBookings.length})
+            </button>
           </nav>
         </div>
       </div>
@@ -481,7 +538,7 @@ const TouristBookings = () => {
       </div>
 
       {/* Content based on active tab */}
-      {activeTab === "properties" ? (
+      {activeTab === "properties" && (
         <>
           {/* Loading State */}
           {loading && (
@@ -534,7 +591,9 @@ const TouristBookings = () => {
             </div>
           )}
         </>
-      ) : (
+      )}
+
+      {activeTab === "packages" && (
         <>
           {/* Package Bookings Loading State */}
           {packageLoading && (
@@ -583,6 +642,58 @@ const TouristBookings = () => {
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
               >
                 Explorer les packages
+              </button>
+            </div>
+          )}
+        </>
+      )}
+
+      {activeTab === "restaurants" && (
+        <>
+          {serviceLoading && (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+              <p className="text-gray-600 mt-4">Chargement de vos réservations restaurant...</p>
+            </div>
+          )}
+
+          {serviceError && (
+            <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-red-800">{serviceError}</p>
+                  <button
+                    onClick={() => fetchServiceBookings(statusFilter)}
+                    className="text-sm text-red-600 underline hover:text-red-500 mt-1"
+                  >
+                    Réessayer
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!serviceLoading && serviceBookings.length === 0 && !serviceError && (
+            <div className="text-center py-12">
+              <div className="mb-4">
+                <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h18M5 7l1 12h12l1-12M8 7V5a4 4 0 118 0v2" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Aucune réservation restaurant</h3>
+              <p className="text-gray-500 mb-4">
+                {statusFilter ? `Aucune réservation restaurant avec le statut "${statusFilter}"` : "Vous n'avez pas encore réservé de restaurant."}
+              </p>
+              <button
+                onClick={() => navigate("/restauration")}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
+              >
+                Explorer les restaurants
               </button>
             </div>
           )}
@@ -727,6 +838,89 @@ const TouristBookings = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {packageBookings.map((booking) => (
             <PackageBookingCard key={booking._id} booking={booking} />
+          ))}
+        </div>
+      )}
+
+      {activeTab === "restaurants" && !serviceLoading && serviceBookings.length > 0 && (
+        <div className="space-y-4">
+          {serviceBookings.map((booking) => (
+            <div key={booking._id} className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                <div className="flex-1 space-y-3">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {booking.service?.title || booking.service?.businessName || "Restaurant"}
+                    </h3>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
+                      {getStatusLabel(booking.status)}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-700">
+                    <div className="flex items-center gap-2">
+                      <ClockIcon className="w-4 h-4" />
+                      <span>
+                        {formatDate(booking.reservationDate)} — <strong>{booking.reservationTime}</strong>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <UsersIcon className="w-4 h-4" />
+                      <span>{booking.partySize} convive{booking.partySize > 1 ? 's' : ''}</span>
+                    </div>
+                    {booking.tableAssignment?.tableNumber && (
+                      <div className="flex items-center gap-2 text-green-700">
+                        <CheckBadgeIcon className="w-4 h-4" />
+                        <span>
+                          Table {booking.tableAssignment.tableNumber} (capacité {booking.tableAssignment.capacity})
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {booking.menuSelections?.length > 0 && (
+                    <div className="bg-green-50 border border-green-100 rounded-lg p-3">
+                      <span className="text-sm font-semibold text-green-800 block mb-2">Plats sélectionnés :</span>
+                      <ul className="list-disc list-inside text-sm text-green-900 space-y-1">
+                        {booking.menuSelections.map((item, index) => (
+                          <li key={index}>
+                            {item.quantity || 1} × {item.name} — {item.price} MAD
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {booking.status === "cancelled" && booking.cancellation?.reason && (
+                    <div className="bg-red-50 border border-red-100 rounded-lg p-3 text-sm text-red-700">
+                      <span className="font-semibold block mb-1">Raison de l'annulation :</span>
+                      {booking.cancellation.reason}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-2 min-w-[200px]">
+                  {booking.service?.contactPhone && (
+                    <button
+                      onClick={() => window.open(`tel:${booking.service.contactPhone}`, '_self')}
+                      className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100 transition"
+                    >
+                      <PhoneIcon className="w-4 h-4" />
+                      Contacter le restaurant
+                    </button>
+                  )}
+                  {booking.service?.contactEmail && (
+                    <button
+                      onClick={() => (window.location.href = `mailto:${booking.service.contactEmail}`)}
+                      className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100 transition"
+                    >
+                      <EnvelopeIcon className="w-4 h-4" />
+                      Envoyer un email
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       )}

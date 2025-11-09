@@ -87,6 +87,13 @@ export default function Profile() {
   
   const { user, logout, setUser, isLoading } = useContext(AuthContext); // ← get user and logout
   
+  // Redirect B2B users to the dedicated B2B profile page
+  React.useEffect(() => {
+    if (user?.role === 'b2b') {
+      navigate('/b2b-profile', { replace: true });
+    }
+  }, [user?.role, navigate]);
+  
   // Dynamic profile data fetching - only if user exists and has valid token
   const shouldFetchProfile = user && user._id && localStorage.getItem('atlasia_access_token');
   const { 
