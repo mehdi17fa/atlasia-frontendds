@@ -50,7 +50,7 @@ import EditProperty from './pages/propertyOwner/EditProperty';
 import MyProperties from './pages/propertyOwner/MyProperties';
 import ReservationPage from './pages/propertyOwner/ReservationPage';
 
-import PropertyPreview from './pages/Propriétés5/PropertyPreview';
+import PropertyPreview from './pages/Proprietes5/PropertyPreview';
 import OwnerDetails from './pages/propertyOwner/OwnerDetails';
 import OwnerIncomePage from './pages/propertyOwner/OwnerIncomePage';
 
@@ -94,7 +94,7 @@ import GuestsSelectionScreen from './pages/UserSearch/Invités';
 import ExploreLayout from './pages/Layout/Layout';
 
 import CohostPropertyLayout from './pages/Layout/CohostPropertyLayout';
-import VillaMakarska from './pages/Propriétés5/VillaMakarska';
+import VillaMakarska from './pages/Proprietes5/VillaMakarska';
 
 import EditProfileScreen from './pages/Profile/EditProfile';
 import B2BDashboard from './pages/B2B/B2BDashboard';
