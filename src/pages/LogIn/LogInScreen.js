@@ -107,6 +107,10 @@ export default function LoginScreen({onClose, currentLocation}) {
     };
 
   const handleClose = () => {
+    if (typeof onClose === 'function') {
+      onClose();
+      return;
+    }
     navigate(-1);
   };
 
