@@ -11,8 +11,10 @@ export default function CartCheckout() {
   const { cart, isLoading, removeFromCart, updateCartItem, checkoutCart, clearCart, getCartTotal, isCartEmpty } = useCart();
   const { isAuthenticated, user } = useAuth();
   
+  const role = user?.role?.toLowerCase();
   // Check if user is a partner/intermediary
-  const isPartner = user?.role?.toLowerCase() === 'partner';
+  const isPartner = role === 'partner';
+  const isTourist = role === 'tourist';
   
   // Set default payment method - cash for partners, card for tourists
   const [paymentMethod, setPaymentMethod] = useState(isPartner ? 'cash' : 'card');
@@ -52,16 +54,26 @@ export default function CartCheckout() {
 
   // Update payment method when user data loads
   useEffect(() => {
-    if (user?.role?.toLowerCase() === 'partner') {
+    if (!role) return;
+
+    if (isPartner) {
       setPaymentMethod('cash');
+      return;
     }
-  }, [user?.role]);
+
+    if (isTourist) {
+      setPaymentMethod('card');
+    }
+  }, [isPartner, isTourist, role]);
 
   const handleGoBack = () => {
     navigate(-1);
   };
 
   const handlePaymentMethodChange = (method) => {
+    if (isTourist && method === 'cash') {
+      return;
+    }
     setPaymentMethod(method);
     setFieldErrors(prev => ({ ...prev, paymentMethod: false }));
   };
@@ -309,41 +321,43 @@ export default function CartCheckout() {
                 )}
 
                 {/* Cash Payment Option */}
-                <div 
-                  className={`flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                    paymentMethod === 'cash' 
-                      ? 'border-green-500 bg-green-50' 
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`} 
-                  onClick={() => handlePaymentMethodChange('cash')}
-                >
-                  <input
-                    type="radio"
-                    id="cash"
-                    name="paymentMethod"
-                    value="cash"
-                    checked={paymentMethod === 'cash'}
-                    onChange={(e) => handlePaymentMethodChange(e.target.value)}
-                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
-                  />
-                  <label htmlFor="cash" className="ml-3 flex items-center cursor-pointer flex-1">
-                    <svg className={`w-5 h-5 mr-2 ${paymentMethod === 'cash' ? 'text-green-600' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    <span className={`font-medium ${paymentMethod === 'cash' ? 'text-green-800' : 'text-gray-700'}`}>
-                      Paiement en espèces
-                    </span>
-                    {isPartner && (
-                      <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                        Intermédiaire
+                {!isTourist && (
+                  <div 
+                    className={`flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      paymentMethod === 'cash' 
+                        ? 'border-green-500 bg-green-50' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`} 
+                    onClick={() => handlePaymentMethodChange('cash')}
+                  >
+                    <input
+                      type="radio"
+                      id="cash"
+                      name="paymentMethod"
+                      value="cash"
+                      checked={paymentMethod === 'cash'}
+                      onChange={(e) => handlePaymentMethodChange(e.target.value)}
+                      className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
+                    />
+                    <label htmlFor="cash" className="ml-3 flex items-center cursor-pointer flex-1">
+                      <svg className={`w-5 h-5 mr-2 ${paymentMethod === 'cash' ? 'text-green-600' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                      <span className={`font-medium ${paymentMethod === 'cash' ? 'text-green-800' : 'text-gray-700'}`}>
+                        Paiement en espèces
                       </span>
-                    )}
-                  </label>
-                </div>
+                      {isPartner && (
+                        <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                          Intermédiaire
+                        </span>
+                      )}
+                    </label>
+                  </div>
+                )}
               </div>
 
               {/* Cash Payment Info */}
-              {paymentMethod === 'cash' && (
+              {paymentMethod === 'cash' && !isTourist && (
                 <div className="border-t pt-6">
                   <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <div className="flex items-start gap-3">
