@@ -70,6 +70,14 @@ export default function MyServicesManagement() {
   const [saving, setSaving] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const [validationErrors, setValidationErrors] = useState([]);
+  
+  // Restaurant-specific state
+  const [menuMode, setMenuMode] = useState('txt'); // 'txt' or 'manual'
+  const [menuTxtFile, setMenuTxtFile] = useState(null);
+  const [parsedMenuItems, setParsedMenuItems] = useState([]);
+  const [manualMenuItems, setManualMenuItems] = useState([{ name: '', price: '', description: '' }]);
+  const [tableCount, setTableCount] = useState('');
+  const [tableCapacity, setTableCapacity] = useState('4'); // Default capacity per table
 
   useEffect(() => {
     fetchServices();
@@ -175,6 +183,102 @@ export default function MyServicesManagement() {
     setImageFiles(imageFiles.filter((_, i) => i !== index));
   };
 
+  // Parse TXT file with format: "name"  "price"  "description"
+  const parseMenuTxtFile = async (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const text = e.target.result;
+          const lines = text.split('\n').filter(line => line.trim());
+          const items = [];
+          
+          for (const line of lines) {
+            // Match pattern: "name"  "price"  "description"
+            // Using regex to match quoted strings with spaces preserved
+            const match = line.match(/^"([^"]+)"\s+"([^"]+)"\s+"([^"]+)"$/);
+            if (match) {
+              const [, name, priceStr, description] = match;
+              const price = parseFloat(priceStr.trim());
+              
+              if (name.trim() && !isNaN(price) && price >= 0 && description.trim()) {
+                items.push({
+                  name: name.trim(),
+                  price: price,
+                  description: description.trim(),
+                  isAvailable: true
+                });
+              }
+            }
+          }
+          
+          if (items.length === 0) {
+            reject(new Error('Aucun élément de menu valide trouvé dans le fichier. Vérifiez le format.'));
+            return;
+          }
+          
+          resolve(items);
+        } catch (error) {
+          reject(new Error('Erreur lors de la lecture du fichier: ' + error.message));
+        }
+      };
+      reader.onerror = () => reject(new Error('Erreur lors de la lecture du fichier'));
+      reader.readAsText(file);
+    });
+  };
+
+  const handleMenuTxtFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    if (file.type !== 'text/plain' && !file.name.endsWith('.txt')) {
+      alert('Veuillez sélectionner un fichier TXT');
+      return;
+    }
+    
+    try {
+      const items = await parseMenuTxtFile(file);
+      setParsedMenuItems(items);
+      setMenuTxtFile(file);
+      setFieldErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.menuTxt;
+        return newErrors;
+      });
+    } catch (error) {
+      alert(error.message);
+      setMenuTxtFile(null);
+      setParsedMenuItems([]);
+      setFieldErrors(prev => ({ ...prev, menuTxt: error.message }));
+    }
+  };
+
+  const handleManualMenuChange = (index, field, value) => {
+    const updated = [...manualMenuItems];
+    updated[index] = { ...updated[index], [field]: value };
+    setManualMenuItems(updated);
+  };
+
+  const addManualMenuItem = () => {
+    setManualMenuItems([...manualMenuItems, { name: '', price: '', description: '' }]);
+  };
+
+  const removeManualMenuItem = (index) => {
+    if (manualMenuItems.length > 1) {
+      setManualMenuItems(manualMenuItems.filter((_, i) => i !== index));
+    }
+  };
+
+  const handleMenuModeChange = (mode) => {
+    setMenuMode(mode);
+    if (mode === 'txt') {
+      setManualMenuItems([{ name: '', price: '', description: '' }]);
+    } else {
+      setMenuTxtFile(null);
+      setParsedMenuItems([]);
+    }
+  };
+
   const validateForm = () => {
     const errors = {};
     const validationErrors = [];
@@ -244,6 +348,32 @@ export default function MyServicesManagement() {
       }
     });
     
+    // Restaurant-specific validation
+    if (formData.serviceType === 'restaurant') {
+      // Validate menu
+      if (menuMode === 'txt') {
+        if (!menuTxtFile || parsedMenuItems.length === 0) {
+          errors.menuTxt = 'Veuillez télécharger un fichier TXT avec le menu valide';
+          validationErrors.push('Menu requis pour les restaurants');
+        }
+      } else {
+        const validMenuItems = manualMenuItems.filter(item => 
+          item.name.trim() && item.price && parseFloat(item.price) >= 0 && item.description.trim()
+        );
+        if (validMenuItems.length === 0) {
+          errors.menuManual = 'Veuillez ajouter au moins un élément de menu valide';
+          validationErrors.push('Menu requis pour les restaurants');
+        }
+      }
+      
+      // Validate table count
+      const tableCountNum = parseInt(tableCount, 10);
+      if (!tableCount || isNaN(tableCountNum) || tableCountNum < 1) {
+        errors.tableCount = 'Veuillez entrer un nombre de tables valide (minimum 1)';
+        validationErrors.push('Nombre de tables requis');
+      }
+    }
+    
     setFieldErrors(errors);
     setValidationErrors(validationErrors);
     
@@ -307,6 +437,36 @@ export default function MyServicesManagement() {
         formDataToSend.append('features', sanitizeFeatures(formData.features));
       }
 
+      // Restaurant-specific data
+      if (formData.serviceType === 'restaurant') {
+        let menuItems = [];
+        
+        if (menuMode === 'txt') {
+          menuItems = parsedMenuItems;
+        } else {
+          menuItems = manualMenuItems
+            .filter(item => item.name.trim() && item.price && item.description.trim())
+            .map(item => ({
+              name: item.name.trim(),
+              price: parseFloat(item.price),
+              description: item.description.trim(),
+              isAvailable: true
+            }));
+        }
+        
+        // Create tables array
+        const tableCountNum = parseInt(tableCount, 10);
+        const capacityNum = parseInt(tableCapacity, 10) || 4;
+        const tables = Array.from({ length: tableCountNum }, (_, i) => ({
+          tableNumber: `T-${i + 1}`,
+          capacity: capacityNum,
+          isActive: true
+        }));
+        
+        formDataToSend.append('menu', JSON.stringify(menuItems));
+        formDataToSend.append('tables', JSON.stringify(tables));
+      }
+
       // Add images
       imageFiles.forEach((file) => {
         formDataToSend.append('images', file);
@@ -354,6 +514,14 @@ export default function MyServicesManagement() {
       setValidationErrors([]);
       setShowForm(false);
       setEditingService(null);
+      
+      // Reset restaurant-specific state
+      setMenuMode('txt');
+      setMenuTxtFile(null);
+      setParsedMenuItems([]);
+      setManualMenuItems([{ name: '', price: '', description: '' }]);
+      setTableCount('');
+      setTableCapacity('4');
       await fetchServices();
       alert(editingService ? 'Service mis à jour avec succès!' : 'Service créé avec succès!');
     } catch (err) {
@@ -448,6 +616,14 @@ export default function MyServicesManagement() {
     setImageFiles([]);
     setFieldErrors({});
     setValidationErrors([]);
+    
+    // Reset restaurant-specific state
+    setMenuMode('txt');
+    setMenuTxtFile(null);
+    setParsedMenuItems([]);
+    setManualMenuItems([{ name: '', price: '', description: '' }]);
+    setTableCount('');
+    setTableCapacity('4');
   };
 
   if (loading) {
@@ -569,130 +745,380 @@ export default function MyServicesManagement() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Prix</label>
-                <input
-                  type="number"
-                  value={formData.price}
-                  onChange={(e) => handleInputChange('price', e.target.value)}
-                  className={`w-full px-4 py-2 border-2 rounded-xl focus:ring-2 outline-none ${
-                    fieldErrors.price 
-                      ? 'border-red-500 focus:border-red-500 focus:ring-red-200' 
-                      : 'border-gray-200 focus:border-green-600 focus:ring-green-200'
-                  }`}
-                  min="0"
-                  step="0.01"
-                />
-                {fieldErrors.price && (
-                  <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                    <ExclamationTriangleIcon className="w-4 h-4" />
-                    {fieldErrors.price}
-                  </p>
-                )}
-              </div>
+            {/* Standard fields - hidden for restaurants */}
+            {formData.serviceType !== 'restaurant' && (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Prix</label>
+                    <input
+                      type="number"
+                      value={formData.price}
+                      onChange={(e) => handleInputChange('price', e.target.value)}
+                      className={`w-full px-4 py-2 border-2 rounded-xl focus:ring-2 outline-none ${
+                        fieldErrors.price 
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200' 
+                          : 'border-gray-200 focus:border-green-600 focus:ring-green-200'
+                      }`}
+                      min="0"
+                      step="0.01"
+                    />
+                    {fieldErrors.price && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                        <ExclamationTriangleIcon className="w-4 h-4" />
+                        {fieldErrors.price}
+                      </p>
+                    )}
+                  </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Unité de prix</label>
-                <select
-                  value={formData.priceUnit}
-                  onChange={(e) => handleInputChange('priceUnit', e.target.value)}
-                  className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-green-600 focus:ring-2 focus:ring-green-200 outline-none bg-white"
-                >
-                  {Object.entries(priceUnitLabels).map(([value, label]) => (
-                    <option key={value} value={value}>{label}</option>
-                  ))}
-                </select>
-              </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Unité de prix</label>
+                    <select
+                      value={formData.priceUnit}
+                      onChange={(e) => handleInputChange('priceUnit', e.target.value)}
+                      className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-green-600 focus:ring-2 focus:ring-green-200 outline-none bg-white"
+                    >
+                      {Object.entries(priceUnitLabels).map(([value, label]) => (
+                        <option key={value} value={value}>{label}</option>
+                      ))}
+                    </select>
+                  </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Localisation <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.location}
-                  onChange={(e) => handleInputChange('location', e.target.value)}
-                  className={`w-full px-4 py-2 border-2 rounded-xl focus:ring-2 outline-none ${
-                    fieldErrors.location 
-                      ? 'border-red-500 focus:border-red-500 focus:ring-red-200' 
-                      : 'border-gray-200 focus:border-green-600 focus:ring-green-200'
-                  }`}
-                  required
-                  maxLength={200}
-                />
-                {fieldErrors.location && (
-                  <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                    <ExclamationTriangleIcon className="w-4 h-4" />
-                    {fieldErrors.location}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Téléphone de contact 
-                  <span className="text-xs text-gray-500 ml-1">(10 chiffres)</span>
-                </label>
-                <input
-                  type="tel"
-                  value={formData.contactPhone}
-                  onChange={(e) => handleInputChange('contactPhone', e.target.value)}
-                  className={`w-full px-4 py-2 border-2 rounded-xl focus:ring-2 outline-none ${
-                    fieldErrors.contactPhone 
-                      ? 'border-red-500 focus:border-red-500 focus:ring-red-200' 
-                      : 'border-gray-200 focus:border-green-600 focus:ring-green-200'
-                  }`}
-                  maxLength={10}
-                  placeholder="0612345678"
-                />
-                <div className="flex justify-between items-center mt-1">
-                  {fieldErrors.contactPhone ? (
-                    <p className="text-sm text-red-600 flex items-center gap-1">
-                      <ExclamationTriangleIcon className="w-4 h-4" />
-                      {fieldErrors.contactPhone}
-                    </p>
-                  ) : formData.contactPhone ? (
-                    <span className="text-xs text-gray-500">
-                      {formData.contactPhone.length}/10 chiffres
-                    </span>
-                  ) : null}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Localisation <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.location}
+                      onChange={(e) => handleInputChange('location', e.target.value)}
+                      className={`w-full px-4 py-2 border-2 rounded-xl focus:ring-2 outline-none ${
+                        fieldErrors.location 
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200' 
+                          : 'border-gray-200 focus:border-green-600 focus:ring-green-200'
+                      }`}
+                      required
+                      maxLength={200}
+                    />
+                    {fieldErrors.location && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                        <ExclamationTriangleIcon className="w-4 h-4" />
+                        {fieldErrors.location}
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email de contact</label>
-                <input
-                  type="email"
-                  value={formData.contactEmail}
-                  onChange={(e) => handleInputChange('contactEmail', e.target.value)}
-                  className={`w-full px-4 py-2 border-2 rounded-xl focus:ring-2 outline-none ${
-                    fieldErrors.contactEmail 
-                      ? 'border-red-500 focus:border-red-500 focus:ring-red-200' 
-                      : 'border-gray-200 focus:border-green-600 focus:ring-green-200'
-                  }`}
-                />
-                {fieldErrors.contactEmail && (
-                  <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                    <ExclamationTriangleIcon className="w-4 h-4" />
-                    {fieldErrors.contactEmail}
-                  </p>
-                )}
-              </div>
-            </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Téléphone de contact 
+                      <span className="text-xs text-gray-500 ml-1">(10 chiffres)</span>
+                    </label>
+                    <input
+                      type="tel"
+                      value={formData.contactPhone}
+                      onChange={(e) => handleInputChange('contactPhone', e.target.value)}
+                      className={`w-full px-4 py-2 border-2 rounded-xl focus:ring-2 outline-none ${
+                        fieldErrors.contactPhone 
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200' 
+                          : 'border-gray-200 focus:border-green-600 focus:ring-green-200'
+                      }`}
+                      maxLength={10}
+                      placeholder="0612345678"
+                    />
+                    <div className="flex justify-between items-center mt-1">
+                      {fieldErrors.contactPhone ? (
+                        <p className="text-sm text-red-600 flex items-center gap-1">
+                          <ExclamationTriangleIcon className="w-4 h-4" />
+                          {fieldErrors.contactPhone}
+                        </p>
+                      ) : formData.contactPhone ? (
+                        <span className="text-xs text-gray-500">
+                          {formData.contactPhone.length}/10 chiffres
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Caractéristiques (séparées par des virgules)</label>
-              <input
-                type="text"
-                value={formData.features}
-                onChange={(e) => handleInputChange('features', e.target.value)}
-                placeholder="Ex: WiFi gratuit, Parking, Accessible PMR"
-                className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-green-600 focus:ring-2 focus:ring-green-200 outline-none"
-              />
-            </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email de contact</label>
+                    <input
+                      type="email"
+                      value={formData.contactEmail}
+                      onChange={(e) => handleInputChange('contactEmail', e.target.value)}
+                      className={`w-full px-4 py-2 border-2 rounded-xl focus:ring-2 outline-none ${
+                        fieldErrors.contactEmail 
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200' 
+                          : 'border-gray-200 focus:border-green-600 focus:ring-green-200'
+                      }`}
+                    />
+                    {fieldErrors.contactEmail && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                        <ExclamationTriangleIcon className="w-4 h-4" />
+                        {fieldErrors.contactEmail}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Caractéristiques (séparées par des virgules)</label>
+                  <input
+                    type="text"
+                    value={formData.features}
+                    onChange={(e) => handleInputChange('features', e.target.value)}
+                    placeholder="Ex: WiFi gratuit, Parking, Accessible PMR"
+                    className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-green-600 focus:ring-2 focus:ring-green-200 outline-none"
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Restaurant-specific fields */}
+            {formData.serviceType === 'restaurant' && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Localisation <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.location}
+                    onChange={(e) => handleInputChange('location', e.target.value)}
+                    className={`w-full px-4 py-2 border-2 rounded-xl focus:ring-2 outline-none ${
+                      fieldErrors.location 
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200' 
+                        : 'border-gray-200 focus:border-green-600 focus:ring-green-200'
+                    }`}
+                    required
+                    maxLength={200}
+                  />
+                  {fieldErrors.location && (
+                    <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                      <ExclamationTriangleIcon className="w-4 h-4" />
+                      {fieldErrors.location}
+                    </p>
+                  )}
+                </div>
+
+                {/* Menu Input Mode Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Méthode de saisie du menu <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex gap-4 mb-4">
+                    <button
+                      type="button"
+                      onClick={() => handleMenuModeChange('txt')}
+                      className={`flex-1 px-4 py-3 rounded-xl border-2 transition-all ${
+                        menuMode === 'txt'
+                          ? 'border-green-600 bg-green-50 text-green-700 font-semibold'
+                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      📄 Fichier TXT
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleMenuModeChange('manual')}
+                      className={`flex-1 px-4 py-3 rounded-xl border-2 transition-all ${
+                        menuMode === 'manual'
+                          ? 'border-green-600 bg-green-50 text-green-700 font-semibold'
+                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      ✏️ Saisie manuelle
+                    </button>
+                  </div>
+
+                  {/* TXT File Upload */}
+                  {menuMode === 'txt' && (
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Télécharger le fichier menu (.txt) <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="file"
+                          accept=".txt,text/plain"
+                          onChange={handleMenuTxtFileChange}
+                          className={`w-full px-4 py-2 border-2 rounded-xl focus:ring-2 outline-none ${
+                            fieldErrors.menuTxt
+                              ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                              : 'border-gray-200 focus:border-green-600 focus:ring-green-200'
+                          }`}
+                        />
+                        {fieldErrors.menuTxt && (
+                          <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                            <ExclamationTriangleIcon className="w-4 h-4" />
+                            {fieldErrors.menuTxt}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Format Guide */}
+                      <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
+                        <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                          📋 Format requis du fichier TXT
+                        </h4>
+                        <p className="text-sm text-blue-800 mb-3">
+                          Chaque ligne doit respecter exactement ce format (les espaces entre les guillemets sont importants) :
+                        </p>
+                        <div className="bg-white rounded-lg p-3 font-mono text-sm text-gray-800 border border-blue-300">
+                          <div className="mb-2">"Nom du plat"  "Prix en MAD"  "Description courte"</div>
+                          <div className="text-xs text-gray-600 mb-2">Exemple :</div>
+                          <div className="space-y-1">
+                            <div>"Couscous Royal"  "85"  "Couscous avec agneau, poulet et merguez"</div>
+                            <div>"Tajine de poulet"  "65"  "Tajine traditionnel aux olives et citron"</div>
+                            <div>"Pastilla"  "75"  "Feuilleté sucré-salé au pigeon"</div>
+                          </div>
+                        </div>
+                        <p className="text-xs text-blue-700 mt-3">
+                          ⚠️ Important : Utilisez des guillemets doubles (") et respectez les espaces entre les champs.
+                        </p>
+                      </div>
+
+                      {/* Preview parsed menu */}
+                      {parsedMenuItems.length > 0 && (
+                        <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4">
+                          <h4 className="font-semibold text-green-900 mb-2">
+                            ✅ {parsedMenuItems.length} élément(s) de menu détecté(s)
+                          </h4>
+                          <div className="max-h-48 overflow-y-auto space-y-2">
+                            {parsedMenuItems.map((item, index) => (
+                              <div key={index} className="bg-white rounded-lg p-2 text-sm">
+                                <div className="font-semibold">{item.name}</div>
+                                <div className="text-gray-600">{item.description}</div>
+                                <div className="text-green-700 font-semibold">{item.price} MAD</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Manual Menu Entry */}
+                  {menuMode === 'manual' && (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Éléments du menu <span className="text-red-500">*</span>
+                        </label>
+                        <button
+                          type="button"
+                          onClick={addManualMenuItem}
+                          className="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+                        >
+                          + Ajouter un élément
+                        </button>
+                      </div>
+                      {manualMenuItems.map((item, index) => (
+                        <div key={index} className="border-2 border-gray-200 rounded-xl p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-700">Élément {index + 1}</span>
+                            {manualMenuItems.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeManualMenuItem(index)}
+                                className="text-red-600 hover:text-red-800 text-sm"
+                              >
+                                Supprimer
+                              </button>
+                            )}
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div>
+                              <label className="block text-xs text-gray-600 mb-1">Nom du plat *</label>
+                              <input
+                                type="text"
+                                value={item.name}
+                                onChange={(e) => handleManualMenuChange(index, 'name', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-green-600 focus:ring-1 focus:ring-green-200 outline-none"
+                                placeholder="Ex: Couscous Royal"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-gray-600 mb-1">Prix (MAD) *</label>
+                              <input
+                                type="number"
+                                value={item.price}
+                                onChange={(e) => handleManualMenuChange(index, 'price', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-green-600 focus:ring-1 focus:ring-green-200 outline-none"
+                                placeholder="85"
+                                min="0"
+                                step="0.01"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-gray-600 mb-1">Description *</label>
+                              <input
+                                type="text"
+                                value={item.description}
+                                onChange={(e) => handleManualMenuChange(index, 'description', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-green-600 focus:ring-1 focus:ring-green-200 outline-none"
+                                placeholder="Description courte"
+                                maxLength={200}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      {fieldErrors.menuManual && (
+                        <p className="text-sm text-red-600 flex items-center gap-1">
+                          <ExclamationTriangleIcon className="w-4 h-4" />
+                          {fieldErrors.menuManual}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Table Count */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Nombre de tables <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      value={tableCount}
+                      onChange={(e) => setTableCount(e.target.value)}
+                      className={`w-full px-4 py-2 border-2 rounded-xl focus:ring-2 outline-none ${
+                        fieldErrors.tableCount
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                          : 'border-gray-200 focus:border-green-600 focus:ring-green-200'
+                      }`}
+                      min="1"
+                      placeholder="Ex: 10"
+                    />
+                    {fieldErrors.tableCount && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                        <ExclamationTriangleIcon className="w-4 h-4" />
+                        {fieldErrors.tableCount}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Capacité par table (personnes)
+                    </label>
+                    <input
+                      type="number"
+                      value={tableCapacity}
+                      onChange={(e) => setTableCapacity(e.target.value)}
+                      className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-green-600 focus:ring-2 focus:ring-green-200 outline-none"
+                      min="1"
+                      placeholder="4"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Toutes les tables auront la même capacité
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">

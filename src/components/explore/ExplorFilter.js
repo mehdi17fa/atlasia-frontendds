@@ -10,7 +10,7 @@ import { ReactComponent as PacksIcon } from '../../assets/icons/pack.svg';
 
 const categories = [
   { label: 'Logement', icon: LogementIcon, path: '/' }, // ← ici
-  { label: 'Restauration', icon: RestaurationIcon, path: '/restauration' },
+  { label: 'Services', icon: RestaurationIcon, path: '/restauration' },
   { label: 'Activités', icon: ActiviteIcon, path: '/activites' },
   { label: 'Packs et services', icon: PacksIcon, path: '/packages' },
 ];

@@ -105,7 +105,7 @@ export default function ServicesBrowser() {
   };
 
   const handleServiceClick = (serviceId) => {
-    navigate(`/service/${serviceId}`);
+    navigate(`/service/${serviceId}`, { state: { from: 'restauration' } });
   };
 
   return (
@@ -298,6 +298,36 @@ export default function ServicesBrowser() {
                           {service.business && (
                             <div className="text-sm text-gray-500">
                               Par {service.business.businessName || service.business.fullName}
+                            </div>
+                          )}
+                          
+                          {/* Restaurant Menu Preview */}
+                          {service.serviceType === 'restaurant' && service.restaurantDetails?.menu?.length > 0 && (
+                            <div className="mt-3 pt-3 border-t border-gray-200">
+                              <div className="text-xs font-semibold text-gray-700 mb-2">Menu ({service.restaurantDetails.menu.length} plat{service.restaurantDetails.menu.length > 1 ? 's' : ''})</div>
+                              <div className="max-h-32 overflow-y-auto space-y-1">
+                                {service.restaurantDetails.menu.slice(0, 3).map((item, idx) => (
+                                  <div key={idx} className="text-xs text-gray-600 flex justify-between">
+                                    <span className="truncate flex-1">{item.name}</span>
+                                    <span className="text-green-700 font-semibold ml-2">{item.price} MAD</span>
+                                  </div>
+                                ))}
+                                {service.restaurantDetails.menu.length > 3 && (
+                                  <div className="text-xs text-gray-500 italic">
+                                    +{service.restaurantDetails.menu.length - 3} autre{service.restaurantDetails.menu.length - 3 > 1 ? 's' : ''}...
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Restaurant Tables Info */}
+                          {service.serviceType === 'restaurant' && service.restaurantDetails?.tables?.length > 0 && (
+                            <div className="mt-2 text-xs text-gray-600">
+                              🪑 {service.restaurantDetails.tables.length} table{service.restaurantDetails.tables.length > 1 ? 's' : ''} disponible{service.restaurantDetails.tables.length > 1 ? 's' : ''}
+                              {service.restaurantDetails.tables[0]?.capacity && (
+                                <span className="ml-1">(max {service.restaurantDetails.tables[0].capacity} pers./table)</span>
+                              )}
                             </div>
                           )}
                         </div>

@@ -141,7 +141,7 @@ export default function B2BServicesBrowser() {
   };
 
   const handleServiceClick = (serviceId) => {
-    navigate(`/b2b-service/${serviceId}`);
+    navigate(`/service/${serviceId}`, { state: { from: 'b2b-services' } });
   };
 
   return (

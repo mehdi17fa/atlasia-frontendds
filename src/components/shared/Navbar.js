@@ -135,6 +135,23 @@ export default function Navbar() {
         return true;
       });
 
+  const roleAdjustedNavItems = filteredNavItems.map((item) => {
+    if (item.name === 'Profile') {
+      return {
+        ...item,
+        path: user?.role === 'b2b' ? '/b2b-profile' : '/profile',
+      };
+    }
+    if (item.name === 'My bookings') {
+      return {
+        ...item,
+        name: user?.role === 'b2b' ? 'Bookings' : item.name,
+        path: user?.role === 'b2b' ? '/b2b-bookings' : '/my-bookings',
+      };
+    }
+    return item;
+  });
+
   return (
     <>
       {/* Dark overlay when desktop nav is open */}
@@ -182,7 +199,7 @@ export default function Navbar() {
         </div>
 
         <div className="flex md:flex-col md:items-stretch md:justify-start flex justify-around md:py-4 py-2 md:space-y-1">
-          {filteredNavItems.map((item, idx) => {
+          {roleAdjustedNavItems.map((item, idx) => {
             const isActive = location.pathname === item.path;
             return (
               <button
