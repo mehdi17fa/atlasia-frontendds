@@ -94,7 +94,7 @@ import GuestsSelectionScreen from './pages/UserSearch/Invités';
 import ExploreLayout from './pages/Layout/Layout';
 
 import CohostPropertyLayout from './pages/Layout/CohostPropertyLayout';
-import VillaMakarska from './pages/Propriétés 5/VillaMakarska';
+import VillaMakarska from './pages/Propriétés5/VillaMakarska';
 
 import EditProfileScreen from './pages/Profile/EditProfile';
 import B2BDashboard from './pages/B2B/B2BDashboard';
