@@ -75,9 +75,12 @@ export default function B2BDashboard() {
         return {
           success: true,
           stats: {
-            totalBookings: 0,
-            revenue: 0,
-            popularService: null
+            totalBookings: 24,
+            revenue: 45000,
+            popularService: {
+              name: 'Tajine',
+              count: 12
+            }
           }
         };
       });
@@ -89,9 +92,69 @@ export default function B2BDashboard() {
       // Fetch upcoming reservations (next 3)
       const bookingsResponse = await apiCall('/api/b2b/bookings?limit=3&status=upcoming').catch(() => {
         // Return mock data if API doesn't exist yet
+        const now = new Date();
+        const mockUpcomingReservations = [
+          {
+            _id: 'mock_booking_1',
+            status: 'confirmed',
+            customer: {
+              fullName: 'Ahmed Benali',
+              email: 'ahmed.benali@example.com',
+              phoneNumber: '+212612345678'
+            },
+            serviceItem: {
+              name: 'Tajine aux Pruneaux et Amandes',
+              type: 'restaurant',
+              description: 'Table pour 2 personnes - Réservation table'
+            },
+            serviceStartTime: new Date(now.getTime() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours from now
+            bookingDate: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
+            totalAmount: 280,
+            createdAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+            notes: 'Préférence pour table près de la fenêtre, demande spéciale: tajine bien cuit'
+          },
+          {
+            _id: 'mock_booking_2',
+            status: 'upcoming',
+            customer: {
+              fullName: 'Fatima Alami',
+              email: 'fatima.alami@example.com',
+              phoneNumber: '+212698765432'
+            },
+            serviceItem: {
+              name: 'Tajine de Poulet aux Citrons Confits',
+              type: 'restaurant',
+              description: 'Table pour 4 personnes - Réservation table'
+            },
+            serviceStartTime: new Date(now.getTime() + 18 * 60 * 60 * 1000).toISOString(), // 18 hours from now
+            bookingDate: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+            totalAmount: 520,
+            createdAt: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+            notes: 'Anniversaire - gâteau souhaité'
+          },
+          {
+            _id: 'mock_booking_3',
+            status: 'confirmed',
+            customer: {
+              fullName: 'Youssef Idrissi',
+              email: 'youssef.idrissi@example.com',
+              phoneNumber: '+212655443322'
+            },
+            serviceItem: {
+              name: 'Tajine d\'Agneau aux Légumes',
+              type: 'restaurant',
+              description: 'Table pour 3 personnes - Réservation table'
+            },
+            serviceStartTime: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days from now
+            bookingDate: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
+            totalAmount: 450,
+            createdAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+            notes: 'Table en terrasse si possible'
+          }
+        ];
         return {
           success: true,
-          bookings: []
+          bookings: mockUpcomingReservations
         };
       });
 
@@ -117,9 +180,9 @@ export default function B2BDashboard() {
   };
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('fr-FR', {
+    return new Intl.NumberFormat('fr-MA', {
       style: 'currency',
-      currency: 'EUR'
+      currency: 'MAD'
     }).format(amount || 0);
   };
 

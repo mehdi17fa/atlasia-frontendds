@@ -4,7 +4,7 @@ import { AuthContext } from '../../context/AuthContext';
 // import CartIcon from '../CartIcon';
 // import CartModal from '../CartModal';
 
-const navItems = [
+const defaultNavItems = [
   {
     name: 'Découvrir',
     icon: (
@@ -61,13 +61,53 @@ const navItems = [
   },
 ];
 
+const b2bNavItems = [
+  {
+    name: 'Tableau de bord',
+    icon: (
+      <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 9.75L12 4l9 5.75V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.75z" />
+      </svg>
+    ),
+    path: '/b2b-dashboard',
+  },
+  {
+    name: 'Profil',
+    icon: (
+      <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M5.121 17.804A7 7 0 0112 15a7 7 0 016.879 2.804M15 11a3 3 0 10-6 0 3 3 0 006 0z" />
+      </svg>
+    ),
+    path: '/profile',
+  },
+  {
+    name: 'Boîte de réception',
+    icon: (
+      <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 13V5a2 2 0 00-2-2H6a2 2 0 00-2 2v8m16 0l-8 5-8-5m16 0v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6" />
+      </svg>
+    ),
+    path: '/inbox',
+  },
+  {
+    name: 'Gérer mes services',
+    icon: (
+      <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+      </svg>
+    ),
+    path: '/b2b-profile',
+  },
+];
+
 export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
   const [isDesktopOpen, setIsDesktopOpen] = useState(false);
 
-  const homePath = '/';
+  const isB2BUser = user?.role === 'b2b';
+  const homePath = isB2BUser ? '/b2b-dashboard' : '/';
   
   // Check if current page is a B2B page
   const isB2BPage = location.pathname.startsWith('/b2b-');
@@ -82,13 +122,18 @@ export default function Navbar() {
   const isChatPage = /^\/chat\/[^/]+$/.test(location.pathname);
   if (isChatPage) return null;
 
+  // Keep role-specific menu definitions centralized here so the shared navbar shell can swap items without extra components.
+  const menuItems = isB2BUser ? b2bNavItems : defaultNavItems;
+
   // Filter navItems to exclude cart if user is not a tourist
-  const filteredNavItems = navItems.filter((item) => {
-    if (item.name === 'Panier') {
-      return user && user.role === 'tourist';
-    }
-    return true;
-  });
+  const filteredNavItems = isB2BUser
+    ? menuItems
+    : menuItems.filter((item) => {
+        if (item.name === 'Panier') {
+          return user && user.role === 'tourist';
+        }
+        return true;
+      });
 
   const roleAdjustedNavItems = filteredNavItems.map((item) => {
     if (item.name === 'Profile') {

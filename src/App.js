@@ -1,6 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
 import {
-  BrowserRouter as Router,
   Routes,
   Route,
   useNavigate,
@@ -10,10 +9,8 @@ import { setGlobalNavigate } from './api';
 
 // Import AuthContext and ProtectedRoute
 import { AuthContext } from './context/AuthContext';
-import { CartProvider } from './context/CartContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
-import SignUpScreen from './pages/SignUp/SignUpScreen';
 import SignUpWizard from './pages/SignUp/SignUpWizard';
 import IdentificationScreen from './pages/SignUp/IdentificationScreen';
 import ProfileSignupScreen from './pages/SignUp/CompleteProfileScreen';
@@ -43,7 +40,6 @@ import ResetPasswordScreen from './pages/LogIn/ResetPasswordScreen';
 import TestDocumentUpload from './pages/TestDocumentUpload';
 import ChatbotWidget from './components/ChatbotWidget';
 
-import SearchResults from './pages/UserSearch/SearchResults';
 import SearchResultsPage from './pages/UserSearch/SearchResultsPage';
 import PropertySearchFlow from './pages/UserSearch/SearchFlow';
 
@@ -53,6 +49,7 @@ import PropertyCreationSinglePage from './pages/propertyOwner/PropertyCreationSi
 import EditProperty from './pages/propertyOwner/EditProperty';
 import MyProperties from './pages/propertyOwner/MyProperties';
 import ReservationPage from './pages/propertyOwner/ReservationPage';
+
 import PropertyPreview from './pages/Propriétés 5/PropertyPreview';
 import OwnerDetails from './pages/propertyOwner/OwnerDetails';
 import OwnerIncomePage from './pages/propertyOwner/OwnerIncomePage';
@@ -95,8 +92,10 @@ import DateSelectionScreens from './pages/UserSearch/Date';
 import GuestsSelectionScreen from './pages/UserSearch/Invités';
 
 import ExploreLayout from './pages/Layout/Layout';
+
 import CohostPropertyLayout from './pages/Layout/CohostPropertyLayout';
 import VillaMakarska from './pages/Propriétés 5/VillaMakarska';
+
 import EditProfileScreen from './pages/Profile/EditProfile';
 import B2BDashboard from './pages/B2B/B2BDashboard';
 import B2BBookings from './pages/B2B/B2BBookings';
@@ -107,18 +106,6 @@ import AdminDashboard from './pages/AdminDashboard';
 
 // Test Components
 import CalendarTest from './components/CalendarTest';
-
-// Explore affiché en fond avec modal devant
-function ModalLayout({ children }) {
-  return (
-    <div className="relative">
-      <div className="opacity-30 pointer-events-none">
-        <ExploreLayout/>
-      </div>
-      {children}
-    </div>
-  );
-}
 
 // Wrapper pour l'écran de sélection de date
 function DateSelectionScreensWrapper() {
