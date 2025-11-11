@@ -213,7 +213,7 @@ export default function Navbar() {
                   transition-colors duration-200
                   focus:outline-none
                   ${isActive ? 'text-primary-700' : 'text-secondary-500 hover:text-primary-600'}
-                  md:transition md:duration-300 md:transform ${isDesktopOpen ? 'md:opacity-100 md:translate-y-0' : 'md:opacity-0 md:-translate-y-2'}
+                  md:transition md:duration-300 md:transform ${isDesktopOpen ? 'md:opacity-100 md:translate-y-0 md:pointer-events-auto' : 'md:opacity-0 md:-translate-y-2 md:pointer-events-none'}
                   md:gap-3
                 `}
                 style={{ transitionDelay: isDesktopOpen ? `${idx * 80}ms` : '0ms' }}
