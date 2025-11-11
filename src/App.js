@@ -50,7 +50,7 @@ import EditProperty from './pages/propertyOwner/EditProperty';
 import MyProperties from './pages/propertyOwner/MyProperties';
 import ReservationPage from './pages/propertyOwner/ReservationPage';
 
-import PropertyPreview from './pages/Propriétés 5/PropertyPreview';
+import PropertyPreview from './pages/Propriétés5/PropertyPreview';
 import OwnerDetails from './pages/propertyOwner/OwnerDetails';
 import OwnerIncomePage from './pages/propertyOwner/OwnerIncomePage';
 
